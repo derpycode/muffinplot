@@ -184,6 +184,8 @@ function [STATM,DIAG] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,
 %             *** GIT UPLOAD **********************************************
 %   17/10/26: rationalized directories and paths (inc. path input params.)
 %             *** VERSION 1.00 ********************************************
+%   17/10/31: adjusted main plot window size
+%             *** VERSION 1.01 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -195,7 +197,7 @@ function [STATM,DIAG] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.00;
+par_ver = 1.01;
 % close open windows
 close all;
 % load plotting options
@@ -1199,7 +1201,7 @@ if (plot_main == 'y'),
     %
     % create figure
     scrsz = get(0,'ScreenSize');
-    figure('Position',[((1 - plot_dscrsz)/2)*plot_dscrsz*scrsz(3) (1 - plot_dscrsz)*plot_dscrsz*scrsz(4) plot_dscrsz*scrsz(3) 0.80*plot_dscrsz*scrsz(4)])
+    figure('Position',[((1 - plot_dscrsz)/2)*plot_dscrsz*scrsz(3) (1 - plot_dscrsz)*plot_dscrsz*scrsz(4) plot_dscrsz*scrsz(3) plot_dscrsz*scrsz(4)])
     clf;
     % define plotting regions
     if (plot_format_old == 'y')
