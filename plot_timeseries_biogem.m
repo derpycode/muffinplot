@@ -103,6 +103,8 @@ function [] = plot_timeseries_biogem(PEXP1,PEXP2,PTMIN,PTMAX,PDATA1,PDATA1N,PDAT
 %   17/05/18: added saving of binned data
 %             *** GIT UPLOAD **********************************************
 %             *** VERSION 0.99 ********************************************
+%   17/11/01: adjusted paths ... again ...
+%             *** VERSION 1.02 ********************************************
 %
 %   ***********************************************************************
 
@@ -113,7 +115,9 @@ function [] = plot_timeseries_biogem(PEXP1,PEXP2,PTMIN,PTMAX,PDATA1,PDATA1N,PDAT
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 0.99;
+par_ver = 1.02;
+% set function name
+str_function = mfilename;
 % close open windows
 close all;
 % load plotting options
@@ -126,6 +130,13 @@ eval(POPT);
 if ~exist('plot_toffset','var'), plot_toffset = 0.0; end
 % time scale direction parameter
 if ~exist('plot_tdir','var'),    plot_tdir = 1.0; end
+% paths
+if ~exist('par_pathin','var'),   par_pathin   = 'cgenie_output'; end
+if ~exist('par_pathlib','var'),  par_pathlib  = 'source'; end
+if ~exist('par_pathout','var'),  par_pathout  = 'PLOTS'; end
+if ~exist('par_pathdata','var'), par_pathdata = 'DATA'; end
+if ~exist('par_pathmask','var'), par_pathmask = 'MASK'; end
+if ~exist('par_pathexam','var'), par_pathexam = 'EXAMPLES'; end
 %
 % *** copy passed parameters ******************************************** %
 % 
@@ -162,22 +173,39 @@ altfilename = PNAME;
 % 
 % set date
 str_date = [datestr(date,11), datestr(date,5), datestr(date,7)];
-% set function name
-str_function = 'plot-timeseries-biogem';
 % set filename
 str_filename = [expid1];
-% plot format
-if ~isempty(plot_format), plot_format_old='n'; end
-% plotting paths
-addpath(par_pathlib);
-if (plot_format_old == 'n'),
-    addpath([par_pathlib '\xpdfbin-win-3.03\bin32']);
-    addpath([par_pathlib '\export_fig']);
-end
 % determine MUTLAB version
 tmp_mutlab = version('-release');
 str_mutlab = tmp_mutlab(1:4);
 par_mutlab = str2num(str_mutlab);
+% add library path to muffinplot function
+% NOTE: find where muffin lives ...
+%       remove its name (+ '.m' extension) from the returned path ...
+%       add relative path to it
+tmp_path = which(str_function);
+tmp_path = tmp_path(1:end-length(str_function)-3);
+% check/create directories
+if ~(exist([tmp_path '/' par_pathdata],'dir') == 7), mkdir([tmp_path '/' par_pathdata]); end
+if ~(exist([tmp_path '/' par_pathmask],'dir') == 7), mkdir([tmp_path '/' par_pathmask]); end
+if ~(exist([tmp_path '/' par_pathexam],'dir') == 7), mkdir([tmp_path '/' par_pathexam]); end
+if ~(exist([tmp_path '/' par_pathout],'dir') == 7),  mkdir([tmp_path '/' par_pathout]);  end
+% add search paths
+addpath([tmp_path '/' par_pathlib]);
+addpath([tmp_path '/' par_pathdata]);
+addpath([tmp_path '/' par_pathmask]);
+addpath([tmp_path '/' par_pathexam]);
+% plot format
+if ~isempty(plot_format), plot_format_old='n'; end
+% plotting paths
+if (plot_format_old == 'n'),
+    addpath([tmp_path '/' par_pathlib '/xpdfbin-win-3.03/bin32']);
+    addpath([tmp_path '/' par_pathlib '/export_fig']);
+end
+% input path
+par_pathin = [tmp_path '/' par_pathin];
+% output path
+par_pathout = [tmp_path '/' par_pathout];
 %
 % *** DEFINE COLORS ***************************************************** %
 %

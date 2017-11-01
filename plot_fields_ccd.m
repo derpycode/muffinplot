@@ -44,6 +44,8 @@ function [out_n,out_ccd] = plot_fields_ccd(PEXPID,PT,PMASK,PMODULE,POPT,PNAME)
 %             + function return
 %             *** GIT UPLOAD **********************************************
 %             *** VERSION 0.99 ********************************************
+%   17/11/01: adjusted paths ... again ...
+%             *** VERSION 1.02 ********************************************
 %
 %   ***********************************************************************
 
@@ -70,12 +72,27 @@ ctrl_SEDGEM_D = false; % use SEDGEM depth (if BIOGEM module selected)?
 % *********************************************************************** %
 %
 % set version!
-par_ver = 0.99;
+par_ver = 1.02;
+% set function name
+str_function = mfilename;
 % close open windows
 close all;
 % load plotting options
 if isempty(POPT), POPT='plot_fields_SETTINGS'; end
 eval(POPT);
+%
+% *** backwards compatability ******************************************* %
+% 
+% paths
+if ~exist('par_pathin','var'),   par_pathin   = 'cgenie_output'; end
+if ~exist('par_pathlib','var'),  par_pathlib  = 'source'; end
+if ~exist('par_pathout','var'),  par_pathout  = 'PLOTS'; end
+if ~exist('par_pathdata','var'), par_pathdata = 'DATA'; end
+if ~exist('par_pathmask','var'), par_pathmask = 'MASK'; end
+if ~exist('par_pathexam','var'), par_pathexam = 'EXAMPLES'; end
+%
+% *** initialize parameters ********************************************* %
+%
 % set passed parameters
 expid = PEXPID;
 basinmaskid = PMASK;
@@ -84,8 +101,33 @@ timesliceid = PT;
 altfilename = PNAME;
 % set date
 str_date = [datestr(date,11), datestr(date,5), datestr(date,7)];
-% set function name
-str_function = 'plot-fields-sedgem-CCD';
+% add library path to muffinplot function
+% NOTE: find where muffin lives ...
+%       remove its name (+ '.m' extension) from the returned path ...
+%       add relative path to it
+tmp_path = which(str_function);
+tmp_path = tmp_path(1:end-length(str_function)-3);
+% check/create directories
+if ~(exist([tmp_path '/' par_pathdata],'dir') == 7), mkdir([tmp_path '/' par_pathdata]); end
+if ~(exist([tmp_path '/' par_pathmask],'dir') == 7), mkdir([tmp_path '/' par_pathmask]); end
+if ~(exist([tmp_path '/' par_pathexam],'dir') == 7), mkdir([tmp_path '/' par_pathexam]); end
+if ~(exist([tmp_path '/' par_pathout],'dir') == 7),  mkdir([tmp_path '/' par_pathout]);  end
+% add search paths
+addpath([tmp_path '/' par_pathlib]);
+addpath([tmp_path '/' par_pathdata]);
+addpath([tmp_path '/' par_pathmask]);
+addpath([tmp_path '/' par_pathexam]);
+% plot format
+if ~isempty(plot_format), plot_format_old='n'; end
+% plotting paths
+if (plot_format_old == 'n'),
+    addpath([tmp_path '/' par_pathlib '/xpdfbin-win-3.03/bin32']);
+    addpath([tmp_path '/' par_pathlib '/export_fig']);
+end
+% input path
+par_pathin = [tmp_path '/' par_pathin];
+% output path
+par_pathout = [tmp_path '/' par_pathout];
 % define grey colors
 if (ctrl_bckgndcol=='w'),
     color_gl = [0.90 0.90 0.90];

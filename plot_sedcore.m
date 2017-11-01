@@ -155,6 +155,8 @@ function [] = plot_sedcore(PEXP,PCORE,PMIN,PMAX,PREFAGE,PDATA1,PDATA2,POPT,PNAME
 %             [opt_minplot, str_plot_title, str_plot_yaxis]
 %             *** GIT UPLOAD **********************************************
 %             *** VERSION 0.99 ********************************************
+%   17/11/01: adjusted paths ... again ...
+%             *** VERSION 1.02 ********************************************
 %
 %   ***********************************************************************
 
@@ -165,7 +167,9 @@ function [] = plot_sedcore(PEXP,PCORE,PMIN,PMAX,PREFAGE,PDATA1,PDATA2,POPT,PNAME
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 0.99;
+par_ver = 1.02;
+% set function name
+str_function = mfilename;
 % close plot windows
 close all;
 % load plotting options
@@ -183,6 +187,13 @@ if ~exist('overlaydatacaco3d13c_file','var'), overlaydatacaco3d13c_file = ''; en
 if ~exist('opt_minplot','var'), opt_minplot = 'false'; end
 if ~exist('str_plot_title','var'), str_plot_title = ''; end
 if ~exist('str_plot_yaxis','var'), str_plot_yaxis = ''; end
+% paths
+if ~exist('par_pathin','var'),   par_pathin   = 'cgenie_output'; end
+if ~exist('par_pathlib','var'),  par_pathlib  = 'source'; end
+if ~exist('par_pathout','var'),  par_pathout  = 'PLOTS'; end
+if ~exist('par_pathdata','var'), par_pathdata = 'DATA'; end
+if ~exist('par_pathmask','var'), par_pathmask = 'MASK'; end
+if ~exist('par_pathexam','var'), par_pathexam = 'EXAMPLES'; end
 %
 % *** copy passed parameters ******************************************** %
 % 
@@ -203,12 +214,6 @@ altfilename = PNAME;
 % extract i and j values
 coreid_i = str2num(coreid(1:2));
 coreid_j = str2num(coreid(3:4));
-% set date
-str_date = [datestr(date,11), datestr(date,5), datestr(date,7)];
-% set function name
-str_function = 'plot-fields-sedgem-sedcore';
-% set filename
-str_filename = [expid];
 % determine age/depth or assume automatic reference level
 if (refage >= 0.0),
     opt_refage=true;
@@ -221,18 +226,41 @@ if (~opt_ashagemodel && ~opt_detagemodel),
 else
     opt_CaCO3agemodel=false;
 end
-% plot format
-if ~isempty(plot_format), plot_format_old='n'; end
-% plotting paths
-addpath(library_path);
-if (plot_format_old == 'n'),
-    addpath([library_path '\xpdfbin-win-3.03\bin32']);
-    addpath([library_path '\export_fig']);
-end
+% set date
+str_date = [datestr(date,11), datestr(date,5), datestr(date,7)];
+% set filename
+str_filename = [expid];
 % determine MUTLAB version
 tmp_mutlab = version('-release');
 str_mutlab = tmp_mutlab(1:4);
 par_mutlab = str2num(str_mutlab);
+% add library path to muffinplot function
+% NOTE: find where muffin lives ...
+%       remove its name (+ '.m' extension) from the returned path ...
+%       add relative path to it
+tmp_path = which(str_function);
+tmp_path = tmp_path(1:end-length(str_function)-3);
+% check/create directories
+if ~(exist([tmp_path '/' par_pathdata],'dir') == 7), mkdir([tmp_path '/' par_pathdata]); end
+if ~(exist([tmp_path '/' par_pathmask],'dir') == 7), mkdir([tmp_path '/' par_pathmask]); end
+if ~(exist([tmp_path '/' par_pathexam],'dir') == 7), mkdir([tmp_path '/' par_pathexam]); end
+if ~(exist([tmp_path '/' par_pathout],'dir') == 7),  mkdir([tmp_path '/' par_pathout]);  end
+% add search paths
+addpath([tmp_path '/' par_pathlib]);
+addpath([tmp_path '/' par_pathdata]);
+addpath([tmp_path '/' par_pathmask]);
+addpath([tmp_path '/' par_pathexam]);
+% plot format
+if ~isempty(plot_format), plot_format_old='n'; end
+% plotting paths
+if (plot_format_old == 'n'),
+    addpath([tmp_path '/' par_pathlib '/xpdfbin-win-3.03/bin32']);
+    addpath([tmp_path '/' par_pathlib '/export_fig']);
+end
+% input path
+par_pathin = [tmp_path '/' par_pathin];
+% output path
+par_pathout = [tmp_path '/' par_pathout];
 %
 % *** DEFINE COLORS ***************************************************** %
 %

@@ -170,6 +170,8 @@ function [grid_lat,zz] = plot_fields_biogem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,P
 %             *** VERSION 1.00 ********************************************
 %   17/10/31: adjusted main plot window size
 %             *** VERSION 1.01 ********************************************
+%   17/11/01: adjusted paths ... again ...
+%             *** VERSION 1.02 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -181,7 +183,9 @@ function [grid_lat,zz] = plot_fields_biogem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,P
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.01;
+par_ver = 1.02;
+% set function name
+str_function = mfilename;
 % close open windows
 close all;
 % load plotting options
@@ -194,10 +198,11 @@ eval(POPT);
 if ~exist('plot_psi','var'), plot_psi = 'n'; end
 % paths
 if ~exist('par_pathin','var'),   par_pathin   = 'cgenie_output'; end
-if ~exist('par_pathout','var'),  par_pathout  = 'PLOTS'; end
 if ~exist('par_pathlib','var'),  par_pathlib  = 'source'; end
+if ~exist('par_pathout','var'),  par_pathout  = 'PLOTS'; end
 if ~exist('par_pathdata','var'), par_pathdata = 'DATA'; end
 if ~exist('par_pathmask','var'), par_pathmask = 'MASK'; end
+if ~exist('par_pathexam','var'), par_pathexam = 'EXAMPLES'; end
 %
 % *** initialize parameters ********************************************* %
 % 
@@ -207,6 +212,8 @@ lat_max = +090;
 lon_min = plot_lon_origin;
 lon_max = lon_min+360;
 lon_offset = 0;
+% null data value
+par_data_null = 9.9E19;
 %
 % *** copy passed parameters ******************************************** %
 % 
@@ -255,16 +262,33 @@ else
 end
 % set date
 str_date = [datestr(date,11), datestr(date,5), datestr(date,7)];
-% set function name
-str_function = 'plot-fields-biogem-2d';
+% add library path to muffinplot function
+% NOTE: find where muffin lives ...
+%       remove its name (+ '.m' extension) from the returned path ...
+%       add relative path to it
+tmp_path = which(str_function);
+tmp_path = tmp_path(1:end-length(str_function)-3);
+% check/create directories
+if ~(exist([tmp_path '/' par_pathdata],'dir') == 7), mkdir([tmp_path '/' par_pathdata]); end
+if ~(exist([tmp_path '/' par_pathmask],'dir') == 7), mkdir([tmp_path '/' par_pathmask]); end
+if ~(exist([tmp_path '/' par_pathexam],'dir') == 7), mkdir([tmp_path '/' par_pathexam]); end
+if ~(exist([tmp_path '/' par_pathout],'dir') == 7),  mkdir([tmp_path '/' par_pathout]);  end
+% add search paths
+addpath([tmp_path '/' par_pathlib]);
+addpath([tmp_path '/' par_pathdata]);
+addpath([tmp_path '/' par_pathmask]);
+addpath([tmp_path '/' par_pathexam]);
 % plot format
 if ~isempty(plot_format), plot_format_old='n'; end
 % plotting paths
-addpath(par_pathlib);
 if (plot_format_old == 'n'),
-    addpath([par_pathlib '\xpdfbin-win-3.03\bin32']);
-    addpath([par_pathlib '\export_fig']);
+    addpath([tmp_path '/' par_pathlib '/xpdfbin-win-3.03/bin32']);
+    addpath([tmp_path '/' par_pathlib '/export_fig']);
 end
+% input path
+par_pathin = [tmp_path '/' par_pathin];
+% output path
+par_pathout = [tmp_path '/' par_pathout];
 %
 % *** DEFINE COLORS ***************************************************** %
 %
