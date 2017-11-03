@@ -677,7 +677,7 @@ if ~isempty(plot_opsi)
         % *** USE PRE-SAVED 2D DATA ********************************************* %
         %
         % open netCDF file
-        ncid_0=netcdf.open([data_path '/' exp_1 '/biogem/fields_biogem_2d.nc'],'nowrite');
+        ncid_0=netcdf.open([par_pathin '/' exp_1 '/biogem/fields_biogem_2d.nc'],'nowrite');
         % read netCDf information
         [ndims,nvars,ngatts,unlimdimid] = netcdf.inq(ncid_0);
         % load grid information
@@ -980,7 +980,7 @@ if ~isempty(overlaydataid)
     end
     % load overlay data
     overlaydatafile = [overlaydataid];
-    fid = fopen([par_pathin '/' overlaydatafile]);
+    fid = fopen(overlaydatafile);
     if (data_shapecol == 'n'),
         % lon, lat, depth, value, LABEL
         C = textscan(fid, '%f %f %f %f %s', 'CommentStyle', '%');
@@ -1435,33 +1435,29 @@ if (plot_main == 'y'),
             con_max = plot_opsi_max;
             con_n = (plot_opsi_max - plot_opsi_min)/plot_opsi_dminor;
             % re-define colormap
-            cmap = make_cmap(colorbar_name,con_n+2);
+            cmap = make_cmap('anom',con_n+2);
             if (colorbar_inv == 'y'), cmap = flipdim(cmap,1); end,
             colormap(cmap);
             %
             caxis([con_min-(con_max-con_min)/con_n con_max]);
             v = [plot_opsi_min:plot_opsi_dminor:plot_opsi_max];
             [C,h] = contourf(opsigrid_lat,opsigrid_zt,opsizm,v);
-            set(h,'LineWidth',0.01);
+            set(h,'LineColor','none')
         end
         v = [0.0:plot_opsi_dminor:plot_opsi_max];
         [C,h] = contour(opsigrid_lat,opsigrid_zt,opsizm,v,'k-');
         set(h,'LineWidth',0.25);
-        v = [plot_opsi_min:plot_opsi_dminor:0.0];
-        [C,h] = contour(opsigrid_lat,opsigrid_zt,opsizm,v,'k:');
-        set(h,'LineWidth',0.25);
         v = [0.0:plot_opsi_dmajor:plot_opsi_max];
         [C,h] = contour(opsigrid_lat,opsigrid_zt,opsizm,v,'k');
         set(h,'LineWidth',0.5);
-        if contour_label == 'y'
-            clabel(C,h);
-        end
+        if contour_label == 'y', clabel(C,h); end
+        v = [plot_opsi_min:plot_opsi_dminor:0.0];
+        [C,h] = contour(opsigrid_lat,opsigrid_zt,opsizm,v,'k-.');
+        set(h,'LineWidth',0.25);
         v = [plot_opsi_min:plot_opsi_dmajor:0.0];
-        [C,h] = contour(opsigrid_lat,opsigrid_zt,opsizm,v,'k:');
+        [C,h] = contour(opsigrid_lat,opsigrid_zt,opsizm,v,'k-.');
         set(h,'LineWidth',0.5);
-        if contour_label == 'y'
-            clabel(C,h);
-        end
+        if contour_label == 'y', clabel(C,h); end
     end
     %
     % *** OVERLAY DATA ************************************************** %

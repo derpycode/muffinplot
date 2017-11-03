@@ -36,6 +36,8 @@ function [] = plot_histc_2d(PDATA1,PBINBNDS1,PDATA2,PBINBNDS2,POPT,PNAME)
 %   15/01/23: changed to use make _cmap.m (replacing make_cmap5.m)
 %             *** GIT UPLOAD **********************************************
 %             *** VERSION 0.99 ********************************************
+%   17/11/02: adjusted paths ... again again ...
+%             *** VERSION 1.03 ********************************************
 %
 %   ***********************************************************************
 
@@ -43,32 +45,33 @@ function [] = plot_histc_2d(PDATA1,PBINBNDS1,PDATA2,PBINBNDS2,POPT,PNAME)
 % *** INITIALIZE PARAMETERS & VARIABLES ********************************* %
 % *********************************************************************** %
 %
+% *** initialize ******************************************************** %
+% 
 % set version!
-par_ver = 0.99;
+par_ver = 1.03;
+% set function name
+str_function = mfilename;
 % load plotting options
 if isempty(POPT), POPT='plot_histc_SETTINGS'; end
 eval(POPT);
-% process dummy parameters
+% set date
+str_date = [datestr(date,11), datestr(date,5), datestr(date,7)];
+%
+% *** initialize parameters ********************************************* %
+% 
 data_1 = PDATA1;
 data_2 = PDATA2;
 binbnds_1 = PBINBNDS1;
 binbnds_2 = PBINBNDS2;
 str_filename = PNAME;
+%
+% *** MISC ************************************************************** %
+%
 % check for no data #2 and create dummy data_2 data to simplify processing
 if (isempty(data_2)), binbnds_2 = []; end
 if (isempty(binbnds_2)), data_2 = data_1; end
-% set date
-str_date = [datestr(date,11), datestr(date,5), datestr(date,7)];
-% set function name
-str_function = 'plot-histc-2d';
-% plot format
-if ~isempty(plot_format), plot_format_old=false; end
-% plotting paths
-addpath(library_path1);
-if (~plot_format_old),
-    addpath(library_path2);
-    addpath(library_path3);
-end
+% now make make str_function text-friendly
+str_function = strrep(str_function,'_','-');
 %
 % *********************************************************************** %
 
@@ -340,20 +343,7 @@ hold off;
 set(gcf,'CurrentAxes',fh(1));
 if isempty(str_filename), str_filename = ['colorhistogram']; end
 str_filename = [str_filename '.' str_date];
-if (plot_format_old)
-    print('-dpsc2', [str_filename, '.ps']);
-else
-    switch plot_format
-        case 'png'
-            export_fig([str_filename '.png'], '-png', '-r150', '-nocrop');
-        case 'pngT'
-            export_fig([str_filename '.png'], '-png', '-r150', '-nocrop', '-transparent');
-        case 'jpg'
-            export_fig([str_filename '.jpg'], '-jpg', '-r150', '-nocrop');
-        otherwise
-            export_fig([str_filename '.eps'], '-eps', '-nocrop');
-    end
-end
+print('-dpsc2', [str_filename, '.ps']);
 %
 % *********************************************************************** %
 

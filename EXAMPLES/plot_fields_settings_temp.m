@@ -1,7 +1,7 @@
 % *********************************************************************** %
 %
 % PARAMATER             % DEFAULT BRIEF DESCRIPTION [SEE ABOVE]
-contour_plot = 'n';     % [ 'y']  OVERLAY CONTOL PLOT?
+contour_plot = 'y';     % [ 'y']  OVERLAY CONTOL PLOT?
 contour_mod = 1;        % [   1]  NUMBER OF COLOR INTERVALS PER CONTOR
 contour_mod_label = 5;  % [   5]  NUMBER OF LABELED CONTOURS PER CONTOUR
 contour_label = 'y';    % [ 'y']  LABEL CONTOURS?

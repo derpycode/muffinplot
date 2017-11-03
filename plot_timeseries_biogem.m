@@ -105,6 +105,8 @@ function [] = plot_timeseries_biogem(PEXP1,PEXP2,PTMIN,PTMAX,PDATA1,PDATA1N,PDAT
 %             *** VERSION 0.99 ********************************************
 %   17/11/01: adjusted paths ... again ...
 %             *** VERSION 1.02 ********************************************
+%   17/11/02: adjusted paths ... again again ...
+%             *** VERSION 1.03 ********************************************
 %
 %   ***********************************************************************
 
@@ -115,7 +117,7 @@ function [] = plot_timeseries_biogem(PEXP1,PEXP2,PTMIN,PTMAX,PDATA1,PDATA1N,PDAT
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.02;
+par_ver = 1.03;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -123,6 +125,8 @@ close all;
 % load plotting options
 if isempty(POPT), POPT='plot_timeseries_SETTINGS'; end
 eval(POPT);
+% set date
+str_date = [datestr(date,11), datestr(date,5), datestr(date,7)];
 %
 % *** backwards compatability ******************************************* %
 % 
@@ -135,7 +139,7 @@ if ~exist('par_pathin','var'),   par_pathin   = 'cgenie_output'; end
 if ~exist('par_pathlib','var'),  par_pathlib  = 'source'; end
 if ~exist('par_pathout','var'),  par_pathout  = 'PLOTS'; end
 if ~exist('par_pathdata','var'), par_pathdata = 'DATA'; end
-if ~exist('par_pathmask','var'), par_pathmask = 'MASK'; end
+if ~exist('par_pathmask','var'), par_pathmask = 'MASKS'; end
 if ~exist('par_pathexam','var'), par_pathexam = 'EXAMPLES'; end
 %
 % *** copy passed parameters ******************************************** %
@@ -169,48 +173,68 @@ if (ischar(axis_tmin) || ischar(axis_tmax)),
 end
 altfilename = PNAME;
 %
-% *** initialize parameters ********************************************* %
-% 
-% set date
-str_date = [datestr(date,11), datestr(date,5), datestr(date,7)];
+% *** DEFINE COLORS ***************************************************** %
+%
+% define grey color
+color_g = [0.75 0.75 0.75];
+%
+% *** MISC ************************************************************** %
+%
 % set filename
 str_filename = [expid1];
 % determine MUTLAB version
 tmp_mutlab = version('-release');
 str_mutlab = tmp_mutlab(1:4);
 par_mutlab = str2num(str_mutlab);
-% add library path to muffinplot function
-% NOTE: find where muffin lives ...
-%       remove its name (+ '.m' extension) from the returned path ...
-%       add relative path to it
-tmp_path = which(str_function);
-tmp_path = tmp_path(1:end-length(str_function)-3);
-% check/create directories
-if ~(exist([tmp_path '/' par_pathdata],'dir') == 7), mkdir([tmp_path '/' par_pathdata]); end
-if ~(exist([tmp_path '/' par_pathmask],'dir') == 7), mkdir([tmp_path '/' par_pathmask]); end
-if ~(exist([tmp_path '/' par_pathexam],'dir') == 7), mkdir([tmp_path '/' par_pathexam]); end
-if ~(exist([tmp_path '/' par_pathout],'dir') == 7),  mkdir([tmp_path '/' par_pathout]);  end
-% add search paths
-addpath([tmp_path '/' par_pathlib]);
-addpath([tmp_path '/' par_pathdata]);
-addpath([tmp_path '/' par_pathmask]);
-addpath([tmp_path '/' par_pathexam]);
-% plot format
-if ~isempty(plot_format), plot_format_old='n'; end
-% plotting paths
-if (plot_format_old == 'n'),
-    addpath([tmp_path '/' par_pathlib '/xpdfbin-win-3.03/bin32']);
-    addpath([tmp_path '/' par_pathlib '/export_fig']);
+%
+% *** SET PATHS & DIRECTORIES ******************************************* %
+% 
+% find where str_function lives ...
+% remove its name (+ '.m' extension) from the returned path ...
+str_function_path = which(str_function);
+str_function_path = str_function_path(1:end-length(str_function)-3);
+% check source code directory and add search path
+if ~(exist([str_function_path '/' par_pathlib],'dir') == 7),
+    disp([' * ERROR: Cannot find source directory']);
+    disp([' ']);
+    return;
+else
+    addpath([str_function_path '/' par_pathlib]);
 end
-% input path
-par_pathin = [tmp_path '/' par_pathin];
-% output path
-par_pathout = [tmp_path '/' par_pathout];
-%
-% *** DEFINE COLORS ***************************************************** %
-%
-% define grey color
-color_g = [0.75 0.75 0.75];
+% check masks directory and add search path
+if ~(exist([str_function_path '/' par_pathmask],'dir') == 7),
+    disp([' * ERROR: Cannot find MASKS directory -- was it moved ... ?']);
+    disp([' ']);
+    return;
+else
+    addpath([str_function_path '/' par_pathmask]);
+end
+% find current path
+current_path = pwd;
+% set input path
+par_pathin = [current_path '/' par_pathin];
+if ~(exist(par_pathin,'dir') == 7),
+    disp([' * ERROR: Cannot find experiment results directory']);
+    disp([' ']);
+    return;
+end
+% set output path
+par_pathout = [current_path '/' par_pathout];
+if ~(exist(par_pathout,'dir') == 7), mkdir(par_pathout);  end
+% check/add data path
+if ~(exist([current_path '/' par_pathdata],'dir') == 7),
+    mkdir([current_path '/' par_pathdata]); 
+end
+addpath([current_path '/' par_pathdata]);
+% check plot format setting
+if ~isempty(plot_format), plot_format_old='n'; end
+% add plotting paths
+if (plot_format_old == 'n'),
+    addpath([str_function_path '/' par_pathlib '/xpdfbin-win-3.03/bin32']);
+    addpath([str_function_path '/' par_pathlib '/export_fig']);
+end
+% now make make str_function text-friendly
+str_function = strrep(str_function,'_','-');
 %
 % *********************************************************************** %
 

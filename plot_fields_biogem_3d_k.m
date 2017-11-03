@@ -992,7 +992,7 @@ overlaydata_zm(:,:) = zm(:,:);
 %
 if ~isempty(overlaydataid)
     % load overlay datafile
-    overlaydatafile = [par_pathin '/' overlaydataid];
+    overlaydatafile = [overlaydataid];
     fid = fopen(overlaydatafile);
     if (data_shapecol == 'n'),
         % lon, lat, depth, value, LABEL
