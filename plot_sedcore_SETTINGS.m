@@ -10,7 +10,6 @@
 %   ** configure paths and experiment
 %      par_pathin = 'cgenie_output'; relative location results directories
 %      par_pathout = 'PLOTS'; relative location for output
-%      par_pathlib = 'source'; relative location of source code
 %      par_pathdata = 'DATA'; relative location of data
 %   ** main (most commonly used) parameters
 %      par_expduration = 50.0; Experiment run duration in kyr
@@ -95,7 +94,6 @@
 %                          *** configure paths and experiment ***
 par_pathin  = 'cgenie_output'; % [ 'cgenie_output']
 par_pathout = 'PLOTS';
-par_pathlib = 'source';
 par_pathdata = 'DATA';
 %                          *** main (most commonly used) parameters ***
 par_expduration = 50.0;    % [ 50.0] EXPERIMENT RUN DURATION (KYR)

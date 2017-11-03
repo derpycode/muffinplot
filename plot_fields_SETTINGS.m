@@ -11,9 +11,7 @@
 %   CONFIGURATION PATHS
 %      par_pathin = 'cgenie_output'; relative location results directories
 %      par_pathout = 'PLOTS'; relative location for output
-%      par_pathlib = 'source'; relative location of source code
 %      par_pathdata = 'DATA'; relative location of data
-%      par_pathmask = 'MASK'; relative location of masks
 %   OVERLAY CONTOUR CONTROL
 %      contour_plot = 'n';    Overlay contour plot?
 %      contour_mod = 1;       Number of color intervals per contour
@@ -109,9 +107,7 @@
 % PARAMATER             % DEFAULT BRIEF DESCRIPTION [SEE ABOVE]
 par_pathin  = 'cgenie_output'; % [ 'cgenie_output']
 par_pathout = 'PLOTS';
-par_pathlib = 'source';
 par_pathdata = 'DATA';
-par_pathmask = 'MASKS';
 contour_plot = 'n';     % [ 'y']  OVERLAY CONTOUR PLOT?
 contour_mod = 1;        % [   1]  NUMBER OF COLOR INTERVALS PER CONTOR
 contour_mod_label = 5;  % [   5]  NUMBER OF LABELED CONTOURS PER CONTOUR

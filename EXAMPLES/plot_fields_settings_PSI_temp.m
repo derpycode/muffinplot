@@ -1,10 +1,6 @@
 % *********************************************************************** %
 %
 % PARAMATER             % DEFAULT BRIEF DESCRIPTION [SEE ABOVE]
-data_path='cgenie_output'; % [ 'cgenie_output']
-library_path1 = 'C:\_svn\cgenie.muffin\genie-matlab';
-library_path2 = 'C:\_svn\cgenie.muffin\genie-matlab\xpdfbin-win-3.03\bin32';
-library_path3 = 'C:\_svn\cgenie.muffin\genie-matlab\export_fig';
 contour_plot = 'n';     % [ 'y']  OVERLAY CONTOL PLOT?
 contour_mod = 1;        % [   1]  NUMBER OF COLOR INTERVALS PER CONTOR
 contour_mod_label = 5;  % [   5]  NUMBER OF LABELED CONTOURS PER CONTOUR

@@ -1,16 +1,12 @@
 % *********************************************************************** %
 %
 % PARAMATER             % DEFAULT BRIEF DESCRIPTION [SEE ABOVE]
-data_path='cgenie_output'; % [ 'cgenie_output']
-library_path1 = 'C:\_svn\cgenie.muffin\genie-matlab';
-library_path2 = 'C:\_svn\cgenie.muffin\genie-matlab\xpdfbin-win-3.03\bin32';
-library_path3 = 'C:\_svn\cgenie.muffin\genie-matlab\export_fig';
 contour_plot = 'n';     % [ 'y']  OVERLAY CONTOL PLOT?
 contour_mod = 1;        % [   1]  NUMBER OF COLOR INTERVALS PER CONTOR
 contour_mod_label = 5;  % [   5]  NUMBER OF LABELED CONTOURS PER CONTOUR
 contour_label = 'y';    % [ 'y']  LABEL CONTOURS?
 contour_noneg = 'n';    % [ 'n']  RESTRICT DATA PLOTTED TO > 0.0?
-contour_dashneg = 'n';  % [ 'n']  PLOT NEGATIVE CONTOURS DASHED?
+contour_dashneg = 'y';  % [ 'n']  PLOT NEGATIVE CONTOURS DASHED?
 contour_hlt = 'n';      % [ 'n']  ADD HIGHLIGHT CONTOUR?
 contour_hltval = 0.0;   % [ 0.0]  HIGHLIGHT CONTOUR VALUE
 contour_hlt2 = 'n';     % [ 'n']  ADD 2nd HIGHLIGHT CONTOUR?
@@ -61,7 +57,7 @@ plot_format = '';       % [  '']  FORMAT OF (NEW STYLE) PLOT
 plot_equallat = 'n';    % [ 'n']  PLOT WITH EQUAL LAT INCREMENTS
 plot_lon_origin = -180; % [-180]  STARTING LONGITUDE FOR X-AXIS
 plot_lon_delta = 90;    % [  90]  INCREMENT OF LONGITUDE ON X-AXIS
-plot_title = '';        % [  '']  OPTIONAL REPLACEMENT TITLE
+plot_title = 'PSI';        % [  '']  OPTIONAL REPLACEMENT TITLE
 plot_dscrsz = 0.60;     % [0.60]  FRACTIONAL FIGURE WINDOW SIZE
 plot_lon_min = 0;       % [   0]  OPTIONAL MIN PLOTTING LIMIT (LON)
 plot_lon_max = 0;       % [   0]  OPTIONAL MIN PLOTTING LIMIT (LON)

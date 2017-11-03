@@ -10,9 +10,7 @@
 %   ** configure paths and experiment
 %      par_pathin = 'cgenie_output'; relative location results directories
 %      par_pathout = 'PLOTS'; relative location for output
-%      par_pathlib = 'source'; relative location of source code
 %      par_pathdata = 'DATA'; relative location of data
-%      par_pathmask = 'MASK'; relative location of masks
 %   ** main (most commonly used) parameters
 %      opt_log10 = false;      plot time on a log10 scale?
 %      opt_invanalysis=false;  plot as inversion emissions analysis?
@@ -75,9 +73,7 @@
 %                          *** configure paths and experiment ***
 par_pathin  = 'cgenie_output'; % [ 'cgenie_output']
 par_pathout = 'PLOTS';
-par_pathlib = 'source';
 par_pathdata = 'DATA';
-par_pathmask = 'MASK';
 %                          *** main (most commonly used) parameters ***
 opt_log10 = false;         % [false] PLOT TIME ON LOG10 SCALE
 opt_invanalysis = false;   % [false] INVERSION EMISSIONS ANALYSIS

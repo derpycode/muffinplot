@@ -29,7 +29,7 @@ function [grid_lat,zz] = plot_fields_biogem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,P
 %       (defining whether and how many, shallow levels are excluded)
 %   --> passing a PIK value equal to the number of ocean levels will result in the full grid being plotted
 %   PMASK [STRING] (e.g. 'mask_worjh2_Indian.dat')
-%   --> the filename containing the mask (in the working directory)
+%   --> NOT USED IN 2D POTTING
 %   PCSCALE [REAL] (e.g. 1.0)
 %   --> the scale factor for the plot
 %       e.g., to plot in units of micro molar (umol kg-1), enter: 1e-6
@@ -172,6 +172,9 @@ function [grid_lat,zz] = plot_fields_biogem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,P
 %             *** VERSION 1.01 ********************************************
 %   17/11/01: adjusted paths ... again ...
 %             *** VERSION 1.02 ********************************************
+%   17/11/02: improved PSI plotting
+%   17/11/02: adjusted paths ... again again ...
+%             *** VERSION 1.03 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -183,7 +186,7 @@ function [grid_lat,zz] = plot_fields_biogem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,P
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.02;
+par_ver = 1.03;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -191,17 +194,19 @@ close all;
 % load plotting options
 if isempty(POPT), POPT='plot_fields_SETTINGS'; end
 eval(POPT);
+% set date
+str_date = [datestr(date,11), datestr(date,5), datestr(date,7)];
 %
 % *** backwards compatability ******************************************* %
 % 
-% age parameter
+% PSI plotting
 if ~exist('plot_psi','var'), plot_psi = 'n'; end
 % paths
 if ~exist('par_pathin','var'),   par_pathin   = 'cgenie_output'; end
 if ~exist('par_pathlib','var'),  par_pathlib  = 'source'; end
 if ~exist('par_pathout','var'),  par_pathout  = 'PLOTS'; end
 if ~exist('par_pathdata','var'), par_pathdata = 'DATA'; end
-if ~exist('par_pathmask','var'), par_pathmask = 'MASK'; end
+if ~exist('par_pathmask','var'), par_pathmask = 'MASKS'; end
 if ~exist('par_pathexam','var'), par_pathexam = 'EXAMPLES'; end
 %
 % *** initialize parameters ********************************************* %
@@ -232,6 +237,16 @@ con_n = PCN;
 maskid = PMASK;
 overlaydataid = PDATA;
 altfilename = PNAME;
+%
+% *** DEFINE COLORS ***************************************************** %
+%
+% define contonental color
+color_g = [0.75 0.75 0.75];
+% define no-data color
+color_b = [0.00 0.00 0.00];
+%
+% *** SCALING *********************************************************** %
+% 
 % set default data scaling
 if data_scale == 0.0
     data_scale = 1.0;
@@ -239,9 +254,6 @@ if data_scale == 0.0
     clear con_max;
     con_n = 10;
 end
-%
-% *** BLAH ************************************************************** %
-% 
 % set global flag if no alt plotting scale is set
 % NOTE: catch possibility of one axis being set, but the other @ default
 %       (min and max with indetical values)
@@ -260,42 +272,55 @@ else
     end
     plot_xy_scaling = ((plot_lat_max - plot_lat_min)/(lat_max - lat_min)) / ((plot_lon_max - plot_lon_min)/(lon_max - lon_min));
 end
-% set date
-str_date = [datestr(date,11), datestr(date,5), datestr(date,7)];
-% add library path to muffinplot function
-% NOTE: find where muffin lives ...
-%       remove its name (+ '.m' extension) from the returned path ...
-%       add relative path to it
-tmp_path = which(str_function);
-tmp_path = tmp_path(1:end-length(str_function)-3);
-% check/create directories
-if ~(exist([tmp_path '/' par_pathdata],'dir') == 7), mkdir([tmp_path '/' par_pathdata]); end
-if ~(exist([tmp_path '/' par_pathmask],'dir') == 7), mkdir([tmp_path '/' par_pathmask]); end
-if ~(exist([tmp_path '/' par_pathexam],'dir') == 7), mkdir([tmp_path '/' par_pathexam]); end
-if ~(exist([tmp_path '/' par_pathout],'dir') == 7),  mkdir([tmp_path '/' par_pathout]);  end
-% add search paths
-addpath([tmp_path '/' par_pathlib]);
-addpath([tmp_path '/' par_pathdata]);
-addpath([tmp_path '/' par_pathmask]);
-addpath([tmp_path '/' par_pathexam]);
-% plot format
-if ~isempty(plot_format), plot_format_old='n'; end
-% plotting paths
-if (plot_format_old == 'n'),
-    addpath([tmp_path '/' par_pathlib '/xpdfbin-win-3.03/bin32']);
-    addpath([tmp_path '/' par_pathlib '/export_fig']);
+%
+% *** SET PATHS & DIRECTORIES ******************************************* %
+% 
+% find where str_function lives ...
+% remove its name (+ '.m' extension) from the returned path ...
+str_function_path = which(str_function);
+str_function_path = str_function_path(1:end-length(str_function)-3);
+% check source code directory and add search path
+if ~(exist([str_function_path '/' par_pathlib],'dir') == 7),
+    disp([' * ERROR: Cannot find source directory']);
+    disp([' ']);
+    return;
+else
+    addpath([str_function_path '/' par_pathlib]);
 end
-% input path
-par_pathin = [tmp_path '/' par_pathin];
-% output path
-par_pathout = [tmp_path '/' par_pathout];
-%
-% *** DEFINE COLORS ***************************************************** %
-%
-% define contonental color
-color_g = [0.75 0.75 0.75];
-% define no-data color
-color_b = [0.00 0.00 0.00];
+% check masks directory and add search path
+if ~(exist([str_function_path '/' par_pathmask],'dir') == 7),
+    disp([' * ERROR: Cannot find MASKS directory -- was it moved ... ?']);
+    disp([' ']);
+    return;
+else
+    addpath([str_function_path '/' par_pathmask]);
+end
+% find current path
+current_path = pwd;
+% set input path
+par_pathin = [current_path '/' par_pathin];
+if ~(exist(par_pathin,'dir') == 7),
+    disp([' * ERROR: Cannot find experiment results directory']);
+    disp([' ']);
+    return;
+end
+% set output path
+par_pathout = [current_path '/' par_pathout];
+if ~(exist(par_pathout,'dir') == 7), mkdir(par_pathout);  end
+% check/add data path
+if ~(exist([current_path '/' par_pathdata],'dir') == 7),
+    mkdir([current_path '/' par_pathdata]); 
+end
+addpath([current_path '/' par_pathdata]);
+% check plot format setting
+if ~isempty(plot_format), plot_format_old='n'; end
+% add plotting paths
+if (plot_format_old == 'n'),
+    addpath([str_function_path '/' par_pathlib '/xpdfbin-win-3.03/bin32']);
+    addpath([str_function_path '/' par_pathlib '/export_fig']);
+end
+% now make make str_function text-friendly
+str_function = strrep(str_function,'_','-');
 %
 % *********************************************************************** %
 
@@ -767,7 +792,7 @@ end
 %
 if ~isempty(overlaydataid)
     % load overlay datafile
-    overlaydatafile = [par_pathdata '/' overlaydataid];
+    overlaydatafile = [overlaydataid];
     fid = fopen(overlaydatafile);
     if (data_shapecol == 'n'),
         % lon, lat, value, LABEL
@@ -1165,46 +1190,6 @@ if (plot_main == 'y'),
         end
     end
     %
-    % *** PLOT CONTINENTAL OUTLINE ************************************** %
-    %
-    % draw continental outline
-    for j = 1:jmax,
-        for i = 1:imax-1,
-            if topo(j,i) > layb(j,i)
-                if topo(j,i+1) <= layb(j,i+1)
-                    h = plot([lone(j,i) lone(j,i)],[lats(j,i) latn(j,i)],'k-');
-                    set(h,'LineWidth',1.0);
-                end
-            end
-        end
-        for i = 2:imax,
-            if topo(j,i) > layb(j,i)
-                if topo(j,i-1) <= layb(j,i-1)
-                    h = plot([lonw(j,i) lonw(j,i)],[lats(j,i) latn(j,i)],'k-');
-                    set(h,'LineWidth',1.0);
-                end
-            end
-        end
-    end
-    for i = 1:imax,
-        for j = 1:jmax-1,
-            if topo(j,i) > layb(j,i)
-                if topo(j+1,i) <= layb(j+1,i)
-                    h = plot([lonw(j,i) lone(j,i)],[latn(j,i) latn(j,i)],'k-');
-                    set(h,'LineWidth',1.0);
-                end
-            end
-        end
-        for j = 2:jmax,
-            if topo(j,i) > layb(j,i)
-                if topo(j-1,i) <= layb(j-1,i)
-                    h = plot([lonw(j,i) lone(j,i)],[lats(j,i) lats(j,i)],'k-');
-                    set(h,'LineWidth',1.0);
-                end
-            end
-        end
-    end
-    %
     % *** OVERLAY CONTOURS ********************************************** %
     %
     % plot contours
@@ -1272,14 +1257,29 @@ if (plot_main == 'y'),
                 con_max = plot_opsi_max;
                 con_n = (plot_opsi_max - plot_opsi_min)/plot_opsi_dminor;
                 % re-define colormap
-                cmap = make_cmap(colorbar_name,con_n+2);
+                cmap = make_cmap('anom',con_n+2);
                 if (colorbar_inv == 'y'), cmap = flipdim(cmap,1); end,
                 colormap(cmap);
-                %
                 caxis([con_min-(con_max-con_min)/con_n con_max]);
+                % colors!
                 v = [plot_opsi_min:plot_opsi_dminor:plot_opsi_max];
-                [C,h] = contourf(xpsi_ex,sin(pi*ypsi_ex/180.0),zpsi_ex,v,'k-.');
+                [C,h] = contourf(xpsi_ex,sin(pi*ypsi_ex/180.0),zpsi_ex,v,'k:');
+                set(h,'LineColor','none')
+                % contours
+                v = [plot_opsi_min:plot_opsi_dminor:0.0];
+                [C,h] = contour(xpsi_ex,sin(pi*ypsi_ex/180.0),zpsi_ex,v,'k-.');
                 set(h,'LineWidth',0.25);
+                v = [plot_opsi_min:plot_opsi_dmajor:0.0];
+                [C,h] = contour(xpsi_ex,sin(pi*ypsi_ex/180.0),zpsi_ex,v,'k-.');
+                set(h,'LineWidth',0.50);
+                if contour_label == 'y', clabel(C,h); end
+                v = [plot_opsi_max:-plot_opsi_dminor:0.0];
+                [C,h] = contour(xpsi_ex,sin(pi*ypsi_ex/180.0),zpsi_ex,v,'k-');
+                set(h,'LineWidth',0.25);
+                v = [plot_opsi_max:-plot_opsi_dmajor:0.0];
+                [C,h] = contour(xpsi_ex,sin(pi*ypsi_ex/180.0),zpsi_ex,v,'k-');
+                set(h,'LineWidth',0.50);
+                if contour_label == 'y', clabel(C,h); end
             else
                 %
                 v = [plot_opsi_min:plot_opsi_dminor:0.0];
@@ -1303,6 +1303,15 @@ if (plot_main == 'y'),
                 [C,h] = contour(xpsi_ex,sin(pi*ypsi_ex/180.0),zpsi_ex,v,'k-');
                 set(h,'LineWidth',1.0);
                 if contour_label == 'y', clabel(C,h); end
+            end
+        end
+        % draw land
+        for i = 1:imax,
+            for j = 1:jmax,
+                if ((topo(j,i) > layb(j,i)) && (plot_landvalues == 'n'))
+                    h = patch([lonw(j,i) lonw(j,i) lone(j,i) lone(j,i)],[lats(j,i) latn(j,i) latn(j,i) lats(j,i)],color_g);
+                    set(h,'EdgeColor',color_g);
+                end
             end
         end
     end
@@ -1346,6 +1355,46 @@ if (plot_main == 'y'),
         end
         if (data_sitelabel == 'y'),
             text(overlaydata(:,1)+(data_size/30),overlaydata(:,2)+(data_size/1200),overlaylabel(:,:),'FontSize',data_fontsz,'Color',data_sitecolor);
+        end
+    end
+    %
+    % *** PLOT CONTINENTAL OUTLINE ************************************** %
+    %
+    % draw continental outline
+    for j = 1:jmax,
+        for i = 1:imax-1,
+            if topo(j,i) > layb(j,i)
+                if topo(j,i+1) <= layb(j,i+1)
+                    h = plot([lone(j,i) lone(j,i)],[lats(j,i) latn(j,i)],'k-');
+                    set(h,'LineWidth',1.0);
+                end
+            end
+        end
+        for i = 2:imax,
+            if topo(j,i) > layb(j,i)
+                if topo(j,i-1) <= layb(j,i-1)
+                    h = plot([lonw(j,i) lonw(j,i)],[lats(j,i) latn(j,i)],'k-');
+                    set(h,'LineWidth',1.0);
+                end
+            end
+        end
+    end
+    for i = 1:imax,
+        for j = 1:jmax-1,
+            if topo(j,i) > layb(j,i)
+                if topo(j+1,i) <= layb(j+1,i)
+                    h = plot([lonw(j,i) lone(j,i)],[latn(j,i) latn(j,i)],'k-');
+                    set(h,'LineWidth',1.0);
+                end
+            end
+        end
+        for j = 2:jmax,
+            if topo(j,i) > layb(j,i)
+                if topo(j-1,i) <= layb(j-1,i)
+                    h = plot([lonw(j,i) lone(j,i)],[lats(j,i) lats(j,i)],'k-');
+                    set(h,'LineWidth',1.0);
+                end
+            end
         end
     end
     %

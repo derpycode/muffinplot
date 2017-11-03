@@ -11,7 +11,6 @@
 %   CONFIGURATION PATHS
 %      par_pathin = 'cgenie_output'; relative location results directories
 %      par_pathout = 'PLOTS'; relative location for output
-%      par_pathlib = 'source'; relative location of source code
 %      par_pathdata = 'DATA'; relative location of data
 %   DATA PROCESSING
 %      data_normalize = false;normalize data (as a % of all occurrences)
@@ -48,7 +47,6 @@
 % PARAMATER             % DEFAULT BRIEF DESCRIPTION [SEE ABOVE]
 par_pathin  = 'cgenie_output'; % [ 'cgenie_output']
 par_pathout = 'PLOTS';
-par_pathlib = 'source';
 par_pathdata = 'DATA';
 data_normalize = false; % [true] NORMALIZE DATA
 data_truncate = true;   % [true] TRUNCATE DATA
