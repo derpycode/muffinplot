@@ -107,6 +107,7 @@ function [] = plot_timeseries_biogem(PEXP1,PEXP2,PTMIN,PTMAX,PDATA1,PDATA1N,PDAT
 %             *** VERSION 1.02 ********************************************
 %   17/11/02: adjusted paths ... again again ...
 %             *** VERSION 1.03 ********************************************
+%   17/11/21: fixed some path bugs
 %
 %   ***********************************************************************
 
@@ -243,7 +244,7 @@ str_function = strrep(str_function,'_','-');
 % *********************************************************************** %
 %
 % test for relevant directories
-data_dir = [data_path '/' expid1];
+data_dir = [par_pathin '/' expid1];
 if (exist(data_dir, 'dir') == 0)
     disp(['ERROR: Experiment cannot be found.']);
     if (exist(data_path, 'dir') == 0)
@@ -255,16 +256,16 @@ if (exist(data_dir, 'dir') == 0)
     return;
 end
 % test for an isotope-enabled experiment
-data_file = [data_path '/' expid1 '/biogem/biogem_series_atm_pCO2_13C.res'];
+data_file = [par_pathin '/' expid1 '/biogem/biogem_series_atm_pCO2_13C.res'];
 if (exist(data_file, 'file') ~= 2)
     disp(['ERROR: The experiment needs to be 13C-enabled in order to use this plotting function.']);
     return;
 end
 % load basic data
-data_pCO2     = load([data_path '/' expid1 '/biogem/biogem_series_atm_pCO2.res'],'ascii');
-data_pCO2_13C = load([data_path '/' expid1 '/biogem/biogem_series_atm_pCO2_13C.res'],'ascii');
-data_Tatm     = load([data_path '/' expid1 '/biogem/biogem_series_atm_temp.res'],'ascii');
-data_seaice   = load([data_path '/' expid1 '/biogem/biogem_series_misc_seaice.res'],'ascii');
+data_pCO2     = load([par_pathin '/' expid1 '/biogem/biogem_series_atm_pCO2.res'],'ascii');
+data_pCO2_13C = load([par_pathin '/' expid1 '/biogem/biogem_series_atm_pCO2_13C.res'],'ascii');
+data_Tatm     = load([par_pathin '/' expid1 '/biogem/biogem_series_atm_temp.res'],'ascii');
+data_seaice   = load([par_pathin '/' expid1 '/biogem/biogem_series_misc_seaice.res'],'ascii');
 % set time units
 switch plot_tunits
     case 'kyr'
@@ -280,8 +281,8 @@ switch plot_tunits
 end
 % load optional data file #1
 if ~isempty(data1_name)
-    data1_file = [data_path '/' expid1 '/biogem/biogem_series_' data1_name '.res'];
-    data1_fileALT = [data_path '/' expid1 '/sedgem/sedcoreenv_' data1_name '.res'];
+    data1_file = [par_pathin '/' expid1 '/biogem/biogem_series_' data1_name '.res'];
+    data1_fileALT = [par_pathin '/' expid1 '/sedgem/sedcoreenv_' data1_name '.res'];
     if (exist(data1_file, 'file') == 2)
         data1 = load(data1_file,'ascii');
         [m,n] = size(data1);
@@ -350,8 +351,8 @@ else
 end
 % load optional data file #2
 if ~isempty(data2_name)
-    data2_file = [data_path '/' expid1 '/biogem/biogem_series_' data2_name '.res'];
-    data2_fileALT = [data_path '/' expid1 '/sedgem/sedcoreenv_' data2_name '.res'];
+    data2_file = [par_pathin '/' expid1 '/biogem/biogem_series_' data2_name '.res'];
+    data2_fileALT = [par_pathin '/' expid1 '/sedgem/sedcoreenv_' data2_name '.res'];
     if (exist(data2_file, 'file') == 2)
         data2 = load(data2_file,'ascii');
         [m,n] = size(data2);
@@ -418,8 +419,8 @@ else
 end
 % load optional data file #3
 if ~isempty(data3_name)
-    data3_file = [data_path '/' expid1 '/biogem/biogem_series_' data3_name '.res'];
-    data3_fileALT = [data_path '/' expid1 '/sedgem/sedcoreenv_' data3_name '.res'];
+    data3_file = [par_pathin '/' expid1 '/biogem/biogem_series_' data3_name '.res'];
+    data3_fileALT = [par_pathin '/' expid1 '/sedgem/sedcoreenv_' data3_name '.res'];
     if (exist(data3_file, 'file') == 2)
         data3 = load(data3_file,'ascii');
         [m,n] = size(data3);
@@ -489,10 +490,10 @@ end
 %
 if opt_invanalysis,
     % determine for type of forcing output and load
-    file_FpCO2 = [data_path '/' expid1 '/biogem/biogem_series_diag_misc_inversion_forcing_FpCO2.res'];
-    file_FpCO2_13C = [data_path '/' expid1 '/biogem/biogem_series_diag_misc_inversion_forcing_FpCO2_13C.res'];
-    file_FDIC = [data_path '/' expid1 '/biogem/biogem_series_diag_misc_inversion_forcing_FDIC.res'];
-    file_FDIC_13C = [data_path '/' expid1 '/biogem/biogem_series_diag_misc_inversion_forcing_FDIC_13C.res'];
+    file_FpCO2 = [par_pathin '/' expid1 '/biogem/biogem_series_diag_misc_inversion_forcing_FpCO2.res'];
+    file_FpCO2_13C = [par_pathin '/' expid1 '/biogem/biogem_series_diag_misc_inversion_forcing_FpCO2_13C.res'];
+    file_FDIC = [par_pathin '/' expid1 '/biogem/biogem_series_diag_misc_inversion_forcing_FDIC.res'];
+    file_FDIC_13C = [par_pathin '/' expid1 '/biogem/biogem_series_diag_misc_inversion_forcing_FDIC_13C.res'];
     %
     string_forcing = 'xxx';
     %test for, and load, atm forcing
