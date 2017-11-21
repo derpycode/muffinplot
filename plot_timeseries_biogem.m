@@ -108,6 +108,7 @@ function [] = plot_timeseries_biogem(PEXP1,PEXP2,PTMIN,PTMAX,PDATA1,PDATA1N,PDAT
 %   17/11/02: adjusted paths ... again again ...
 %             *** VERSION 1.03 ********************************************
 %   17/11/21: fixed some path bugs
+%             *** VERSION 1.04 ********************************************
 %
 %   ***********************************************************************
 
@@ -118,7 +119,7 @@ function [] = plot_timeseries_biogem(PEXP1,PEXP2,PTMIN,PTMAX,PDATA1,PDATA1N,PDAT
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.03;
+par_ver = 1.04;
 % set function name
 str_function = mfilename;
 % close open windows
