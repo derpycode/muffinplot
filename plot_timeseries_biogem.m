@@ -109,6 +109,8 @@ function [] = plot_timeseries_biogem(PEXP1,PEXP2,PTMIN,PTMAX,PDATA1,PDATA1N,PDAT
 %             *** VERSION 1.03 ********************************************
 %   17/11/21: fixed some path bugs
 %             *** VERSION 1.04 ********************************************
+%   17/12/27: more path bugs ... [fixed]
+%             *** VERSION 1.05 ********************************************
 %
 %   ***********************************************************************
 
@@ -119,7 +121,7 @@ function [] = plot_timeseries_biogem(PEXP1,PEXP2,PTMIN,PTMAX,PDATA1,PDATA1N,PDAT
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.04;
+par_ver = 1.05;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -857,9 +859,9 @@ end
 if (par_mutlab >= 2014),
     loc_table = struct2table(loc_str_data);
     if ~isempty(altfilename),
-        writetable(loc_table,[altfilename '.txt'],'Delimiter',' ');
+        writetable(loc_table,[par_pathout '/' altfilename '.txt'],'Delimiter',' ');
     else
-        writetable(loc_table,[str_filename '.txt'],'Delimiter',' ');
+        writetable(loc_table,[par_pathout '/' str_filename '.txt'],'Delimiter',' ');
     end
 end
 %
@@ -1272,17 +1274,17 @@ if opt_log10, str_filename = [str_filename '.' 'LOG10']; end
 if (~isempty(expid2)), str_filename = [str_filename '.' 'ANOM']; end
 str_filename = [str_filename '.' str_date];
 if (plot_format_old == 'y')
-    print('-dpsc2', [str_filename, '.ps']);
+    print('-dpsc2', [par_pathout '/' str_filename, '.ps']);
 else
     switch plot_format
         case 'png'
-            export_fig([str_filename '.png'], '-png', '-r150', '-nocrop');
+            export_fig([par_pathout '/' str_filename '.png'], '-png', '-r150', '-nocrop');
         case 'pngT'
-            export_fig([str_filename '.png'], '-png', '-r150', '-nocrop', '-transparent');
+            export_fig([par_pathout '/' str_filename '.png'], '-png', '-r150', '-nocrop', '-transparent');
         case 'jpg'
-            export_fig([str_filename '.jpg'], '-jpg', '-r150', '-nocrop');
+            export_fig([par_pathout '/' str_filename '.jpg'], '-jpg', '-r150', '-nocrop');
         otherwise
-            export_fig([str_filename '.eps'], '-eps', '-nocrop');
+            export_fig([par_pathout '/' str_filename '.eps'], '-eps', '-nocrop');
     end
 end
 %
@@ -1298,15 +1300,15 @@ if(opt_invanalysis)
     % rebinned data
     if (opt_rebinned),
         % bin ends
-        fprint_1Dn(bins_FCO2_t(2:end),[str_filename '.binends.res'],'%3i','%3i',true,false);
+        fprint_1Dn(bins_FCO2_t(2:end),[par_pathout '/' str_filename '.binends.res'],'%3i','%3i',true,false);
         % bin centers
-        fprint_1Dn(binctrs_FCO2(:),[str_filename '.bincenters.res'],'%3i','%3i',true,false);
+        fprint_1Dn(binctrs_FCO2(:),[par_pathout '/' str_filename '.bincenters.res'],'%3i','%3i',true,false);
         % emissions rate
-        fprint_1Dn(bindata_FCO2_dF(:),[str_filename '.demissions.res'],'%3i','%3i',true,false);
+        fprint_1Dn(bindata_FCO2_dF(:),[par_pathout '/' str_filename '.demissions.res'],'%3i','%3i',true,false);
         % cumulative emissons
-        fprint_1Dn(bindata_FCO2_sum(:),[str_filename '.sumemissions.res'],'%3i','%3i',true,false);
+        fprint_1Dn(bindata_FCO2_sum(:),[par_pathout '/' str_filename '.sumemissions.res'],'%3i','%3i',true,false);
         % d13C of emissons
-        fprint_1Dn(bindata_FCO2_13C(:),[str_filename '.d13Cemissions.res'],'%3i','%3i',true,false);
+        fprint_1Dn(bindata_FCO2_13C(:),[par_pathout '/' str_filename '.d13Cemissions.res'],'%3i','%3i',true,false);
     else
         %%%
     end
