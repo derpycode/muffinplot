@@ -216,6 +216,8 @@ function [STATM] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,P
 %             *** VERSION 1.02 ********************************************
 %   17/11/02: adjusted paths ... again again ...
 %             *** VERSION 1.03 ********************************************
+%   17/12/29: fixed some minor bugs with overlay (lon,lat) data processing
+%             *** VERSION 1.04 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -227,7 +229,7 @@ function [STATM] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,P
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.03;
+par_ver = 1.04;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -1018,6 +1020,15 @@ if ~isempty(overlaydataid)
     nmax=overlaydata_size(1);
     % create (i,j) from (lon,lat) and vice versa (depending on data input type)
     if (data_ijk == 'n')
+        % precondition lon
+        for n = 1:nmax,
+            if (overlaydata_raw(n,1) >= (360.0 + grid_lon_origin)),
+                overlaydata_raw(n,1) = overlaydata_raw(n,1) - 360.0;
+            end
+            if (overlaydata_raw(n,1) < grid_lon_origin),
+                overlaydata_raw(n,1) = overlaydata_raw(n,1) + 360.0;
+            end
+        end        
         % convert (lon,lat) overlay data to (i,j)
         % NOTE: function 'calc_find_ij' takes input in order: (lon,lat)
         %       i.e., the same as the raw overlay data, which is (lon,lat) (i.e., (i,j)) format
@@ -1027,17 +1038,33 @@ if ~isempty(overlaydataid)
             overlaydata_ijk(n,1:2) = calc_find_ij(overlaydata_raw(n,1),overlaydata_raw(n,2),grid_lon_origin,imax,jmax);
             overlaydata_ijk(n,3)   = calc_find_k(overlaydata_raw(n,3),kmax);
         end
-        if kplot > 0,
+        if (kplot > 0),
             % delete data lines with depth levels not equal to kplot
             wronglayer_locations = find(overlaydata_ijk(:,3)~=kplot);
             wronglayer_n = size(wronglayer_locations);
             overlaydata_ijk(wronglayer_locations,:) = [];
             overlaydata_raw(wronglayer_locations,:) = [];
             nmax = nmax-wronglayer_n(1);
-            if (nmax == 0),
-                disp([' ']);
-                error('*WARNING*: No data corresponding to this ocean level: ENDING ... ');
+        elseif (kplot == -1),
+            % delete data lines with depth levels not equal to loc_k1
+            % NOTE: allow data k values *deeper* than the ocean grid
+            n = 1;
+            while (n < nmax),
+                loc_k1 = grid_k1(overlaydata_ijk(n,2),overlaydata_ijk(n,1));
+                if (overlaydata_ijk(n,3) > loc_k1),
+                    overlaydata_ijk(n,:) = [];
+                    overlaydata_raw(n,:) = [];
+                    nmax = nmax-1;
+                else
+                    overlaydata_ijk(n,3) = loc_k1;
+                    n = n+1;
+                end
             end
+        end
+        % check for no data (left)!
+        if (nmax == 0),
+            disp([' ']);
+            error('*WARNING*: No data corresponding to this ocean level: ENDING ... ');
         end
         % convert to double and set overlay data
         overlaydata_ijk(:,:) = double(overlaydata_ijk(:,:));
@@ -1088,7 +1115,12 @@ if ~isempty(overlaydataid)
         for i = 1:imax,
             for j = 1:jmax,
                 if (~isnan(overlaydata_zm(j,i)))
-                    samecell_locations = find((int32(overlaydata_ijk_old(:,1))==i)&(int32(overlaydata_ijk_old(:,2))==j)&(int32(overlaydata_ijk_old(:,3))==kplot));
+                    if (kplot == -1),
+                        k = grid_k1(j,i);
+                    else
+                        k = kplot;
+                    end
+                    samecell_locations = find((int32(overlaydata_ijk_old(:,1))==i)&(int32(overlaydata_ijk_old(:,2))==j)&(int32(overlaydata_ijk_old(:,3))==k));
                     samecell_n = size(samecell_locations);
                     if (samecell_n(1) > 0)
                         m=m+1;

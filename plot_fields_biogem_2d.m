@@ -175,6 +175,8 @@ function [grid_lat,zz] = plot_fields_biogem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,P
 %   17/11/02: improved PSI plotting
 %   17/11/02: adjusted paths ... again again ...
 %             *** VERSION 1.03 ********************************************
+%   17/12/29: fixed some minor bugs with overlay (lon,lat) data processing
+%             *** VERSION 1.04 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -186,7 +188,7 @@ function [grid_lat,zz] = plot_fields_biogem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,P
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.03;
+par_ver = 1.04;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -818,6 +820,15 @@ if ~isempty(overlaydataid)
     nmax=overlaydata_size(1);
     % create (i,j) from (lon,lat) and vice versa (depending on data input type)
     if (data_ijk == 'n')
+        % precondition lon
+        for n = 1:nmax,
+            if (overlaydata_raw(n,1) >= (360.0 + grid_lon_origin)),
+                overlaydata_raw(n,1) = overlaydata_raw(n,1) - 360.0;
+            end
+            if (overlaydata_raw(n,1) < grid_lon_origin),
+                overlaydata_raw(n,1) = overlaydata_raw(n,1) + 360.0;
+            end
+        end        
         % convert (lon,lat) overlay data to (i,j)
         % NOTE: function 'calc_find_ij' takes input in order: (lon,lat)
         %       i.e., the same as the raw overlay data, which is (lon,lat) (i.e., (i,j)) format
