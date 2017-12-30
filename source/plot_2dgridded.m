@@ -48,7 +48,7 @@ function [] = plot_2dgridded(PDATAIN,PDATATH,POPT,PDATAID,PDATATITLE)
 % NOTE: don't clear variable space here ...
 close all;
 % load plotting options
-if isempty(POPT), POPT='plot_fields_settings'; end
+if isempty(POPT), POPT='plot_fields_SETTINGS'; end
 eval(POPT);
 % set dummy variables
 data = PDATAIN;
