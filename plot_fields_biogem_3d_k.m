@@ -218,6 +218,8 @@ function [STATM] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,P
 %             *** VERSION 1.03 ********************************************
 %   17/12/29: fixed some minor bugs with overlay (lon,lat) data processing
 %             *** VERSION 1.04 ********************************************
+%   17/12/30: adjusted paths ... bug fix ...
+%             *** VERSION 1.05 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -229,7 +231,7 @@ function [STATM] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,P
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.04;
+par_ver = 1.05;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -1252,7 +1254,7 @@ end
 % STATM(9,:) = R2;
 if (data_stats == 'y')
     if (~isempty(dataid_2) | (~isempty(overlaydataid) && ((data_only == 'n') || (data_anomoly == 'y'))))
-        fid = fopen([vfilename '_STATS' '.dat'], 'wt');
+        fid = fopen([par_pathout '/' filename '_STATS' '.dat'], 'wt');
         fprintf(fid, '\n');
         fprintf(fid, '=== STATS SUMMARY ===');
         fprintf(fid, '\n');
