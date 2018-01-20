@@ -1,4 +1,4 @@
-function [FCMAP] = make_cmap(PCNAME,PNCOL)
+    function [FCMAP] = make_cmap(PCNAME,PNCOL)
 % make_cmap
 %
 %   *******************************************************************   %
