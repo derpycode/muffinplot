@@ -37,6 +37,7 @@ function [] = plot_2dgridded(PDATAIN,PDATATH,POPT,PDATAID,PDATATITLE)
 %   15/05/01: added color scale flip option
 %             updated make_cmap function call
 %   16/08/30: removed 'gridded' from filename
+%   18/02/05: altered behavor of data_threshold (now only ABOVE is NaN-ed)
 %
 %   ***********************************************************************
 
@@ -76,8 +77,8 @@ color_w = [1.00 1.00 1.00];
 %
 c_max =256;
 loc_data = data;
-loc_data(find(data(:,:) >= abs(data_threshold))) = NaN;
-loc_data(find(loc_data(:,:) <= -abs(data_threshold))) = NaN;
+loc_data(find(data(:,:)     > abs(data_threshold)))  = NaN;
+loc_data(find(loc_data(:,:) < -abs(data_threshold))) = NaN;
 data_max = max(max(loc_data));
 data_min = min(min(loc_data));
 if (data_min == data_max)
@@ -126,7 +127,7 @@ title(plot_title,'FontSize',15);
 % draw filled rectangles
 for i = 1:imax,
     for j = 1:jmax,
-        if ( (data(j,i) >= abs(data_threshold)) || (data(j,i) <= -abs(data_threshold)) ),
+        if ( (data(j,i) > abs(data_threshold)) || (data(j,i) < -abs(data_threshold)) ),
             h = fill([(i-1) (i-1) i i],[(j-1) j j (j-1)],color_g);
             set(h,'EdgeColor',color_g);
         else
