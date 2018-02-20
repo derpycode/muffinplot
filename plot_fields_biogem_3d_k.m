@@ -222,6 +222,9 @@ function [STATM] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,P
 %             *** VERSION 1.05 ********************************************
 %   18/02/19: removed prescribed directory in loading mask file
 %             *** VERSION 1.06 ********************************************
+%   18/02/19: removed NOT data_only requirement for plotting cross-plot
+%             corrected data point k assignment for kplot == -1 case
+%             *** VERSION 1.07 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -233,7 +236,7 @@ function [STATM] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,P
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.06;
+par_ver = 1.07;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -1129,7 +1132,7 @@ if ~isempty(overlaydataid)
                     if (samecell_n(1) > 0)
                         m=m+1;
                         samecell_mean = mean(overlaydata_ijk_old(samecell_locations,4));
-                        overlaydata_ijk(m,:) = [i j kplot samecell_mean];
+                        overlaydata_ijk(m,:) = [i j k samecell_mean];
                         overlaydata(m,1) = grid_lon_origin + 360.0*(overlaydata_ijk(m,1) - 0.5)/jmax;
                         overlaydata(m,2) = 2.0*(overlaydata_ijk(m,2) - 0.5)/jmax - 1.0;
                         overlaydata(m,3) = double(laym(j,i));
@@ -1759,7 +1762,9 @@ if (plot_secondary == 'y'),
     %
     % *** PLOT FIGURE (cross-plot) ************************************** %
     %
-    if ( ~isempty(dataid_2) || (~isempty(overlaydataid) && (data_only == 'n')) ),
+    % NOTE: data_vector_1 == DATA  (or model field 1)
+    % NOTE: data_vector_2 == MODEL (or model field 2)
+    if ( ~isempty(dataid_2) || ~isempty(overlaydataid) ),
         %
         if ~isempty(dataid_2),
             loc_x_data = data_vector_1;

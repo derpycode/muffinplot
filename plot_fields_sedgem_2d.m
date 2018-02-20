@@ -178,6 +178,8 @@ function [STATM] = plot_fields_sedgem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,PMA
 %             *** VERSION 1.04 ********************************************
 %   18/02/19: removed prescribed directory in loading mask file
 %             *** VERSION 1.06 ********************************************
+%   18/02/19: removed NOT data_only requirement for plotting cross-plot
+%             *** VERSION 1.07 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -189,7 +191,7 @@ function [STATM] = plot_fields_sedgem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,PMA
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.06;
+par_ver = 1.07;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -1149,7 +1151,7 @@ if (plot_secondary == 'y'),
     %
     % *** PLOT FIGURE (cross-plot) ************************************** %
     %
-    if ( ~isempty(dataid_2) || (~isempty(overlaydataid) && (data_only == 'n')) ),
+    if ( ~isempty(dataid_2) || ~isempty(overlaydataid) ),
         %
         if ~isempty(dataid_2),
             loc_x_data = data_vector_1;

@@ -192,6 +192,8 @@ function [STATM,DIAG] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,
 %             *** VERSION 1.03 ********************************************
 %   18/02/19: removed prescribed directory in loading mask file
 %             *** VERSION 1.06 ********************************************
+%   18/02/19: removed NOT data_only requirement for plotting cross-plot
+%             *** VERSION 1.07 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -203,7 +205,7 @@ function [STATM,DIAG] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.06;
+par_ver = 1.07;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -1677,7 +1679,7 @@ if (plot_secondary == 'y'),
     %
     % *** PLOT FIGURE (cross-plot) ************************************** %
     %
-    if ( ~isempty(dataid_2) || (~isempty(overlaydataid) && (data_only == 'n')) ),
+    if ( ~isempty(dataid_2) || ~isempty(overlaydataid) ),
         %
         if ~isempty(dataid_2),
             loc_x_data = reshape(data_1(loc_kmin:loc_kmax,:,:),1,[]);

@@ -177,6 +177,8 @@ function [grid_lat,zz] = plot_fields_biogem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,P
 %             *** VERSION 1.03 ********************************************
 %   17/12/29: fixed some minor bugs with overlay (lon,lat) data processing
 %             *** VERSION 1.04 ********************************************
+%   18/02/19: removed NOT data_only requirement for plotting cross-plot
+%             *** VERSION 1.07 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -188,7 +190,7 @@ function [grid_lat,zz] = plot_fields_biogem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,P
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.04;
+par_ver = 1.07;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -1590,7 +1592,7 @@ if (plot_secondary == 'y'),
     %
     % *** PLOT FIGURE (cross-plot) ************************************** %
     %
-    if ( ~isempty(dataid_2) || (~isempty(overlaydataid) && (data_only == 'n')) ),
+    if ( ~isempty(dataid_2) || ~isempty(overlaydataid) ),
         %
         if ~isempty(dataid_2),
             loc_x_data = reshape(data_1(:,:),1,[]);
