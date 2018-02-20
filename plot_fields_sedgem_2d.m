@@ -176,6 +176,8 @@ function [STATM] = plot_fields_sedgem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,PMA
 %             *** VERSION 1.03 ********************************************
 %   17/12/29: fixed some minor bugs with overlay (lon,lat) data processing
 %             *** VERSION 1.04 ********************************************
+%   18/02/19: removed prescribed directory in loading mask file
+%             *** VERSION 1.06 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -187,7 +189,7 @@ function [STATM] = plot_fields_sedgem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,PMA
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.04;
+par_ver = 1.06;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -362,7 +364,7 @@ end
 % NOTE: flip in j-direction to make consistent with netCDF grid
 maskfile = maskid;
 if ~isempty(maskid)
-    mask = load([par_pathmask '/' maskfile],'-ascii');
+    mask = load([maskfile],'-ascii');
     mask = flipdim(mask,1);
 end
 %

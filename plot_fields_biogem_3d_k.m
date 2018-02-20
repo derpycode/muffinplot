@@ -220,6 +220,8 @@ function [STATM] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,P
 %             *** VERSION 1.04 ********************************************
 %   17/12/30: adjusted paths ... bug fix ...
 %             *** VERSION 1.05 ********************************************
+%   18/02/19: removed prescribed directory in loading mask file
+%             *** VERSION 1.06 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -231,7 +233,7 @@ function [STATM] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,P
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.05;
+par_ver = 1.06;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -416,7 +418,7 @@ end
 % NOTE: flip in j-direction to make consistent with netCDF grid
 maskfile = maskid;
 if ~isempty(maskid)
-    mask = load([par_pathmask '/' maskfile],'-ascii');
+    mask = load([maskfile],'-ascii');
     mask = flipdim(mask,1);
 end
 %
