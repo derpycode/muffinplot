@@ -48,6 +48,9 @@ function [out_n,out_ccd] = plot_fields_ccd(PEXPID,PT,PMASK,PMODULE,POPT,PNAME)
 %             *** VERSION 1.02 ********************************************
 %   17/11/02: adjusted paths ... again again ...
 %             *** VERSION 1.03 ********************************************
+%   18/03/20: addition of some simple opal system diagnostics plotting
+%             (+ minor path and filename fixes)
+%             *** VERSION 1.08 ********************************************
 %
 %   ***********************************************************************
 
@@ -74,7 +77,7 @@ ctrl_SEDGEM_D = false; % use SEDGEM depth (if BIOGEM module selected)?
 % *********************************************************************** %
 %
 % set version!
-par_ver = 1.03;
+par_ver = 1.08;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -96,7 +99,12 @@ if ~exist('par_pathmask','var'), par_pathmask = 'MASKS'; end
 if ~exist('par_pathexam','var'), par_pathexam = 'EXAMPLES'; end
 %
 % *** initialize parameters ********************************************* %
+% 
+% null data value
+par_data_null = 9.9E19;
 %
+% *** copy passed parameters ******************************************** %
+% 
 % set passed parameters
 expid = PEXPID;
 basinmaskid = PMASK;
@@ -172,20 +180,23 @@ str_function = strrep(str_function,'_','-');
 const_rEarth = 6371000.0;
 % number of variables (tracers)
 ntracer = 17;
+% check user-settings
+switch moduleid
+    case {'SEDGEM', 'sedgem'}
+        moduleid = 'sedgem';
+        ctrl_SEDGEM_D = false;
+    case {'BIOGEM', 'biogem'}
+        moduleid = 'biogem';
+    otherwise
+        moduleid = 'sedgem';
+end
 % set output filestring
-filename_root = [expid '.' moduleid];
+filename_root = [par_pathout '/' expid '.' moduleid];
 if ~isempty(basinmaskid)
     filename_root = [filename_root, '.', basinmaskid];
 end
 filename_root = [filename_root '.' str_date];
-if (~isempty(altfilename)), filename_root = altfilename; end
-% check user-settings
-switch moduleid
-    case {'SEDGEM', 'sedgem'}
-        ctrl_SEDGEM_D = false;
-    case {'BIOGEM', 'biogem'}
-    %
-end
+if (~isempty(altfilename)), filename_root = [par_pathout '/' altfilename]; end
 %
 % *********************************************************************** %
 
@@ -195,12 +206,12 @@ end
 %
 % open netCDF file
 switch moduleid
-    case {'SEDGEM', 'sedgem'}
+    case {'sedgem'}
         %
-        ncid=netcdf.open([data_path '/' expid '/sedgem/fields_sedgem_2d.nc'],'nowrite');
-    case {'BIOGEM', 'biogem'}
+        ncid=netcdf.open([par_pathin '/' expid '/sedgem/fields_sedgem_2d.nc'],'nowrite');
+    case {'biogem'}
         %
-        ncid=netcdf.open([data_path '/' expid '/biogem/fields_biogem_2d.nc'],'nowrite');
+        ncid=netcdf.open([par_pathin '/' expid '/biogem/fields_biogem_2d.nc'],'nowrite');
         % check that the year exists
         varid  = netcdf.inqVarID(ncid,'time');
         timeslices = netcdf.getVar(ncid,varid);
@@ -223,7 +234,7 @@ switch moduleid
         end
         % optional SEDGEM bathymetry
         if ctrl_SEDGEM_D,
-            ncid2=netcdf.open([data_path '/' expid '/sedgem/fields_sedgem_2d.nc'],'nowrite');
+            ncid2=netcdf.open([par_pathin '/' expid '/sedgem/fields_sedgem_2d.nc'],'nowrite');
         end
     otherwise
         %
@@ -232,6 +243,25 @@ switch moduleid
 end
 % read netCDf information
 [ndims,nvars,ngatts,unlimdimid] = netcdf.inq(ncid);
+% check for opal sediments
+% check that the opal wt% variable name exists
+varid = [];
+for n = 0:nvars-1,
+    [varname,xtype,dimids,natts] = netcdf.inqVar(ncid,n);
+    if strcmp(varname,'sed_opal')
+        varid = n;
+    end
+end
+if ~isempty(varid)
+    opt_opal = true;
+else
+    opt_opal = false;
+end
+% temporarily disable opal use in BIOGEM
+switch moduleid
+    case {'biogem'}
+        opt_opal = false;
+end
 %
 % *********************************************************************** %
 
@@ -260,10 +290,10 @@ varid  = netcdf.inqVarID(ncid,'grid_mask');
 grid_mask = flipud(netcdf.getVar(ncid,varid));
 grid_mask(grid_mask > 1.0) = 0.0;
 switch moduleid
-    case {'SEDGEM', 'sedgem'}
+    case {'sedgem'}
         varid  = netcdf.inqVarID(ncid,'grid_topo');
         grid_depth = -flipud(netcdf.getVar(ncid,varid));
-    case {'BIOGEM', 'biogem'}
+    case {'biogem'}
         if ctrl_SEDGEM_D,
             varid  = netcdf.inqVarID(ncid2,'grid_topo');
             grid_depth = -flipud(netcdf.getVar(ncid2,varid));
@@ -293,7 +323,8 @@ end
 % *************************************************************************
 %
 switch moduleid
-    case {'SEDGEM', 'sedgem'}% wt% CaCO3
+    case {'sedgem'}
+        % wt% CaCO3
         varid = netcdf.inqVarID(ncid,'sed_CaCO3');
         grid_CaCO3 = flipud(netcdf.getVar(ncid,varid));
         grid_CaCO3(grid_CaCO3 > 100.0) = 0.0;
@@ -330,7 +361,28 @@ switch moduleid
         % saturation
         varid = netcdf.inqVarID(ncid,'carb_dCO3_cal');
         grid_dCO3_cal = flipud(netcdf.getVar(ncid,varid));
-    case {'BIOGEM', 'biogem'}% wt% CaCO3
+        % opal
+        if opt_opal
+            % wt% opal
+            varid = netcdf.inqVarID(ncid,'sed_opal');
+            grid_opal = flipud(netcdf.getVar(ncid,varid));
+            grid_opal(find(grid_opal >= par_data_null)) = NaN;
+            % rain and dissolution fluxes
+            varid = netcdf.inqVarID(ncid,'fsed_opal');
+            grid_fsed_opal = flipud(netcdf.getVar(ncid,varid));
+            grid_fsed_opal(find(grid_fsed_opal >= par_data_null)) = NaN;
+            varid = netcdf.inqVarID(ncid,'fdis_opal');
+            grid_fdis_opal = flipud(netcdf.getVar(ncid,varid));
+            grid_fdis_opal(find(grid_fdis_opal >= par_data_null)) = NaN;
+            % burial flux
+            grid_fbur_opal = double(grid_fsed_opal - grid_fdis_opal);
+            % fractional preservation flux
+            varid = netcdf.inqVarID(ncid,'fpres_opal');
+            grid_fpres_opal = flipud(netcdf.getVar(ncid,varid));
+            grid_fpres_opal(find(grid_fpres_opal >= par_data_null)) = NaN;
+        end
+    case {'biogem'}
+        % wt% CaCO3
         varid = netcdf.inqVarID(ncid,'sed_CaCO3');
         rawdata = netcdf.getVar(ncid,varid);
         grid_CaCO3 = flipud(rawdata(1:imax,1:jmax,tid));
@@ -682,35 +734,54 @@ grid_plot = grid_depth;
 grid_plot(find(grid_plot == -1)) = NaN;
 filename = [filename_root '_plot_grid_depth.ps'];
 plot_2dgridded(rot90(grid_plot,-1),0.9E19,'',filename,'grid depth');
-%plot_2dgridded(rot90(grid_plot,-1),0.9E19,'plot_fields_settings_depth',filename,'grid depth');
 % plot mask
 grid_plot = grid_mask;
 filename = [filename_root '_plot_grid_mask.ps'];
 plot_2dgridded(rot90(grid_plot,-1),0.9E19,'',filename,'grid mask');
-%plot_2dgridded(rot90(grid_plot,-1),0.9E19,'plot_fields_settings_mask',filename,'grid mask');
 % plot slope
 grid_plot = grid_mask_slope;
 filename = [filename_root '_plot_grid_slopeth.ps'];
 plot_2dgridded(rot90(grid_plot,-1),0.9E19,'',filename,'grid slope mask');
-%plot_2dgridded(rot90(grid_plot,-1),0.9E19,'plot_fields_settings_mask',filename,'grid slope mask');
 % plot CaCO3
 grid_plot = grid_CaCO3;
 grid_plot(find(grid_plot == -100)) = NaN;
 filename = [filename_root '_plot_grid_CaCO3.ps'];
 plot_2dgridded(rot90(grid_plot,-1),0.9E19,'',filename,'grid CaCO3');
-%plot_2dgridded(rot90(grid_plot,-1),0.9E19,'plot_fields_settings_CaCO3',filename,'grid CaCO3');
 % plot CaCO3 burial flux
 grid_plot = grid_fbur_CaCO3;
-grid_plot(find(grid_plot == 0)) = NaN;
+grid_plot(find(grid_plot < 0)) = NaN;
 filename = [filename_root '_plot_grid_FCaCO3.ps'];
 plot_2dgridded(rot90(grid_plot,-1),0.9E19,'',filename,'grid FCaCO3');
 % plot CCD
 grid_plot = grid_CCD;
 filename = [filename_root '_plot_grid_CCD.ps'];
 plot_2dgridded(rot90(grid_plot,-1),0.9E19,'',filename,'grid CCD');
-%plot_2dgridded(rot90(grid_plot,-1),0.9E19,'plot_fields_settings_CCD',filename,'grid CCD');
 % clean up ...
 close all;
+%
+% *** QUICK DIAGNOSTIC PLOTS -- OPAL ************************************ %
+%
+% opal
+if opt_opal
+    % plot wt% opal
+    filename = [filename_root '_plot_grid_opal.ps'];
+    plot_2dgridded(rot90(grid_opal,-1),0.9E19,'',filename,'grid opal');
+    % plot opal fluxes
+    filename = [filename_root '_plot_grid_Fsedopal.ps'];
+    plot_2dgridded(rot90(grid_fsed_opal,-1),0.9E19,'',filename,'grid Fsed opal');
+    filename = [filename_root '_plot_grid_Fdisopal.ps'];
+    plot_2dgridded(rot90(grid_fdis_opal,-1),0.9E19,'',filename,'grid Fdis opal');
+    filename = [filename_root '_plot_grid_Fburopal.ps'];
+    plot_2dgridded(rot90(grid_fbur_opal,-1),0.9E19,'',filename,'grid Fbur opal');
+    % cross plots
+    plot_crossplotc(reshape(grid_fsed_opal,numel(grid_fsed_opal),1),reshape(grid_fbur_opal,numel(grid_fbur_opal),1),[],'grid_fsed_opal','grid_fbur_opal','',POPT,[filename_root '.CROSSPLOT1']);
+    plot_crossplotc(reshape(grid_fsed_opal,numel(grid_fsed_opal),1),reshape(grid_opal,numel(grid_opal),1),[],'grid_fsed_opal','grid_opal','',POPT,[filename_root '.CROSSPLOT2']);
+    plot_crossplotc(reshape(grid_opal,numel(grid_opal),1),reshape(grid_fdis_opal,numel(grid_fdis_opal),1),[],'grid_opal','grid_fdis_opal','',POPT,[filename_root '.CROSSPLOT3']);
+    plot_crossplotc(reshape(grid_fsed_opal,numel(grid_fsed_opal),1),reshape(grid_fdis_opal,numel(grid_fdis_opal),1),[],'grid_fsed_opal','grid_fdis_opal','',POPT,[filename_root '.CROSSPLOT4']);
+    plot_crossplotc(reshape(grid_fsed_opal,numel(grid_fsed_opal),1),reshape(grid_fpres_opal,numel(grid_fpres_opal),1),[],'grid_fsed_opal','grid_fpres_opal','',POPT,[filename_root '.CROSSPLOT5']);
+    % clean up ...
+    close all;
+end
 %
 % *** SAVE DATA ********************************************************* %
 %
@@ -729,7 +800,7 @@ fprintf(' - wt%% CaCO3 saved\n');
 %
 % *********************************************************************** %
 
-if (ctrl_orientation == 'vert'),
+if strcmp(ctrl_orientation,'vert'),
     
     % *********************************************************************
     % *** MANE PLOT: VERTICAL AXES ****************************************
@@ -883,7 +954,7 @@ if (ctrl_orientation == 'vert'),
     if ctrl_pct,
         set(ax1,'XLim',[0.0 100.0]);
     else
-        set(ax1,'XLim',[0.0 max(c_burial)]);
+        set(ax1,'XLim',[min(c_burial) max(c_burial)]);
     end
     set(ax1,'XColor',ctrl_axiscol,'TickDir','out','XTickLabel','');
     set(ax1,'YColor',ctrl_axiscol,'TickDir','out','YTickLabel','');
@@ -895,7 +966,7 @@ if (ctrl_orientation == 'vert'),
         set(ax2,'XLim',[0.0 100.0]);
         set(ax2,'XLabel',text('String','Cumulative burial (%)','FontSize',10));
     else
-        set(ax2,'XLim',[0.0 max(c_burial)]);
+        set(ax2,'XLim',[min(c_burial) max(c_burial)]);
         set(ax2,'XLabel',text('String','Cumulative burial (Tmol)','FontSize',10));
     end
     set(ax2,'YAxisLocation','left','YColor',ctrl_axiscol,'YTick',[],'YTickLabel','');
@@ -1345,6 +1416,8 @@ netcdf.close(ncid);
 if ctrl_SEDGEM_D,
     netcdf.close(ncid2);
 end
+% close remaining windows
+close all;
 % END
 disp(['END ...'])
 %

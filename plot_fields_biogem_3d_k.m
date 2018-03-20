@@ -225,6 +225,9 @@ function [STATM] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,P
 %   18/02/19: removed NOT data_only requirement for plotting cross-plot
 %             corrected data point k assignment for kplot == -1 case
 %             *** VERSION 1.07 ********************************************
+%   18/03/20: some fixes
+%            (a lesson to be learned here about noting them down ...)
+%             *** VERSION 1.08 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -236,7 +239,7 @@ function [STATM] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,P
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.07;
+par_ver = 1.08;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -1107,7 +1110,7 @@ if ~isempty(overlaydataid)
     % update value of nmax
     overlaydata_size = size(overlaydata_raw(:,:));
     nmax=overlaydata_size(1);
-    %
+    % BLAH
     overlaylabel(:,:) = overlaylabel_raw(:,:);
     overlaydata(:,:) = overlaydata_raw(:,:);
     % convert lat to sin(lat) for plotting
@@ -1144,7 +1147,7 @@ if ~isempty(overlaydataid)
         nmax=m;
     end
     % scale overlay data
-    overlaydata(:,4)/data_scalepoints;
+    overlaydata(:,4) = overlaydata(:,4)/datapoint_scale;
 end
 %
 % *********************************************************************** %

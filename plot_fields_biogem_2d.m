@@ -179,6 +179,9 @@ function [grid_lat,zz] = plot_fields_biogem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,P
 %             *** VERSION 1.04 ********************************************
 %   18/02/19: removed NOT data_only requirement for plotting cross-plot
 %             *** VERSION 1.07 ********************************************
+%   18/03/20: some fixes
+%            (a lesson to be learned here about noting them down ...)
+%             *** VERSION 1.08 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -190,7 +193,7 @@ function [grid_lat,zz] = plot_fields_biogem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,P
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.07;
+par_ver = 1.08;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -257,6 +260,11 @@ if data_scale == 0.0
     clear con_min;
     clear con_max;
     con_n = 10;
+end
+if strcmp(data_scalepoints,'n')
+    datapoint_scale = 1.0;
+else
+    datapoint_scale = data_scale;
 end
 % set global flag if no alt plotting scale is set
 % NOTE: catch possibility of one axis being set, but the other @ default
@@ -897,6 +905,8 @@ if ~isempty(overlaydataid)
         % save data on grid
         fprint_2D_d(overlaydata_gridded(:,:),[overlaydatafile, '.griddedOBS.', str_date, '.dat']);
     end
+    % scale overlay data
+    overlaydata(:,3) = overlaydata(:,3)/datapoint_scale;
 end
 %
 % *********************************************************************** %

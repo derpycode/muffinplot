@@ -194,6 +194,9 @@ function [STATM,DIAG] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,
 %             *** VERSION 1.06 ********************************************
 %   18/02/19: removed NOT data_only requirement for plotting cross-plot
 %             *** VERSION 1.07 ********************************************
+%   18/03/20: some fixes
+%            (a lesson to be learned here about noting them down ...)
+%             *** VERSION 1.08 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -205,7 +208,7 @@ function [STATM,DIAG] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.07;
+par_ver = 1.08;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -1039,7 +1042,8 @@ if ~isempty(overlaydataid)
     overlaydata_raw(isnan(overlaydata_raw(:,4)),:) = [];
     overlaydata_ijk(isnan(overlaydata_ijk(:,4)),:) = [];
     % update value of nmax
-    nmax=length(overlaydata_raw);
+    overlaydata_size = size(overlaydata_raw(:,:));
+    nmax=overlaydata_size(1);
     % change: +vs depths to -vs for plotting
     overlaydata_raw(find(overlaydata_raw(:,3)>0.0),3) = -1.0*overlaydata_raw(find(overlaydata_raw(:,3)>0.0),3);
     % BLAH
@@ -1072,7 +1076,7 @@ if ~isempty(overlaydataid)
         nmax=m;
     end
     % scale overlay data
-    overlaydata(:,4)/data_scalepoints;
+    overlaydata(:,4) = overlaydata(:,4)/datapoint_scale;
 end
 % create and print mask
 if ( isempty(dataid_2) && ~isempty(overlaydataid) )

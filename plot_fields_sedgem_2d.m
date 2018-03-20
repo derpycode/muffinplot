@@ -180,6 +180,9 @@ function [STATM] = plot_fields_sedgem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,PMA
 %             *** VERSION 1.06 ********************************************
 %   18/02/19: removed NOT data_only requirement for plotting cross-plot
 %             *** VERSION 1.07 ********************************************
+%   18/03/20: some fixes
+%            (a lesson to be learned here about noting them down ...)
+%             *** VERSION 1.08 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -191,7 +194,7 @@ function [STATM] = plot_fields_sedgem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,PMA
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.07;
+par_ver = 1.08;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -256,6 +259,11 @@ if data_scale == 0.0
     clear con_min;
     clear con_max;
     con_n = 10;
+end
+if strcmp(data_scalepoints,'n')
+    datapoint_scale = 1.0;
+else
+    datapoint_scale = data_scale;
 end
 % set global flag if no alt plotting scale is set
 % NOTE: catch possibility of one axis being set, but the other @ default
@@ -708,6 +716,8 @@ if ~isempty(overlaydataid)
         end
         nmax=m;
     end
+    % scale overlay data
+    overlaydata(:,3) = overlaydata(:,3)/datapoint_scale;
 end
 %
 % *********************************************************************** %
