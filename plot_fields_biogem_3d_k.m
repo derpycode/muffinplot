@@ -228,6 +228,8 @@ function [STATM] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,P
 %   18/03/20: some fixes
 %            (a lesson to be learned here about noting them down ...)
 %             *** VERSION 1.08 ********************************************
+%   18/04/05: added M-score stats output
+%             *** VERSION 1.09 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -239,7 +241,7 @@ function [STATM] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,P
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.08;
+par_ver = 1.09;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -1260,6 +1262,7 @@ end
 % STATM(7,:) = STANDARD DEVIATION NORMALISED RMSD;
 % STATM(8,:) = NORMALISED BIAS;
 % STATM(9,:) = R2;
+% STATM(10,:) = M;
 if (data_stats == 'y')
     if (~isempty(dataid_2) | (~isempty(overlaydataid) && ((data_only == 'n') || (data_anomoly == 'y'))))
         fid = fopen([par_pathout '/' filename '_STATS' '.dat'], 'wt');
@@ -1277,6 +1280,7 @@ if (data_stats == 'y')
         fprintf(fid, 'Correlation                                        : %8.6e \n', STATM(4,2));
         fprintf(fid, 'STANDARD DEVIATION NORMALISED RMSD                 : %8.6e \n', STATM(7,2));
         fprintf(fid, 'NORMALISED BIAS                                    : %8.6e \n', STATM(8,2));
+        fprintf(fid, 'M-score                                            : %8.6e \n', STATM(10,2));
         fclose(fid);
     end
 end
