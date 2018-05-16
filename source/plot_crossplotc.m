@@ -48,6 +48,7 @@ function [] = plot_crossplotc(PVECX,PVECY,PVECZ,PSTRX,PSTRY,PSTRZ,POPT,PNAME)
 %   15/03/03: removed NaNs from auto-setting of colormap scale
 %   16/03/01: set n equal to x-vector rather than z (that might be empty)
 %   17/06/22: catch min/max color values equal
+%   18/04/26: fix for silly fussy case sensitive default settings filename
 %
 %   ***********************************************************************
 
@@ -64,7 +65,7 @@ str_y = PSTRY;
 str_z = PSTRZ;
 str_filename = PNAME;
 % load plotting options
-if isempty(POPT), POPT='plot_fields_settings'; end
+if isempty(POPT), POPT='plot_fields_SETTINGS'; end
 eval(POPT);
 %
 % *** misc (local) parameters ******************************************* %

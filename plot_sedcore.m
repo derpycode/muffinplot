@@ -159,6 +159,10 @@ function [] = plot_sedcore(PEXP,PCORE,PMIN,PMAX,PREFAGE,PDATA1,PDATA2,POPT,PNAME
 %             *** VERSION 1.02 ********************************************
 %   17/11/02: adjusted paths ... again again ...
 %             *** VERSION 1.03 ********************************************
+%   18/04/24: bug-fixing paths ...
+%             *** VERSION 1.04 ********************************************
+%   18/04/24: bug-fixing PLOT path ...
+%             *** VERSION 1.05 ********************************************
 %
 %   ***********************************************************************
 
@@ -169,7 +173,7 @@ function [] = plot_sedcore(PEXP,PCORE,PMIN,PMAX,PREFAGE,PDATA1,PDATA2,POPT,PNAME
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.03;
+par_ver = 1.05;
 % set function name
 str_function = mfilename;
 % close plot windows
@@ -217,8 +221,6 @@ altfilename = PNAME;
 %
 % define grey color
 color_g = [0.75 0.75 0.75];
-% DEFINE wt% COLOR MAP
-cmap = make_cmap('wt%',101);
 %
 % *** MISC ************************************************************** %
 %
@@ -303,6 +305,11 @@ const_den_opal = 2.25;
 const_den_det  = 3.00;
 const_den_corg = 1.00;
 %
+% *** DEFINE COLOR MAP ************************************************** %
+%
+% DEFINE wt% COLOR MAP
+cmap = make_cmap('wt%',101);
+%
 % *********************************************************************** %
 
 % *********************************************************************** %
@@ -310,7 +317,7 @@ const_den_corg = 1.00;
 % *********************************************************************** %
 %
 % open netCDF file
-ncid=netcdf.open([data_path '/' expid '/sedgem/sedcore.nc'],'nowrite');
+ncid=netcdf.open([par_pathin '/' expid '/sedgem/sedcore.nc'],'nowrite');
 % read netCDf information
 [ndims,nvars,ngatts,unlimdimid] = netcdf.inq(ncid);
 %
@@ -504,7 +511,7 @@ if ~isempty(data1),
     end
     if (isempty(data1)),
         if (strcmp('.res',dataid(end-3:end))),
-            file_data1 = [data_path '/' expid '/biogem/' dataid];
+            file_data1 = [par_pathin '/' expid '/biogem/' dataid];
             if (exist(file_data1, 'file') == 2)
                 data1_ts = load(file_data1,'ascii');
                 data1 = dataid;
@@ -536,7 +543,7 @@ if ~isempty(data2),
     end
     if (isempty(data2)),
         if (strcmp('.res',dataid(end-3:end))),
-            file_data2 = [data_path '/' expid '/biogem/' dataid];
+            file_data2 = [par_pathin '/' expid '/biogem/' dataid];
             if (exist(file_data2, 'file') == 2)
                 data2_ts = load(file_data2,'ascii');
                 data2 = dataid;
@@ -1409,17 +1416,17 @@ else
     end
 end
 if (plot_format_old == 'y')
-    print('-dpsc2', [str_filename '.' str_date '.ps']);
+    print('-dpsc2', [par_pathout '/' str_filename '.' str_date '.ps']);
 else
     switch plot_format
         case 'png'
-            export_fig([str_filename '.' str_date '.png'], '-png', '-r150', '-nocrop');
+            export_fig([par_pathout '/' str_filename '.' str_date '.png'], '-png', '-r150', '-nocrop');
         case 'pngT'
-            export_fig([str_filename '.' str_date '.png'], '-png', '-r150', '-nocrop', '-transparent');
+            export_fig([par_pathout '/' str_filename '.' str_date '.png'], '-png', '-r150', '-nocrop', '-transparent');
         case 'jpg'
-            export_fig([str_filename '.' str_date '.jpg'], '-jpg', '-r150', '-nocrop');
+            export_fig([par_pathout '/' str_filename '.' str_date '.jpg'], '-jpg', '-r150', '-nocrop');
         otherwise
-            export_fig([str_filename '.' str_date '.eps'], '-eps', '-nocrop');
+            export_fig([par_pathout '/' str_filename '.' str_date '.eps'], '-eps', '-nocrop');
     end
 end
 %
@@ -1544,7 +1551,7 @@ end
 %
 if (par_mutlab >= 2014),
     loc_table = struct2table(loc_str_data);
-    writetable(loc_table,[str_filename '.' str_date '.txt'],'Delimiter',' ');
+    writetable(loc_table,[par_pathout '/' str_filename '.' str_date '.txt'],'Delimiter',' ');
 end
 %
 % *********************************************************************** %
