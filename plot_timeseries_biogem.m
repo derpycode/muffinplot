@@ -111,6 +111,9 @@ function [] = plot_timeseries_biogem(PEXP1,PEXP2,PTMIN,PTMAX,PDATA1,PDATA1N,PDAT
 %             *** VERSION 1.04 ********************************************
 %   17/12/27: more path bugs ... [fixed]
 %             *** VERSION 1.05 ********************************************
+%   18/07/09: added ORB data plotting capability
+%             added plotted data, data saving
+%             *** VERSION 1.06 ********************************************
 %
 %   ***********************************************************************
 
@@ -121,7 +124,7 @@ function [] = plot_timeseries_biogem(PEXP1,PEXP2,PTMIN,PTMAX,PDATA1,PDATA1N,PDAT
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.05;
+par_ver = 1.06;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -190,6 +193,10 @@ str_filename = [expid1];
 tmp_mutlab = version('-release');
 str_mutlab = tmp_mutlab(1:4);
 par_mutlab = str2num(str_mutlab);
+% flags
+data_orb1 = false;
+data_orb2 = false;
+data_orb3 = false;
 %
 % *** SET PATHS & DIRECTORIES ******************************************* %
 % 
@@ -286,6 +293,7 @@ end
 if ~isempty(data1_name)
     data1_file = [par_pathin '/' expid1 '/biogem/biogem_series_' data1_name '.res'];
     data1_fileALT = [par_pathin '/' expid1 '/sedgem/sedcoreenv_' data1_name '.res'];
+    data1_fileORB = [par_pathin '/' expid1 '/biogem/biogem_orb_' data1_name '.res'];
     if (exist(data1_file, 'file') == 2)
         data1 = load(data1_file,'ascii');
         [m,n] = size(data1);
@@ -324,6 +332,11 @@ if ~isempty(data1_name)
         [m,n] = size(data1);
         % NOTE: convert kyr to yr
         data1(:,1) = 1000.0*data1(:,1);
+    elseif (exist(data1_fileORB, 'file') == 2)
+        data1 = load(data1_fileORB,'ascii');
+        [m,n] = size(data1);
+        % set flag for 'orbit' output data
+        data_orb1 = true;
     else
         disp(['ERROR: BIOGEM time-series file ', data1_file, ' does not exist.']);
         disp(['(or SEDGEM sedcorenv file ', data1_fileALT, ' does not exist)']);
@@ -356,6 +369,7 @@ end
 if ~isempty(data2_name)
     data2_file = [par_pathin '/' expid1 '/biogem/biogem_series_' data2_name '.res'];
     data2_fileALT = [par_pathin '/' expid1 '/sedgem/sedcoreenv_' data2_name '.res'];
+    data2_fileORB = [par_pathin '/' expid1 '/biogem/biogem_orb_' data2_name '.res'];
     if (exist(data2_file, 'file') == 2)
         data2 = load(data2_file,'ascii');
         [m,n] = size(data2);
@@ -392,6 +406,11 @@ if ~isempty(data2_name)
         [m,n] = size(data2);
         % NOTE: convert kyr to yr
         data2(:,1) = 1000.0*data2(:,1);
+    elseif (exist(data2_fileORB, 'file') == 2)
+        data2 = load(data2_fileORB,'ascii');
+        [m,n] = size(data2);
+        % set flag for 'orbit' output data
+        data_orb2 = true;
     else
         disp(['ERROR: BIOGEM time-series file ', data2_file, ' does not exist.']);
         disp(['(or SEDGEM sedcorenv file ', data2_fileALT, ' does not exist)']);
@@ -424,6 +443,7 @@ end
 if ~isempty(data3_name)
     data3_file = [par_pathin '/' expid1 '/biogem/biogem_series_' data3_name '.res'];
     data3_fileALT = [par_pathin '/' expid1 '/sedgem/sedcoreenv_' data3_name '.res'];
+    data3_fileORB = [par_pathin '/' expid1 '/biogem/biogem_orb_' data3_name '.res'];
     if (exist(data3_file, 'file') == 2)
         data3 = load(data3_file,'ascii');
         [m,n] = size(data3);
@@ -460,6 +480,11 @@ if ~isempty(data3_name)
         [m,n] = size(data3);
         % NOTE: convert kyr to yr
         data3(:,1) = 1000.0*data3(:,1);
+    elseif (exist(data3_fileORB, 'file') == 2)
+        data3 = load(data3_fileORB,'ascii');
+        [m,n] = size(data3);
+        % set flag for 'orbit' output data
+        data_orb3 = true;
     else
         disp(['ERROR: BIOGEM time-series file ', data3_file, ' does not exist.']);
         disp(['(or SEDGEM sedcorenv file ', data3_fileALT, ' does not exist)']);
@@ -1294,24 +1319,43 @@ end
 % *** SAVE DATA ********************************************************* %
 % *********************************************************************** %
 %
-% *** SAVE INVERSION ANALYSIS DATA ************************************** %
-%
-if(opt_invanalysis)
+if (opt_rebinned),
+    %
+    % *** SAVE INVERSION ANALYSIS DATA ************************************** %
+    %
     % rebinned data
-    if (opt_rebinned),
-        % bin ends
-        fprint_1Dn(bins_FCO2_t(2:end),[par_pathout '/' str_filename '.binends.res'],'%3i','%3i',true,false);
-        % bin centers
-        fprint_1Dn(binctrs_FCO2(:),[par_pathout '/' str_filename '.bincenters.res'],'%3i','%3i',true,false);
-        % emissions rate
-        fprint_1Dn(bindata_FCO2_dF(:),[par_pathout '/' str_filename '.demissions.res'],'%3i','%3i',true,false);
-        % cumulative emissons
-        fprint_1Dn(bindata_FCO2_sum(:),[par_pathout '/' str_filename '.sumemissions.res'],'%3i','%3i',true,false);
-        % d13C of emissons
-        fprint_1Dn(bindata_FCO2_13C(:),[par_pathout '/' str_filename '.d13Cemissions.res'],'%3i','%3i',true,false);
-    else
-        %%%
+    % bin ends
+    fprint_1Dn(bins_FCO2_t(2:end),[par_pathout '/' str_filename '.binends.res'],'%3i','%3i',true,false);
+    % bin centers
+    fprint_1Dn(binctrs_FCO2(:),[par_pathout '/' str_filename '.bincenters.res'],'%3i','%3i',true,false);
+    % emissions rate
+    fprint_1Dn(bindata_FCO2_dF(:),[par_pathout '/' str_filename '.demissions.res'],'%3i','%3i',true,false);
+    % cumulative emissons
+    fprint_1Dn(bindata_FCO2_sum(:),[par_pathout '/' str_filename '.sumemissions.res'],'%3i','%3i',true,false);
+    % d13C of emissons
+    fprint_1Dn(bindata_FCO2_13C(:),[par_pathout '/' str_filename '.d13Cemissions.res'],'%3i','%3i',true,false);
+    %
+else
+    %
+    % *** SAVE OTHER PLOTED DATA ******************************************** %
+    %
+    % panel #1
+    fprint_1Dn([data_pCO2(:,1) 1.0E6*data_pCO2(:,3)],[par_pathout '/' str_filename '.panel1_pCO2.res'],'%3i','%3i',true,false);
+    fprint_1Dn([data_pCO2_13C(:,1) data_pCO2_13C(:,3)],[par_pathout '/' str_filename '.panel1_pCO2_d13C.res'],'%3i','%3i',true,false);
+    % panel #2
+    fprint_1Dn([data_Tatm(:,1) data_Tatm(:,2)],[par_pathout '/' str_filename '.panel2_atmT.res'],'%3i','%3i',true,false);
+    fprint_1Dn([data_seaice(:,1) data_seaice(:,3)],[par_pathout '/' str_filename '.panel2_seaice.res'],'%3i','%3i',true,false);
+    % optional panels
+    if (~isempty(data1)),
+        fprint_1Dn([data1(:,1) data1(:,data1_n)],[par_pathout '/' str_filename '.panel3_datacolumn' num2str(data1_n) '.res'],'%3i','%3i',true,false);
     end
+    if (~isempty(data2)),
+        fprint_1Dn([data2(:,1) data2(:,data2_n)],[par_pathout '/' str_filename '.panel4_datacolumn' num2str(data2_n) '.res'],'%3i','%3i',true,false);
+    end
+    if (~isempty(data3)),
+        fprint_1Dn([data3(:,1) data3(:,data3_n)],[par_pathout '/' str_filename '.panel5_datacolumn' num2str(data3_n) '.res'],'%3i','%3i',true,false);
+    end
+    %
 end
 %
 % *********************************************************************** %
