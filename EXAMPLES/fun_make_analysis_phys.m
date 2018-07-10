@@ -8,8 +8,6 @@ plot_fields_biogem_2d(DUM_EXP,'','grid_topo','',DUM_T,-1,16,'',-1.0,-6000.0,0.0,
 plot_fields_biogem_2d(DUM_EXP,'','phys_seaice','',DUM_T,-1,16,'',1.0,0.0,100.0,20,'','plot_fields_settings_MISC',[DUM_EXP '.SEAICE']);
 % PSI
 plot_fields_biogem_2d(DUM_EXP,'','atm_temp','',DUM_T,-1,16,'',1.0,0.0,30.0,30,'','plot_fields_settings_PSI',[DUM_EXP '.PSI']);
-% PSI (+ temp)
-plot_fields_biogem_2d(DUM_EXP,'','ocn_sur_temp','',DUM_T,-1,16,'',1.0,0.0,30.0,30,'','plot_fields_settings_PSI_temp',[DUM_EXP '.PSI_temp']);
 % temp
 plot_fields_biogem_3d_k(DUM_EXP,'','ocn_temp','',DUM_T,-1,16,'',1.0,0.0,30.0,30,'','plot_fields_settings_temp',[DUM_EXP '.SST']);
 % currents (+ speed)
