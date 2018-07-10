@@ -19,6 +19,6 @@ plot_fields_biogem_3d_i(DUM_EXP,'','ocn_temp','',DUM_T,-1,0,'',1.0,0.0,30.0,30,'
 % OPSI (+ temp)
 plot_fields_biogem_3d_i(DUM_EXP,'','ocn_temp','',DUM_T,-1,0,'',1.0,0.0,30.0,30,'','plot_fields_settings_OPSI_temp',[DUM_EXP '.OPSI_temp']);
 %
-close all;
-%
 % *********************************************************************** %
+
+close all;

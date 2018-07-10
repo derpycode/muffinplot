@@ -16,3 +16,5 @@ plot_fields_biogem_3d_k(DUM_EXP,'','ocn_O2','',DUM_T,-1,-1,'',1.0E-6,0.0,300.0,3
 plot_fields_biogem_3d_i(DUM_EXP,'','ocn_O2','',DUM_T,-1,0,'',1.0E-6,0.0,300.0,30,'','plot_fields_settings_GEO',[DUM_EXP '.ZONALo2']);
 %
 % *********************************************************************** %
+
+close all;
