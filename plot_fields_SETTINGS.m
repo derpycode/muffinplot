@@ -47,6 +47,10 @@
 %      data_stats = 'n';      Calculate and plot model-data statistics?
 %      data_fit_n = 1;        Polynomial fit order
 %      data_scalepoints = 'y';Also scale data points
+%      data_saveall = 'n';    SAVE ALL DATA (in plotted section)?
+%      data_saveallinfo = 'n';SAVE ALL DATA + grid info?
+%      data_minmax = '';      EXTRACT MIN / MAX FROM SEASONAL DATA
+%      data_nseas = 12;       NUMBER OF SUB-YEAR SLICES
 %   REPLACEMENT ASCII-FORMAT DATA FIELDS
 %      plot_dataid_alt1='';   Datafile (ASCII) replacement for field #1 
 %      plot_dataid_alt2='';   Datafile (ASCII) replacement for field #2
@@ -141,6 +145,10 @@ data_fontsz = 8;        % [   8]  LABEL FONT SIZE
 data_stats = 'n';       % [ 'n']  CALCULATE & PLOT STATS?
 data_fit_n = 1;         % [   1]  POLYNOMIAL FIT ORDER
 data_scalepoints = 'y'; % [ 'y']  ALSO SCALE DATA POINTS (same as model)?
+data_saveall = 'n';     % [ 'n']  SAVE ALL DATA (in plotted section)?
+data_saveallinfo = 'n'; % [ 'n']  SAVE ALL DATA + grid info?
+data_minmax = '';       % [ '']  EXTRACT MIN / MAX FROM SEASONAL DATA
+data_nseas = 12;        % [ '12']  NUMBER OF SUB-YEAR SLICES
 plot_dataid_alt1='';    % [  '']  DATA FIELD #1 REPLACEMENT FILE
 plot_dataid_alt2='';    % [  '']  DATA FIELD #2 REPLACEMENT FILE
 plot_landvalues='n';    % [ 'n']  PLOT VALUES OVER LAND?
