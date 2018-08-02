@@ -237,6 +237,9 @@ function [STATM] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,P
 %             seasonal data
 %             added code to save all points, and also in an explicit format
 %             *** VERSION 1.10 ********************************************
+%   18/08/02: added velocity scale vector (0.1 m s-1)
+%             (also removed more xm and ym NaN assignments)
+%             *** VERSION 1.11 ********************************************
 % *********************************************************************** %
 %%
 
@@ -247,7 +250,7 @@ function [STATM] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,P
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.10;
+par_ver = 1.11;
 % set function name
 str_function = mfilename;
 % close open windows
