@@ -230,7 +230,13 @@ function [STATM] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,P
 %             *** VERSION 1.08 ********************************************
 %   18/04/05: added M-score stats output
 %             *** VERSION 1.09 ********************************************
-%
+%   18/07/16: corrected sign of depth in mask location ASCII output
+%   18/07/20: changed initial name of 'raw' netCDF data 
+%             to help avoid potenital issues
+%             added parameters and code to extract min and max from
+%             seasonal data
+%             added code to save all points, and also in an explicit format
+%             *** VERSION 1.10 ********************************************
 % *********************************************************************** %
 %%
 
@@ -241,7 +247,7 @@ function [STATM] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,P
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.09;
+par_ver = 1.10;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -256,6 +262,12 @@ str_date = [datestr(date,11), datestr(date,5), datestr(date,7)];
 % 
 % data point scaling
 if ~exist('data_scalepoints','var'), data_scalepoints = 'n'; end
+% data saving
+if ~exist('data_saveall','var'), data_saveall = 'n'; end
+if ~exist('data_saveallinfo','var'), data_saveallinfo = 'n'; end
+% extracting min / max / range from seasonal data
+if ~exist('data_minmax','var'),  data_minmax  = ''; end
+if ~exist('data_nseas','var'),   data_nseas   = 0; end
 % paths
 if ~exist('par_pathin','var'),   par_pathin   = 'cgenie_output'; end
 if ~exist('par_pathlib','var'),  par_pathlib  = 'source'; end
@@ -582,19 +594,37 @@ end
 % load data
 % flip array around diagonal to give (j,i) array orientation
 [varname,xtype,dimids,natts] = netcdf.inqVar(ncid_1,varid);
-rawdata = netcdf.getVar(ncid_1,varid);
+netcdfdata = netcdf.getVar(ncid_1,varid);
 if length(dimids) == 4
-    rawdata(1:imax,1:jmax,1:kmax) = rawdata(1:imax,1:jmax,1:kmax,tid);
+    rawdata(1:imax,1:jmax,1:kmax) = netcdfdata(1:imax,1:jmax,1:kmax,tid);
+    switch data_minmax,
+        case {'min'}
+            for j = 1:jmax,
+                for i = 1:imax,
+                    for k = 1:kmax,
+                        rawdata(i,j,k) = min(netcdfdata(i,j,k,tid:tid+data_nseas-1));
+                    end
+                end
+            end
+        case {'max','minmax'}
+            for j = 1:jmax,
+                for i = 1:imax,
+                    for k = 1:kmax,
+                        rawdata(i,j,k) = max(netcdfdata(i,j,k,tid:tid+data_nseas-1));
+                    end
+                end
+            end
+    end
     for n = 1:kmax,
         data_1(kmax - n + 1,1:jmax,1:imax) = rawdata(1:imax,1:jmax,n)';
     end
 elseif length(dimids) == 3
-    rawdata(1:imax,1:jmax,1:kmax) = rawdata(1:imax,1:jmax,1:kmax);
+    rawdata(1:imax,1:jmax,1:kmax) = netcdfata(1:imax,1:jmax,1:kmax);
     for n = 1:kmax,
         data_1(kmax - n + 1,1:jmax,1:imax) = rawdata(1:imax,1:jmax,n)';
     end
 elseif length(dimids) == 2
-    rawdata(1:imax,1:jmax) = rawdata(1:imax,1:jmax);
+    rawdata(1:imax,1:jmax) = netcdfata(1:imax,1:jmax);
     data_1(1:jmax,1:imax) = rawdata(1:imax,1:jmax)';
 else
     data_1(:,:,:) = NaN;
@@ -686,19 +716,37 @@ end
 if (~isempty(exp_2)) || (timesliceid_2 > 0.0) || (~isempty(dataid_2))
     % load data
     [varname,xtype,dimids,natts] = netcdf.inqVar(ncid_2,varid);
-    rawdata = netcdf.getVar(ncid_2,varid);
+    netcdfdata = netcdf.getVar(ncid_2,varid);
     if length(dimids) == 4
-        rawdata(1:imax,1:jmax,1:kmax) = rawdata(1:imax,1:jmax,1:kmax,tid);
+        rawdata(1:imax,1:jmax,1:kmax) = netcdfdata(1:imax,1:jmax,1:kmax,tid);
+        switch data_minmax,
+            case {'min','minmax'}
+                for j = 1:jmax,
+                    for i = 1:imax,
+                        for k = 1:kmax,
+                            rawdata(i,j,k) = min(netcdfdata(i,j,k,tid:tid+data_nseas-1));
+                        end
+                    end
+                end
+            case 'max'
+                for j = 1:jmax,
+                    for i = 1:imax,
+                        for k = 1:kmax,
+                            rawdata(i,j,k) = max(netcdfdata(i,j,k,tid:tid+data_nseas-1));
+                        end
+                    end
+                end
+        end
         for n = 1:kmax,
             data_2(kmax - n + 1,1:jmax,1:imax) = rawdata(1:imax,1:jmax,n)';
         end
     elseif length(dimids) == 3
-        rawdata(1:imax,1:jmax,1:kmax) = rawdata(1:imax,1:jmax,1:kmax);
+        rawdata(1:imax,1:jmax,1:kmax) = netcdfata(1:imax,1:jmax,1:kmax);
         for n = 1:kmax,
             data_2(kmax - n + 1,1:jmax,1:imax) = rawdata(1:imax,1:jmax,n)';
         end
     elseif length(dimids) == 2
-        rawdata(1:imax,1:jmax) = rawdata(1:imax,1:jmax);
+        rawdata(1:imax,1:jmax) = netcdfata(1:imax,1:jmax);
         data_2(1:jmax,1:imax) = rawdata(1:imax,1:jmax)';
     else
         data_2(:,:,:) = NaN;
@@ -839,14 +887,10 @@ if (kplot > 0),
         for j = 1:jmax,
             if topo(j,i) > layb(j,i)
                 zm(j,i) = NaN;
-%                 xm(j,i) = NaN;
-%                 ym(j,i) = NaN;
                 z_u(j,i) = NaN;
                 z_v(j,i) = NaN;
             elseif (zm(j,i) < -1.0E6) || (zm(j,i) > 1.0E30) || isnan(zm(j,i))
                 zm(j,i) = NaN;
-%                 xm(j,i) = NaN;
-%                 ym(j,i) = NaN;
                 z_u(j,i) = NaN;
                 z_v(j,i) = NaN;
             else
@@ -897,8 +941,6 @@ elseif (kplot == 0),
     for j = 1:jmax,
         for i = 1:imax,
             if topo(j,i) == 0.0
-%                 xm(j,i) = NaN;
-%                 ym(j,i) = NaN;
                 zm(j,i) = NaN;
                 z_u(j,i) = NaN;
                 z_v(j,i) = NaN;
@@ -1341,8 +1383,45 @@ elseif ~isempty(maskid)
                 loc_lat = ym(j,i);
                 loc_depth = laym(j,i);
                 loc_value = zm(j,i);
-                fprintf(fid, '%2d %2d %2d %8.3f %8.3f %8.3f %8.6e %s \n', loc_i, loc_j, loc_k, loc_lon, loc_lat, loc_depth, loc_value, '%');
+                fprintf(fid, '%2d %2d %2d %8.3f %8.3f %8.3f %8.6e %s \n', loc_i, loc_j, loc_k, loc_lon, loc_lat, -loc_depth, loc_value, '%');
             end
+        end
+    end
+    fclose(fid);
+elseif (data_saveall == 'y')
+    fid = fopen([par_pathout '/' filename '_ALLPOINTS', '.', str_date '.dat'], 'wt');
+    fprintf(fid, '%% Model value at all grid locations');
+    fprintf(fid, '\n');
+    fprintf(fid, '%% Format: i, j, k, lon, lat, model depth, model value, label');
+    fprintf(fid, '\n');
+    for j = 1:jmax,
+        for i = 1:imax,
+            loc_i = i;
+            loc_j = j;
+            if (kplot > 0), % process single depth layer
+                loc_k = kplot;
+            elseif (kplot == 0), % create water column integral
+                loc_k = 0;
+            elseif (kplot == -1), % benthic layer
+                loc_k = grid_k1(j,i);
+            end
+            loc_lon = xm(j,i);
+            loc_lat = ym(j,i);
+            loc_depth = laym(j,i);
+            loc_value = zm(j,i);
+            fprintf(fid, '%2d %2d %2d %8.3f %8.3f %8.3f %8.6e %s \n', loc_i, loc_j, loc_k, loc_lon, loc_lat, -loc_depth, loc_value, '%');
+        end
+    end
+    fclose(fid);
+elseif (data_saveallinfo == 'y')
+    fid = fopen([par_pathout '/' filename '_ALLINFOPOINTS', '.', str_date '.dat'], 'wt');
+    fprintf(fid, '%% Model value at all grid locations');
+    fprintf(fid, '\n');
+    fprintf(fid, '%% Format: lon_W, lon_m, lon_W, lat_S, lat_m, lat_N, depth_B, depth_M, depth_T, model value');
+    fprintf(fid, '\n');
+    for j = 1:jmax,
+        for i = 1:imax,
+            fprintf(fid, '%8.3f %8.3f %8.3f %8.3f %8.3f %8.3f %8.3f %8.3f %8.3f %8.6e \n', lonw(j,i), lonm(j,i), lone(j,i), asin(lats(j,i))*180.0/pi, latm(j,i), asin(latn(j,i))*180.0/pi, -layb(j,i), -laym(j,i), -layt(j,i), zm(j,i));
         end
     end
     fclose(fid);
