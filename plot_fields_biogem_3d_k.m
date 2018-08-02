@@ -839,14 +839,14 @@ if (kplot > 0),
         for j = 1:jmax,
             if topo(j,i) > layb(j,i)
                 zm(j,i) = NaN;
-                xm(j,i) = NaN;
-                ym(j,i) = NaN;
+%                 xm(j,i) = NaN;
+%                 ym(j,i) = NaN;
                 z_u(j,i) = NaN;
                 z_v(j,i) = NaN;
             elseif (zm(j,i) < -1.0E6) || (zm(j,i) > 1.0E30) || isnan(zm(j,i))
                 zm(j,i) = NaN;
-                xm(j,i) = NaN;
-                ym(j,i) = NaN;
+%                 xm(j,i) = NaN;
+%                 ym(j,i) = NaN;
                 z_u(j,i) = NaN;
                 z_v(j,i) = NaN;
             else
@@ -897,8 +897,8 @@ elseif (kplot == 0),
     for j = 1:jmax,
         for i = 1:imax,
             if topo(j,i) == 0.0
-                xm(j,i) = NaN;
-                ym(j,i) = NaN;
+%                 xm(j,i) = NaN;
+%                 ym(j,i) = NaN;
                 zm(j,i) = NaN;
                 z_u(j,i) = NaN;
                 z_v(j,i) = NaN;
@@ -1599,8 +1599,11 @@ if (plot_main == 'y'),
     % *** OVERLAY VELOCITY FIELD ******************************************** %
     %
     % plot velocity field if requested
+    % NOTE: units == m s-1
     if (data_uv == 'y'),
         if (plot_equallat == 'n'),
+            % set flag
+            loc_flag = true;
             % calculate maximum velocities
             loc_max_u = max(max(z_u));
             loc_max_v = max(max(z_v));
@@ -1638,6 +1641,29 @@ if (plot_main == 'y'),
                         loc_dxr = 360*loc_dxr/loc_w;
                         loc_dyr = 2.0*loc_dyr/loc_h;
                         [h] = line([loc_x+loc_dx loc_x+loc_dx+loc_dxr],[loc_y+loc_dy loc_y+loc_dy+loc_dyr],'LineWidth',0.3,'Color','k');
+                    elseif loc_flag
+                        % plot scale vector -- 0.1 m s-1
+                        loc_x = xm(j,i);
+                        loc_dx = data_uv_scale*(360/imax)*0.1/loc_max_u;
+                        loc_y = sin(pi*ym(j,i)/180.0);
+                        loc_dy = data_uv_scale*(2/jmax)*0.0/loc_max_u;
+                        [h] = line([loc_x loc_x+loc_dx],[loc_y loc_y+loc_dy],'LineWidth',1.2,'Color','w');
+                        % plot arrow arm #1
+                        [THETA,R] = cart2pol((-loc_dx/2.5)/360*loc_w,(-loc_dy/2.5)/2*loc_h); %Convert to polar coordinates
+                        THETA=THETA+pi*30/180; %Add a_rad to theta
+                        [loc_dxr,loc_dyr] = pol2cart(THETA,R); %Convert back to Cartesian coordinates
+                        loc_dxr = 360*loc_dxr/loc_w;
+                        loc_dyr = 2.0*loc_dyr/loc_h;
+                        [h] = line([loc_x+loc_dx loc_x+loc_dx+loc_dxr],[loc_y+loc_dy loc_y+loc_dy+loc_dyr],'LineWidth',0.6,'Color','w');
+                        % plot arrow arm #2
+                        [THETA,R] = cart2pol((-loc_dx/2.5)/360*loc_w,(-loc_dy/2.5)/2*loc_h); %Convert to polar coordinates
+                        THETA=THETA-pi*30/180; %Add a_rad to theta
+                        [loc_dxr,loc_dyr] = pol2cart(THETA,R); %Convert back to Cartesian coordinates
+                        loc_dxr = 360*loc_dxr/loc_w;
+                        loc_dyr = 2.0*loc_dyr/loc_h;
+                        [h] = line([loc_x+loc_dx loc_x+loc_dx+loc_dxr],[loc_y+loc_dy loc_y+loc_dy+loc_dyr],'LineWidth',0.6,'Color','w');
+                        % reset flag
+                        loc_flag = false;
                     end
                 end
             end
@@ -1676,7 +1702,7 @@ if (plot_main == 'y'),
         end
     end
     %
-    % *** PLOT BORDER ******************************************************* %
+    % *** PLOT BORDER *************************************************** %
     %
     % draw plot border
     h = plot([lon_min lon_max],[lat_min lat_min],'k-');
@@ -1690,7 +1716,7 @@ if (plot_main == 'y'),
     %
     hold off;
     %
-    % *** CREATE COLOR BAR ************************************************** %
+    % *** CREATE COLOR BAR ********************************************** %
     %
     if (~((data_only == 'y') && (data_siteonly == 'y')))
         %
@@ -1737,7 +1763,7 @@ if (plot_main == 'y'),
         %
     end
     %
-    % *** PRINT PLOT ******************************************************** %
+    % *** PRINT PLOT **************************************************** %
     %
     set(gcf,'CurrentAxes',fh(1));
     if (plot_format_old == 'y')
