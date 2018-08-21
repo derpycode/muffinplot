@@ -190,6 +190,9 @@ function [grid_lat,zz] = plot_fields_biogem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,P
 %             seasonal data
 %             added code to save all points, and also in an explicit format
 %             *** VERSION 1.10 ********************************************
+%   18/08/21: rename current_path string
+%             adjusted mask path search
+%             *** VERSION 1.12 ********************************************
 % *********************************************************************** %
 %%
 
@@ -200,7 +203,7 @@ function [grid_lat,zz] = plot_fields_biogem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,P
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.10;
+par_ver = 1.12;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -300,6 +303,8 @@ end
 %
 % *** SET PATHS & DIRECTORIES ******************************************* %
 % 
+% find current path
+str_current_path = pwd;
 % find where str_function lives ...
 % remove its name (+ '.m' extension) from the returned path ...
 str_function_path = which(str_function);
@@ -313,30 +318,30 @@ else
     addpath([str_function_path '/' par_pathlib]);
 end
 % check masks directory and add search path
-if ~(exist([str_function_path '/' par_pathmask],'dir') == 7),
+if (exist([str_current_path '/' par_pathmask],'dir') == 7),
+    addpath([str_current_path '/' par_pathmask]);
+elseif (exist([str_function_path '/' par_pathmask],'dir') == 7),
+    addpath([str_function_path '/' par_pathmask]);
+else
     disp([' * ERROR: Cannot find MASKS directory -- was it moved ... ?']);
     disp([' ']);
     return;
-else
-    addpath([str_function_path '/' par_pathmask]);
 end
-% find current path
-current_path = pwd;
 % set input path
-par_pathin = [current_path '/' par_pathin];
+par_pathin = [str_current_path '/' par_pathin];
 if ~(exist(par_pathin,'dir') == 7),
     disp([' * ERROR: Cannot find experiment results directory']);
     disp([' ']);
     return;
 end
 % set output path
-par_pathout = [current_path '/' par_pathout];
+par_pathout = [str_current_path '/' par_pathout];
 if ~(exist(par_pathout,'dir') == 7), mkdir(par_pathout);  end
 % check/add data path
-if ~(exist([current_path '/' par_pathdata],'dir') == 7),
-    mkdir([current_path '/' par_pathdata]); 
+if ~(exist([str_current_path '/' par_pathdata],'dir') == 7),
+    mkdir([str_current_path '/' par_pathdata]); 
 end
-addpath([current_path '/' par_pathdata]);
+addpath([str_current_path '/' par_pathdata]);
 % check plot format setting
 if ~isempty(plot_format), plot_format_old='n'; end
 % add plotting paths

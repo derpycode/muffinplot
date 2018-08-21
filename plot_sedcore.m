@@ -163,6 +163,8 @@ function [] = plot_sedcore(PEXP,PCORE,PMIN,PMAX,PREFAGE,PDATA1,PDATA2,POPT,PNAME
 %             *** VERSION 1.04 ********************************************
 %   18/04/24: bug-fixing PLOT path ...
 %             *** VERSION 1.05 ********************************************
+%   18/08/21: rename current_path string
+%             *** VERSION 1.12 ********************************************
 %
 %   ***********************************************************************
 
@@ -173,7 +175,7 @@ function [] = plot_sedcore(PEXP,PCORE,PMIN,PMAX,PREFAGE,PDATA1,PDATA2,POPT,PNAME
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.05;
+par_ver = 1.12;
 % set function name
 str_function = mfilename;
 % close plot windows
@@ -246,6 +248,8 @@ par_mutlab = str2num(str_mutlab);
 %
 % *** SET PATHS & DIRECTORIES ******************************************* %
 % 
+% find current path
+str_current_path = pwd;
 % find where str_function lives ...
 % remove its name (+ '.m' extension) from the returned path ...
 str_function_path = which(str_function);
@@ -266,23 +270,21 @@ if ~(exist([str_function_path '/' par_pathmask],'dir') == 7),
 else
     addpath([str_function_path '/' par_pathmask]);
 end
-% find current path
-current_path = pwd;
 % set input path
-par_pathin = [current_path '/' par_pathin];
+par_pathin = [str_current_path '/' par_pathin];
 if ~(exist(par_pathin,'dir') == 7),
     disp([' * ERROR: Cannot find experiment results directory']);
     disp([' ']);
     return;
 end
 % set output path
-par_pathout = [current_path '/' par_pathout];
+par_pathout = [str_current_path '/' par_pathout];
 if ~(exist(par_pathout,'dir') == 7), mkdir(par_pathout);  end
 % check/add data path
-if ~(exist([current_path '/' par_pathdata],'dir') == 7),
-    mkdir([current_path '/' par_pathdata]); 
+if ~(exist([str_current_path '/' par_pathdata],'dir') == 7),
+    mkdir([str_current_path '/' par_pathdata]); 
 end
-addpath([current_path '/' par_pathdata]);
+addpath([str_current_path '/' par_pathdata]);
 % check plot format setting
 if ~isempty(plot_format), plot_format_old='n'; end
 % add plotting paths
