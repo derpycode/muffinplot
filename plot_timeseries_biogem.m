@@ -116,6 +116,8 @@ function [] = plot_timeseries_biogem(PEXP1,PEXP2,PTMIN,PTMAX,PDATA1,PDATA1N,PDAT
 %             *** VERSION 1.06 ********************************************
 %   18/08/21: rename current_path string
 %             *** VERSION 1.12 ********************************************
+%   18/09/10: improved error messaging
+%             *** VERSION 1.13 ********************************************
 %
 %   ***********************************************************************
 
@@ -126,7 +128,7 @@ function [] = plot_timeseries_biogem(PEXP1,PEXP2,PTMIN,PTMAX,PDATA1,PDATA1N,PDAT
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.12;
+par_ver = 1.13;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -342,6 +344,7 @@ if ~isempty(data1_name)
     else
         disp(['ERROR: BIOGEM time-series file ', data1_file, ' does not exist.']);
         disp(['(or SEDGEM sedcorenv file ', data1_fileALT, ' does not exist)']);
+        disp(['(or BIOGEM orbital data file ', data1_fileORB, ' does not exist)']);
         return;
     end
     data1(:,n) = axis_data1_scale*data1(:,data1_n);
@@ -416,6 +419,7 @@ if ~isempty(data2_name)
     else
         disp(['ERROR: BIOGEM time-series file ', data2_file, ' does not exist.']);
         disp(['(or SEDGEM sedcorenv file ', data2_fileALT, ' does not exist)']);
+        disp(['(or BIOGEM orbital data file ', data2_fileORB, ' does not exist)']);
         return;
     end
     data2(:,data2_n) = axis_data2_scale*data2(:,data2_n);
@@ -490,6 +494,7 @@ if ~isempty(data3_name)
     else
         disp(['ERROR: BIOGEM time-series file ', data3_file, ' does not exist.']);
         disp(['(or SEDGEM sedcorenv file ', data3_fileALT, ' does not exist)']);
+        disp(['(or BIOGEM orbital data file ', data3_fileORB, ' does not exist)']);
         return;
     end
     data3(:,data3_n) = axis_data3_scale*data3(:,data3_n);
