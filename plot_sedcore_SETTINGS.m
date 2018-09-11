@@ -145,7 +145,5 @@ opt_fatplot=false;         % [false] FATTER PLOTS?
 opt_minplot=false;         % [false] MINIMAL PLOT?
 str_plot_title = '';       % [  '']  PLOT TITLE!
 str_plot_yaxis = '';       % [  '']  Y-AXIS LABEL
-library_path2 = 'C:\cgenie.muffin\genie-matlab\xpdfbin-win-3.03\bin32';
-library_path3 = 'C:\cgenie.muffin\genie-matlab\export_fig';
 %
 % *********************************************************************** %
