@@ -118,6 +118,9 @@ function [] = plot_timeseries_biogem(PEXP1,PEXP2,PTMIN,PTMAX,PDATA1,PDATA1N,PDAT
 %             *** VERSION 1.12 ********************************************
 %   18/09/10: improved error messaging
 %             *** VERSION 1.13 ********************************************
+%   18/09/24: made diagnostics data saving optional
+%             made timeseries saving optional [true by default]
+%             *** VERSION 1.14 ********************************************
 %
 %   ***********************************************************************
 
@@ -126,9 +129,9 @@ function [] = plot_timeseries_biogem(PEXP1,PEXP2,PTMIN,PTMAX,PDATA1,PDATA1N,PDAT
 % *********************************************************************** %
 %
 % *** initialize ******************************************************** %
-% 
+%
 % set version!
-par_ver = 1.13;
+par_ver = 1.14;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -140,7 +143,7 @@ eval(POPT);
 str_date = [datestr(date,11), datestr(date,5), datestr(date,7)];
 %
 % *** backwards compatability ******************************************* %
-% 
+%
 % time scale offset parameter
 if ~exist('plot_toffset','var'), plot_toffset = 0.0; end
 % time scale direction parameter
@@ -152,9 +155,12 @@ if ~exist('par_pathout','var'),  par_pathout  = 'PLOTS'; end
 if ~exist('par_pathdata','var'), par_pathdata = 'DATA'; end
 if ~exist('par_pathmask','var'), par_pathmask = 'MASKS'; end
 if ~exist('par_pathexam','var'), par_pathexam = 'EXAMPLES'; end
+% data saving
+if ~exist('opt_save_diagnostics','var'), opt_save_diagnostics = false; end
+if ~exist('opt_save_timeseries','var'), opt_save_timeseries = true; end
 %
 % *** copy passed parameters ******************************************** %
-% 
+%
 % set dummy variables
 expid1 = PEXP1;
 expid2 = PEXP2;
@@ -203,7 +209,7 @@ data_orb2 = false;
 data_orb3 = false;
 %
 % *** SET PATHS & DIRECTORIES ******************************************* %
-% 
+%
 % find current path
 str_current_path = pwd;
 % find where str_function lives ...
@@ -238,7 +244,7 @@ par_pathout = [str_current_path '/' par_pathout];
 if ~(exist(par_pathout,'dir') == 7), mkdir(par_pathout);  end
 % check/add data path
 if ~(exist([str_current_path '/' par_pathdata],'dir') == 7),
-    mkdir([str_current_path '/' par_pathdata]); 
+    mkdir([str_current_path '/' par_pathdata]);
 end
 addpath([str_current_path '/' par_pathdata]);
 % check plot format setting
@@ -636,265 +642,272 @@ end
 % *** EXTRACT DIAGNOSTIC  DATA ****************************************** %
 % *********************************************************************** %
 %
-%
-loc_str_data = struct('name', {}, 'time', {}, 'value', {});
-%
-loc_data = data_pCO2;
-loc_terr = min(abs(loc_data(:,1) - axis_tmin));
-loc_n_min = find(abs(loc_data(:,1) - axis_tmin) == loc_terr);
-loc_terr = min(abs(loc_data(:,1) - axis_tmax));
-loc_n_max = find(abs(loc_data(:,1) - axis_tmax) == loc_terr);
-%
-% *** DATA #1 *********************************************************** %
-%
-loc_str = 'pCO2';
-loc_data = data_pCO2;
-loc_data_min = min(loc_data(loc_n_min:loc_n_max,3));
-loc_data_min_t = loc_data(find(loc_data(:,3) == loc_data_min),1);
-if (length(loc_data_min_t) > 1), loc_data_min_t = loc_data_min_t(1); end;
-loc_data_max = max(loc_data(loc_n_min:loc_n_max,3));
-loc_data_max_t = loc_data(find(loc_data(:,3) == loc_data_max),1);
-if (length(loc_data_max_t) > 1), loc_data_max_t = loc_data_max_t(1); end;
-loc_str_data = setfield(loc_str_data, {1}, 'name', [loc_str '_start']);
-loc_str_data = setfield(loc_str_data, {1}, 'time', loc_data(loc_n_min,1));
-loc_str_data = setfield(loc_str_data, {1}, 'value', loc_data(loc_n_min,3));
-loc_str_data = setfield(loc_str_data, {2}, 'name', [loc_str '_end']);
-loc_str_data = setfield(loc_str_data, {2}, 'time', loc_data(loc_n_max,1));
-loc_str_data = setfield(loc_str_data, {2}, 'value', loc_data(loc_n_max,3));
-loc_str_data = setfield(loc_str_data, {3}, 'name', [loc_str '_min']);
-loc_str_data = setfield(loc_str_data, {3}, 'time', loc_data_min_t);
-loc_str_data = setfield(loc_str_data, {3}, 'value', loc_data_min);
-loc_str_data = setfield(loc_str_data, {4}, 'name', [loc_str '_max']);
-loc_str_data = setfield(loc_str_data, {4}, 'time', loc_data_max_t);
-loc_str_data = setfield(loc_str_data, {4}, 'value', loc_data_max);
-%
-% *** DATA #2 *********************************************************** %
-%
-loc_str = 'pCO2_13C';
-loc_data = data_pCO2_13C;
-loc_data_min = min(loc_data(loc_n_min:loc_n_max,3));
-loc_data_min_t = loc_data(find(loc_data(:,3) == loc_data_min),1);
-if (length(loc_data_min_t) > 1), loc_data_min_t = loc_data_min_t(1); end;
-loc_data_max = max(loc_data(loc_n_min:loc_n_max,3));
-loc_data_max_t = loc_data(find(loc_data(:,3) == loc_data_max),1);
-if (length(loc_data_max_t) > 1), loc_data_max_t = loc_data_max_t(1); end;
-loc_str_data = setfield(loc_str_data, {5}, 'name', [loc_str '_start']);
-loc_str_data = setfield(loc_str_data, {5}, 'time', loc_data(loc_n_min,1));
-loc_str_data = setfield(loc_str_data, {5}, 'value', loc_data(loc_n_min,3));
-loc_str_data = setfield(loc_str_data, {6}, 'name', [loc_str '_end']);
-loc_str_data = setfield(loc_str_data, {6}, 'time', loc_data(loc_n_max,1));
-loc_str_data = setfield(loc_str_data, {6}, 'value', loc_data(loc_n_max,3));
-loc_str_data = setfield(loc_str_data, {7}, 'name', [loc_str '_min']);
-loc_str_data = setfield(loc_str_data, {7}, 'time', loc_data_min_t);
-loc_str_data = setfield(loc_str_data, {7}, 'value', loc_data_min);
-loc_str_data = setfield(loc_str_data, {8}, 'name', [loc_str '_max']);
-loc_str_data = setfield(loc_str_data, {8}, 'time', loc_data_max_t);
-loc_str_data = setfield(loc_str_data, {8}, 'value', loc_data_max);
-%
-% *** DATA #3 *********************************************************** %
-%
-loc_str = 'Tatm';
-loc_data = data_Tatm;
-loc_data_min = min(loc_data(loc_n_min:loc_n_max,2));
-loc_data_min_t = loc_data(find(loc_data(:,2) == loc_data_min),1);
-if (length(loc_data_min_t) > 1), loc_data_min_t = loc_data_min_t(1); end;
-loc_data_max = max(loc_data(loc_n_min:loc_n_max,2));
-loc_data_max_t = loc_data(find(loc_data(:,2) == loc_data_max),1);
-if (length(loc_data_max_t) > 1), loc_data_max_t = loc_data_max_t(1); end;
-loc_str_data = setfield(loc_str_data, {9}, 'name', [loc_str '_start']);
-loc_str_data = setfield(loc_str_data, {9}, 'time', loc_data(loc_n_min,1));
-loc_str_data = setfield(loc_str_data, {9}, 'value', loc_data(loc_n_min,2));
-loc_str_data = setfield(loc_str_data, {10}, 'name', [loc_str '_end']);
-loc_str_data = setfield(loc_str_data, {10}, 'time', loc_data(loc_n_max,1));
-loc_str_data = setfield(loc_str_data, {10}, 'value', loc_data(loc_n_max,2));
-loc_str_data = setfield(loc_str_data, {11}, 'name', [loc_str '_min']);
-loc_str_data = setfield(loc_str_data, {11}, 'time', loc_data_min_t);
-loc_str_data = setfield(loc_str_data, {11}, 'value', loc_data_min);
-loc_str_data = setfield(loc_str_data, {12}, 'name', [loc_str '_max']);
-loc_str_data = setfield(loc_str_data, {12}, 'time', loc_data_max_t);
-loc_str_data = setfield(loc_str_data, {12}, 'value', loc_data_max);
-%
-% *** DATA #4 *********************************************************** %
-%
-loc_str = 'seaice';
-loc_data = data_seaice;
-loc_data_min = min(loc_data(loc_n_min:loc_n_max,3));
-loc_data_min_t = loc_data(find(loc_data(:,3) == loc_data_min),1);
-if (length(loc_data_min_t) > 1), loc_data_min_t = loc_data_min_t(1); end;
-loc_data_max = max(loc_data(loc_n_min:loc_n_max,3));
-loc_data_max_t = loc_data(find(loc_data(:,3) == loc_data_max),1);
-if (length(loc_data_max_t) > 1), loc_data_max_t = loc_data_max_t(1); end;
-loc_str_data = setfield(loc_str_data, {13}, 'name', [loc_str '_start']);
-loc_str_data = setfield(loc_str_data, {13}, 'time', loc_data(loc_n_min,1));
-loc_str_data = setfield(loc_str_data, {13}, 'value', loc_data(loc_n_min,3));
-loc_str_data = setfield(loc_str_data, {14}, 'name', [loc_str '_end']);
-loc_str_data = setfield(loc_str_data, {14}, 'time', loc_data(loc_n_max,1));
-loc_str_data = setfield(loc_str_data, {14}, 'value', loc_data(loc_n_max,3));
-loc_str_data = setfield(loc_str_data, {15}, 'name', [loc_str '_min']);
-loc_str_data = setfield(loc_str_data, {15}, 'time', loc_data_min_t);
-loc_str_data = setfield(loc_str_data, {15}, 'value', loc_data_min);
-loc_str_data = setfield(loc_str_data, {16}, 'name', [loc_str '_max']);
-loc_str_data = setfield(loc_str_data, {16}, 'time', loc_data_max_t);
-loc_str_data = setfield(loc_str_data, {16}, 'value', loc_data_max);
-%
-% *** DATA #5 (OPTIONAL DATA #1) **************************************** %
-%
-if (~isempty(data1) && ~opt_invanalysis),
-    loc_str = strrep(plot_data1_title,' ','_');
-    loc_data = data1;
-    loc_data_min = min(loc_data(loc_n_min:loc_n_max,data1_n));
-    loc_data_min_t = loc_data(find(loc_data(:,data1_n) == loc_data_min),1);
-    if (length(loc_data_min_t) > 1), loc_data_min_t = loc_data_min_t(1); end;
-    loc_data_max = max(loc_data(loc_n_min:loc_n_max,data1_n));
-    loc_data_max_t = loc_data(find(loc_data(:,data1_n) == loc_data_max),1);
-    if (length(loc_data_max_t) > 1), loc_data_max_t = loc_data_max_t(1); end;
-    loc_str_data = setfield(loc_str_data, {17}, 'name', [loc_str '_start']);
-    loc_str_data = setfield(loc_str_data, {17}, 'time', loc_data(loc_n_min,1));
-    loc_str_data = setfield(loc_str_data, {17}, 'value', loc_data(loc_n_min,data1_n));
-    loc_str_data = setfield(loc_str_data, {18}, 'name', [loc_str '_end']);
-    loc_str_data = setfield(loc_str_data, {18}, 'time', loc_data(loc_n_max,1));
-    loc_str_data = setfield(loc_str_data, {18}, 'value', loc_data(loc_n_max,data1_n));
-    loc_str_data = setfield(loc_str_data, {19}, 'name', [loc_str '_min']);
-    loc_str_data = setfield(loc_str_data, {19}, 'time', loc_data_min_t);
-    loc_str_data = setfield(loc_str_data, {19}, 'value', loc_data_min);
-    loc_str_data = setfield(loc_str_data, {20}, 'name', [loc_str '_max']);
-    loc_str_data = setfield(loc_str_data, {20}, 'time', loc_data_max_t);
-    loc_str_data = setfield(loc_str_data, {20}, 'value', loc_data_max);
-end
-%
-% *** DATA #6 (OPTIONAL DATA #2) **************************************** %
-%
-if (~isempty(data2) && ~opt_invanalysis),
-    loc_str = strrep(plot_data2_title,' ','_');
-    loc_data = data2;
-    loc_data_min = min(loc_data(loc_n_min:loc_n_max,data2_n));
-    loc_data_min_t = loc_data(find(loc_data(:,data2_n) == loc_data_min),1);
-    if (length(loc_data_min_t) > 1), loc_data_min_t = loc_data_min_t(1); end;
-    loc_data_max = max(loc_data(loc_n_min:loc_n_max,data2_n));
-    loc_data_max_t = loc_data(find(loc_data(:,data2_n) == loc_data_max),1);
-    if (length(loc_data_max_t) > 1), loc_data_max_t = loc_data_max_t(1); end;
-    loc_str_data = setfield(loc_str_data, {21}, 'name', [loc_str '_start']);
-    loc_str_data = setfield(loc_str_data, {21}, 'time', loc_data(loc_n_min,1));
-    loc_str_data = setfield(loc_str_data, {21}, 'value', loc_data(loc_n_min,data2_n));
-    loc_str_data = setfield(loc_str_data, {22}, 'name', [loc_str '_end']);
-    loc_str_data = setfield(loc_str_data, {22}, 'time', loc_data(loc_n_max,1));
-    loc_str_data = setfield(loc_str_data, {22}, 'value', loc_data(loc_n_max,data2_n));
-    loc_str_data = setfield(loc_str_data, {23}, 'name', [loc_str '_min']);
-    loc_str_data = setfield(loc_str_data, {23}, 'time', loc_data_min_t);
-    loc_str_data = setfield(loc_str_data, {23}, 'value', loc_data_min);
-    loc_str_data = setfield(loc_str_data, {24}, 'name', [loc_str '_max']);
-    loc_str_data = setfield(loc_str_data, {24}, 'time', loc_data_max_t);
-    loc_str_data = setfield(loc_str_data, {24}, 'value', loc_data_max);
-end
-%
-% *** DATA #7 (OPTIONAL DATA #3) **************************************** %
-%
-if (~isempty(data3) && ~opt_invanalysis),
-    loc_str = strrep(plot_data3_title,' ','_');
-    loc_data = data3;
-    loc_data_min = min(loc_data(loc_n_min:loc_n_max,data3_n));
-    loc_data_min_t = loc_data(find(loc_data(:,data3_n) == loc_data_min),1);
-    if (length(loc_data_min_t) > 1), loc_data_min_t = loc_data_min_t(1); end;
-    loc_data_max = max(loc_data(loc_n_min:loc_n_max,data3_n));
-    loc_data_max_t = loc_data(find(loc_data(:,data3_n) == loc_data_max),1);
-    if (length(loc_data_max_t) > 1), loc_data_max_t = loc_data_max_t(1); end;
-    loc_str_data = setfield(loc_str_data, {25}, 'name', [loc_str '_start']);
-    loc_str_data = setfield(loc_str_data, {25}, 'time', loc_data(loc_n_min,1));
-    loc_str_data = setfield(loc_str_data, {25}, 'value', loc_data(loc_n_min,data3_n));
-    loc_str_data = setfield(loc_str_data, {26}, 'name', [loc_str '_end']);
-    loc_str_data = setfield(loc_str_data, {26}, 'time', loc_data(loc_n_max,1));
-    loc_str_data = setfield(loc_str_data, {26}, 'value', loc_data(loc_n_max,data3_n));
-    loc_str_data = setfield(loc_str_data, {27}, 'name', [loc_str '_min']);
-    loc_str_data = setfield(loc_str_data, {27}, 'time', loc_data_min_t);
-    loc_str_data = setfield(loc_str_data, {27}, 'value', loc_data_min);
-    loc_str_data = setfield(loc_str_data, {28}, 'name', [loc_str '_max']);
-    loc_str_data = setfield(loc_str_data, {28}, 'time', loc_data_max_t);
-    loc_str_data = setfield(loc_str_data, {28}, 'value', loc_data_max);
-end
-%
-% *** INV DATA ********************************************************** %
-%
-if(opt_invanalysis)
+if (opt_save_diagnostics)
     %
-    loc_C_SUM = 12E-15*sum(data_FCO2(loc_n_min:loc_n_max,2));
-    loc_C13_AV = sum(data_FCO2(loc_n_min:loc_n_max,2).*data_FCO2_13C(loc_n_min:loc_n_max))/sum(data_FCO2(loc_n_min:loc_n_max,2));
+    % *** \/\/\/\/ ********************************************************** %
     %
-    if (opt_rebinned),
-        loc_n_min = 1;
-        loc_n_max = length(binctrs_FCO2);
+    loc_str_data = struct('name', {}, 'time', {}, 'value', {});
+    %
+    loc_data = data_pCO2;
+    loc_terr = min(abs(loc_data(:,1) - axis_tmin));
+    loc_n_min = find(abs(loc_data(:,1) - axis_tmin) == loc_terr);
+    loc_terr = min(abs(loc_data(:,1) - axis_tmax));
+    loc_n_max = find(abs(loc_data(:,1) - axis_tmax) == loc_terr);
+    %
+    % *** DATA #1 *********************************************************** %
+    %
+    loc_str = 'pCO2';
+    loc_data = data_pCO2;
+    loc_data_min = min(loc_data(loc_n_min:loc_n_max,3));
+    loc_data_min_t = loc_data(find(loc_data(:,3) == loc_data_min),1);
+    if (length(loc_data_min_t) > 1), loc_data_min_t = loc_data_min_t(1); end;
+    loc_data_max = max(loc_data(loc_n_min:loc_n_max,3));
+    loc_data_max_t = loc_data(find(loc_data(:,3) == loc_data_max),1);
+    if (length(loc_data_max_t) > 1), loc_data_max_t = loc_data_max_t(1); end;
+    loc_str_data = setfield(loc_str_data, {1}, 'name', [loc_str '_start']);
+    loc_str_data = setfield(loc_str_data, {1}, 'time', loc_data(loc_n_min,1));
+    loc_str_data = setfield(loc_str_data, {1}, 'value', loc_data(loc_n_min,3));
+    loc_str_data = setfield(loc_str_data, {2}, 'name', [loc_str '_end']);
+    loc_str_data = setfield(loc_str_data, {2}, 'time', loc_data(loc_n_max,1));
+    loc_str_data = setfield(loc_str_data, {2}, 'value', loc_data(loc_n_max,3));
+    loc_str_data = setfield(loc_str_data, {3}, 'name', [loc_str '_min']);
+    loc_str_data = setfield(loc_str_data, {3}, 'time', loc_data_min_t);
+    loc_str_data = setfield(loc_str_data, {3}, 'value', loc_data_min);
+    loc_str_data = setfield(loc_str_data, {4}, 'name', [loc_str '_max']);
+    loc_str_data = setfield(loc_str_data, {4}, 'time', loc_data_max_t);
+    loc_str_data = setfield(loc_str_data, {4}, 'value', loc_data_max);
+    %
+    % *** DATA #2 *********************************************************** %
+    %
+    loc_str = 'pCO2_13C';
+    loc_data = data_pCO2_13C;
+    loc_data_min = min(loc_data(loc_n_min:loc_n_max,3));
+    loc_data_min_t = loc_data(find(loc_data(:,3) == loc_data_min),1);
+    if (length(loc_data_min_t) > 1), loc_data_min_t = loc_data_min_t(1); end;
+    loc_data_max = max(loc_data(loc_n_min:loc_n_max,3));
+    loc_data_max_t = loc_data(find(loc_data(:,3) == loc_data_max),1);
+    if (length(loc_data_max_t) > 1), loc_data_max_t = loc_data_max_t(1); end;
+    loc_str_data = setfield(loc_str_data, {5}, 'name', [loc_str '_start']);
+    loc_str_data = setfield(loc_str_data, {5}, 'time', loc_data(loc_n_min,1));
+    loc_str_data = setfield(loc_str_data, {5}, 'value', loc_data(loc_n_min,3));
+    loc_str_data = setfield(loc_str_data, {6}, 'name', [loc_str '_end']);
+    loc_str_data = setfield(loc_str_data, {6}, 'time', loc_data(loc_n_max,1));
+    loc_str_data = setfield(loc_str_data, {6}, 'value', loc_data(loc_n_max,3));
+    loc_str_data = setfield(loc_str_data, {7}, 'name', [loc_str '_min']);
+    loc_str_data = setfield(loc_str_data, {7}, 'time', loc_data_min_t);
+    loc_str_data = setfield(loc_str_data, {7}, 'value', loc_data_min);
+    loc_str_data = setfield(loc_str_data, {8}, 'name', [loc_str '_max']);
+    loc_str_data = setfield(loc_str_data, {8}, 'time', loc_data_max_t);
+    loc_str_data = setfield(loc_str_data, {8}, 'value', loc_data_max);
+    %
+    % *** DATA #3 *********************************************************** %
+    %
+    loc_str = 'Tatm';
+    loc_data = data_Tatm;
+    loc_data_min = min(loc_data(loc_n_min:loc_n_max,2));
+    loc_data_min_t = loc_data(find(loc_data(:,2) == loc_data_min),1);
+    if (length(loc_data_min_t) > 1), loc_data_min_t = loc_data_min_t(1); end;
+    loc_data_max = max(loc_data(loc_n_min:loc_n_max,2));
+    loc_data_max_t = loc_data(find(loc_data(:,2) == loc_data_max),1);
+    if (length(loc_data_max_t) > 1), loc_data_max_t = loc_data_max_t(1); end;
+    loc_str_data = setfield(loc_str_data, {9}, 'name', [loc_str '_start']);
+    loc_str_data = setfield(loc_str_data, {9}, 'time', loc_data(loc_n_min,1));
+    loc_str_data = setfield(loc_str_data, {9}, 'value', loc_data(loc_n_min,2));
+    loc_str_data = setfield(loc_str_data, {10}, 'name', [loc_str '_end']);
+    loc_str_data = setfield(loc_str_data, {10}, 'time', loc_data(loc_n_max,1));
+    loc_str_data = setfield(loc_str_data, {10}, 'value', loc_data(loc_n_max,2));
+    loc_str_data = setfield(loc_str_data, {11}, 'name', [loc_str '_min']);
+    loc_str_data = setfield(loc_str_data, {11}, 'time', loc_data_min_t);
+    loc_str_data = setfield(loc_str_data, {11}, 'value', loc_data_min);
+    loc_str_data = setfield(loc_str_data, {12}, 'name', [loc_str '_max']);
+    loc_str_data = setfield(loc_str_data, {12}, 'time', loc_data_max_t);
+    loc_str_data = setfield(loc_str_data, {12}, 'value', loc_data_max);
+    %
+    % *** DATA #4 *********************************************************** %
+    %
+    loc_str = 'seaice';
+    loc_data = data_seaice;
+    loc_data_min = min(loc_data(loc_n_min:loc_n_max,3));
+    loc_data_min_t = loc_data(find(loc_data(:,3) == loc_data_min),1);
+    if (length(loc_data_min_t) > 1), loc_data_min_t = loc_data_min_t(1); end;
+    loc_data_max = max(loc_data(loc_n_min:loc_n_max,3));
+    loc_data_max_t = loc_data(find(loc_data(:,3) == loc_data_max),1);
+    if (length(loc_data_max_t) > 1), loc_data_max_t = loc_data_max_t(1); end;
+    loc_str_data = setfield(loc_str_data, {13}, 'name', [loc_str '_start']);
+    loc_str_data = setfield(loc_str_data, {13}, 'time', loc_data(loc_n_min,1));
+    loc_str_data = setfield(loc_str_data, {13}, 'value', loc_data(loc_n_min,3));
+    loc_str_data = setfield(loc_str_data, {14}, 'name', [loc_str '_end']);
+    loc_str_data = setfield(loc_str_data, {14}, 'time', loc_data(loc_n_max,1));
+    loc_str_data = setfield(loc_str_data, {14}, 'value', loc_data(loc_n_max,3));
+    loc_str_data = setfield(loc_str_data, {15}, 'name', [loc_str '_min']);
+    loc_str_data = setfield(loc_str_data, {15}, 'time', loc_data_min_t);
+    loc_str_data = setfield(loc_str_data, {15}, 'value', loc_data_min);
+    loc_str_data = setfield(loc_str_data, {16}, 'name', [loc_str '_max']);
+    loc_str_data = setfield(loc_str_data, {16}, 'time', loc_data_max_t);
+    loc_str_data = setfield(loc_str_data, {16}, 'value', loc_data_max);
+    %
+    % *** DATA #5 (OPTIONAL DATA #1) **************************************** %
+    %
+    if (~isempty(data1) && ~opt_invanalysis),
+        loc_str = strrep(plot_data1_title,' ','_');
+        loc_data = data1;
+        loc_data_min = min(loc_data(loc_n_min:loc_n_max,data1_n));
+        loc_data_min_t = loc_data(find(loc_data(:,data1_n) == loc_data_min),1);
+        if (length(loc_data_min_t) > 1), loc_data_min_t = loc_data_min_t(1); end;
+        loc_data_max = max(loc_data(loc_n_min:loc_n_max,data1_n));
+        loc_data_max_t = loc_data(find(loc_data(:,data1_n) == loc_data_max),1);
+        if (length(loc_data_max_t) > 1), loc_data_max_t = loc_data_max_t(1); end;
+        loc_str_data = setfield(loc_str_data, {17}, 'name', [loc_str '_start']);
+        loc_str_data = setfield(loc_str_data, {17}, 'time', loc_data(loc_n_min,1));
+        loc_str_data = setfield(loc_str_data, {17}, 'value', loc_data(loc_n_min,data1_n));
+        loc_str_data = setfield(loc_str_data, {18}, 'name', [loc_str '_end']);
+        loc_str_data = setfield(loc_str_data, {18}, 'time', loc_data(loc_n_max,1));
+        loc_str_data = setfield(loc_str_data, {18}, 'value', loc_data(loc_n_max,data1_n));
+        loc_str_data = setfield(loc_str_data, {19}, 'name', [loc_str '_min']);
+        loc_str_data = setfield(loc_str_data, {19}, 'time', loc_data_min_t);
+        loc_str_data = setfield(loc_str_data, {19}, 'value', loc_data_min);
+        loc_str_data = setfield(loc_str_data, {20}, 'name', [loc_str '_max']);
+        loc_str_data = setfield(loc_str_data, {20}, 'time', loc_data_max_t);
+        loc_str_data = setfield(loc_str_data, {20}, 'value', loc_data_max);
     end
     %
-    loc_str = 'dFCO2dt';
-    if (opt_rebinned),
-        loc_data = bindata_FCO2_dF;
-        loc_data_t = binctrs_FCO2;
-    else
-        loc_data = data_FCO2_dF;
-        loc_data_t = data_FCO2_t;
-    end
-    loc_data_min = min(loc_data(loc_n_min:loc_n_max));
-    loc_data_min_t = loc_data_t(find(loc_data(:) == loc_data_min));
-    if (length(loc_data_min_t) > 1), loc_data_min_t = loc_data_min_t(1); end;
-    loc_data_max = max(loc_data(loc_n_min:loc_n_max));
-    loc_data_max_t = loc_data_t(find(loc_data(:) == loc_data_max));
-    if (length(loc_data_max_t) > 1), loc_data_max_t = loc_data_max_t(1); end;
-    loc_str_data = setfield(loc_str_data, {17}, 'name', [loc_str '_start']);
-    loc_str_data = setfield(loc_str_data, {17}, 'time', loc_data_t(loc_n_min));
-    loc_str_data = setfield(loc_str_data, {17}, 'value', loc_data(loc_n_min));
-    loc_str_data = setfield(loc_str_data, {18}, 'name', [loc_str '_end']);
-    loc_str_data = setfield(loc_str_data, {18}, 'time', loc_data_t(loc_n_max));
-    loc_str_data = setfield(loc_str_data, {18}, 'value', loc_data(loc_n_max));
-    loc_str_data = setfield(loc_str_data, {19}, 'name', [loc_str '_min']);
-    loc_str_data = setfield(loc_str_data, {19}, 'time', loc_data_min_t);
-    loc_str_data = setfield(loc_str_data, {19}, 'value', loc_data_min);
-    loc_str_data = setfield(loc_str_data, {20}, 'name', [loc_str '_max']);
-    loc_str_data = setfield(loc_str_data, {20}, 'time', loc_data_max_t);
-    loc_str_data = setfield(loc_str_data, {20}, 'value', loc_data_max);
+    % *** DATA #6 (OPTIONAL DATA #2) **************************************** %
     %
-    loc_str = 'FCO2_13C';
-    if (opt_rebinned),
-        loc_data = bindata_FCO2_13C;
-        loc_data_t = binctrs_FCO2;
-    else
-        loc_data = data_FCO2_13C;
-        loc_data_t = data_FCO2_t;
+    if (~isempty(data2) && ~opt_invanalysis),
+        loc_str = strrep(plot_data2_title,' ','_');
+        loc_data = data2;
+        loc_data_min = min(loc_data(loc_n_min:loc_n_max,data2_n));
+        loc_data_min_t = loc_data(find(loc_data(:,data2_n) == loc_data_min),1);
+        if (length(loc_data_min_t) > 1), loc_data_min_t = loc_data_min_t(1); end;
+        loc_data_max = max(loc_data(loc_n_min:loc_n_max,data2_n));
+        loc_data_max_t = loc_data(find(loc_data(:,data2_n) == loc_data_max),1);
+        if (length(loc_data_max_t) > 1), loc_data_max_t = loc_data_max_t(1); end;
+        loc_str_data = setfield(loc_str_data, {21}, 'name', [loc_str '_start']);
+        loc_str_data = setfield(loc_str_data, {21}, 'time', loc_data(loc_n_min,1));
+        loc_str_data = setfield(loc_str_data, {21}, 'value', loc_data(loc_n_min,data2_n));
+        loc_str_data = setfield(loc_str_data, {22}, 'name', [loc_str '_end']);
+        loc_str_data = setfield(loc_str_data, {22}, 'time', loc_data(loc_n_max,1));
+        loc_str_data = setfield(loc_str_data, {22}, 'value', loc_data(loc_n_max,data2_n));
+        loc_str_data = setfield(loc_str_data, {23}, 'name', [loc_str '_min']);
+        loc_str_data = setfield(loc_str_data, {23}, 'time', loc_data_min_t);
+        loc_str_data = setfield(loc_str_data, {23}, 'value', loc_data_min);
+        loc_str_data = setfield(loc_str_data, {24}, 'name', [loc_str '_max']);
+        loc_str_data = setfield(loc_str_data, {24}, 'time', loc_data_max_t);
+        loc_str_data = setfield(loc_str_data, {24}, 'value', loc_data_max);
     end
-    loc_data_min = min(loc_data(loc_n_min:loc_n_max));
-    loc_data_min_t = loc_data_t(find(loc_data(:) == loc_data_min));
-    if (length(loc_data_min_t) > 1), loc_data_min_t = loc_data_min_t(1); end;
-    loc_data_max = max(loc_data(loc_n_min:loc_n_max));
-    loc_data_max_t = loc_data_t(find(loc_data(:) == loc_data_max));
-    if (length(loc_data_max_t) > 1), loc_data_max_t = loc_data_max_t(1); end;
-    loc_str_data = setfield(loc_str_data, {21}, 'name', [loc_str '_start']);
-    loc_str_data = setfield(loc_str_data, {21}, 'time', loc_data_t(loc_n_min));
-    loc_str_data = setfield(loc_str_data, {21}, 'value', loc_data(loc_n_min));
-    loc_str_data = setfield(loc_str_data, {22}, 'name', [loc_str '_end']);
-    loc_str_data = setfield(loc_str_data, {22}, 'time', loc_data_t(loc_n_max));
-    loc_str_data = setfield(loc_str_data, {22}, 'value', loc_data(loc_n_max));
-    loc_str_data = setfield(loc_str_data, {23}, 'name', [loc_str '_min']);
-    loc_str_data = setfield(loc_str_data, {23}, 'time', loc_data_min_t);
-    loc_str_data = setfield(loc_str_data, {23}, 'value', loc_data_min);
-    loc_str_data = setfield(loc_str_data, {24}, 'name', [loc_str '_max']);
-    loc_str_data = setfield(loc_str_data, {24}, 'time', loc_data_max_t);
-    loc_str_data = setfield(loc_str_data, {24}, 'value', loc_data_max);
     %
-    loc_str_data = setfield(loc_str_data, {25}, 'name', 'Total_emisisons_PgC');
-    loc_str_data = setfield(loc_str_data, {25}, 'time', axis_tmax);
-    loc_str_data = setfield(loc_str_data, {25}, 'value', loc_C_SUM);
-    loc_str_data = setfield(loc_str_data, {26}, 'name', 'Mean_d13C_o/oo');
-    loc_str_data = setfield(loc_str_data, {26}, 'time', axis_tmax);
-    loc_str_data = setfield(loc_str_data, {26}, 'value', loc_C13_AV);
-end
-%
-% *** SAVE DATA ********************************************************* %
-%
-if (par_mutlab >= 2014),
-    loc_table = struct2table(loc_str_data);
-    if ~isempty(altfilename),
-        writetable(loc_table,[par_pathout '/' altfilename '.txt'],'Delimiter',' ');
-    else
-        writetable(loc_table,[par_pathout '/' str_filename '.txt'],'Delimiter',' ');
+    % *** DATA #7 (OPTIONAL DATA #3) **************************************** %
+    %
+    if (~isempty(data3) && ~opt_invanalysis),
+        loc_str = strrep(plot_data3_title,' ','_');
+        loc_data = data3;
+        loc_data_min = min(loc_data(loc_n_min:loc_n_max,data3_n));
+        loc_data_min_t = loc_data(find(loc_data(:,data3_n) == loc_data_min),1);
+        if (length(loc_data_min_t) > 1), loc_data_min_t = loc_data_min_t(1); end;
+        loc_data_max = max(loc_data(loc_n_min:loc_n_max,data3_n));
+        loc_data_max_t = loc_data(find(loc_data(:,data3_n) == loc_data_max),1);
+        if (length(loc_data_max_t) > 1), loc_data_max_t = loc_data_max_t(1); end;
+        loc_str_data = setfield(loc_str_data, {25}, 'name', [loc_str '_start']);
+        loc_str_data = setfield(loc_str_data, {25}, 'time', loc_data(loc_n_min,1));
+        loc_str_data = setfield(loc_str_data, {25}, 'value', loc_data(loc_n_min,data3_n));
+        loc_str_data = setfield(loc_str_data, {26}, 'name', [loc_str '_end']);
+        loc_str_data = setfield(loc_str_data, {26}, 'time', loc_data(loc_n_max,1));
+        loc_str_data = setfield(loc_str_data, {26}, 'value', loc_data(loc_n_max,data3_n));
+        loc_str_data = setfield(loc_str_data, {27}, 'name', [loc_str '_min']);
+        loc_str_data = setfield(loc_str_data, {27}, 'time', loc_data_min_t);
+        loc_str_data = setfield(loc_str_data, {27}, 'value', loc_data_min);
+        loc_str_data = setfield(loc_str_data, {28}, 'name', [loc_str '_max']);
+        loc_str_data = setfield(loc_str_data, {28}, 'time', loc_data_max_t);
+        loc_str_data = setfield(loc_str_data, {28}, 'value', loc_data_max);
     end
+    %
+    % *** INV DATA ********************************************************** %
+    %
+    if(opt_invanalysis)
+        %
+        loc_C_SUM = 12E-15*sum(data_FCO2(loc_n_min:loc_n_max,2));
+        loc_C13_AV = sum(data_FCO2(loc_n_min:loc_n_max,2).*data_FCO2_13C(loc_n_min:loc_n_max))/sum(data_FCO2(loc_n_min:loc_n_max,2));
+        %
+        if (opt_rebinned),
+            loc_n_min = 1;
+            loc_n_max = length(binctrs_FCO2);
+        end
+        %
+        loc_str = 'dFCO2dt';
+        if (opt_rebinned),
+            loc_data = bindata_FCO2_dF;
+            loc_data_t = binctrs_FCO2;
+        else
+            loc_data = data_FCO2_dF;
+            loc_data_t = data_FCO2_t;
+        end
+        loc_data_min = min(loc_data(loc_n_min:loc_n_max));
+        loc_data_min_t = loc_data_t(find(loc_data(:) == loc_data_min));
+        if (length(loc_data_min_t) > 1), loc_data_min_t = loc_data_min_t(1); end;
+        loc_data_max = max(loc_data(loc_n_min:loc_n_max));
+        loc_data_max_t = loc_data_t(find(loc_data(:) == loc_data_max));
+        if (length(loc_data_max_t) > 1), loc_data_max_t = loc_data_max_t(1); end;
+        loc_str_data = setfield(loc_str_data, {17}, 'name', [loc_str '_start']);
+        loc_str_data = setfield(loc_str_data, {17}, 'time', loc_data_t(loc_n_min));
+        loc_str_data = setfield(loc_str_data, {17}, 'value', loc_data(loc_n_min));
+        loc_str_data = setfield(loc_str_data, {18}, 'name', [loc_str '_end']);
+        loc_str_data = setfield(loc_str_data, {18}, 'time', loc_data_t(loc_n_max));
+        loc_str_data = setfield(loc_str_data, {18}, 'value', loc_data(loc_n_max));
+        loc_str_data = setfield(loc_str_data, {19}, 'name', [loc_str '_min']);
+        loc_str_data = setfield(loc_str_data, {19}, 'time', loc_data_min_t);
+        loc_str_data = setfield(loc_str_data, {19}, 'value', loc_data_min);
+        loc_str_data = setfield(loc_str_data, {20}, 'name', [loc_str '_max']);
+        loc_str_data = setfield(loc_str_data, {20}, 'time', loc_data_max_t);
+        loc_str_data = setfield(loc_str_data, {20}, 'value', loc_data_max);
+        %
+        loc_str = 'FCO2_13C';
+        if (opt_rebinned),
+            loc_data = bindata_FCO2_13C;
+            loc_data_t = binctrs_FCO2;
+        else
+            loc_data = data_FCO2_13C;
+            loc_data_t = data_FCO2_t;
+        end
+        loc_data_min = min(loc_data(loc_n_min:loc_n_max));
+        loc_data_min_t = loc_data_t(find(loc_data(:) == loc_data_min));
+        if (length(loc_data_min_t) > 1), loc_data_min_t = loc_data_min_t(1); end;
+        loc_data_max = max(loc_data(loc_n_min:loc_n_max));
+        loc_data_max_t = loc_data_t(find(loc_data(:) == loc_data_max));
+        if (length(loc_data_max_t) > 1), loc_data_max_t = loc_data_max_t(1); end;
+        loc_str_data = setfield(loc_str_data, {21}, 'name', [loc_str '_start']);
+        loc_str_data = setfield(loc_str_data, {21}, 'time', loc_data_t(loc_n_min));
+        loc_str_data = setfield(loc_str_data, {21}, 'value', loc_data(loc_n_min));
+        loc_str_data = setfield(loc_str_data, {22}, 'name', [loc_str '_end']);
+        loc_str_data = setfield(loc_str_data, {22}, 'time', loc_data_t(loc_n_max));
+        loc_str_data = setfield(loc_str_data, {22}, 'value', loc_data(loc_n_max));
+        loc_str_data = setfield(loc_str_data, {23}, 'name', [loc_str '_min']);
+        loc_str_data = setfield(loc_str_data, {23}, 'time', loc_data_min_t);
+        loc_str_data = setfield(loc_str_data, {23}, 'value', loc_data_min);
+        loc_str_data = setfield(loc_str_data, {24}, 'name', [loc_str '_max']);
+        loc_str_data = setfield(loc_str_data, {24}, 'time', loc_data_max_t);
+        loc_str_data = setfield(loc_str_data, {24}, 'value', loc_data_max);
+        %
+        loc_str_data = setfield(loc_str_data, {25}, 'name', 'Total_emisisons_PgC');
+        loc_str_data = setfield(loc_str_data, {25}, 'time', axis_tmax);
+        loc_str_data = setfield(loc_str_data, {25}, 'value', loc_C_SUM);
+        loc_str_data = setfield(loc_str_data, {26}, 'name', 'Mean_d13C_o/oo');
+        loc_str_data = setfield(loc_str_data, {26}, 'time', axis_tmax);
+        loc_str_data = setfield(loc_str_data, {26}, 'value', loc_C13_AV);
+    end
+    %
+    % *** SAVE DATA ********************************************************* %
+    %
+    if (par_mutlab >= 2014),
+        loc_table = struct2table(loc_str_data);
+        if ~isempty(altfilename),
+            writetable(loc_table,[par_pathout '/' altfilename '.txt'],'Delimiter',' ');
+        else
+            writetable(loc_table,[par_pathout '/' str_filename '.txt'],'Delimiter',' ');
+        end
+    end
+    %
+    % *** /\/\/\/\ ********************************************************** %
+    %
 end
 %
 % *********************************************************************** %
@@ -1326,42 +1339,50 @@ end
 % *** SAVE DATA ********************************************************* %
 % *********************************************************************** %
 %
-if (opt_rebinned),
+if (opt_save_timeseries)
     %
-    % *** SAVE INVERSION ANALYSIS DATA ************************************** %
+    % *** \/\/\/\/ ****************************************************** %
     %
-    % rebinned data
-    % bin ends
-    fprint_1Dn(bins_FCO2_t(2:end),[par_pathout '/' str_filename '.binends.res'],'%3i','%3i',true,false);
-    % bin centers
-    fprint_1Dn(binctrs_FCO2(:),[par_pathout '/' str_filename '.bincenters.res'],'%3i','%3i',true,false);
-    % emissions rate
-    fprint_1Dn(bindata_FCO2_dF(:),[par_pathout '/' str_filename '.demissions.res'],'%3i','%3i',true,false);
-    % cumulative emissons
-    fprint_1Dn(bindata_FCO2_sum(:),[par_pathout '/' str_filename '.sumemissions.res'],'%3i','%3i',true,false);
-    % d13C of emissons
-    fprint_1Dn(bindata_FCO2_13C(:),[par_pathout '/' str_filename '.d13Cemissions.res'],'%3i','%3i',true,false);
-    %
-else
-    %
-    % *** SAVE OTHER PLOTED DATA ******************************************** %
-    %
-    % panel #1
-    fprint_1Dn([data_pCO2(:,1) 1.0E6*data_pCO2(:,3)],[par_pathout '/' str_filename '.panel1_pCO2.res'],'%3i','%3i',true,false);
-    fprint_1Dn([data_pCO2_13C(:,1) data_pCO2_13C(:,3)],[par_pathout '/' str_filename '.panel1_pCO2_d13C.res'],'%3i','%3i',true,false);
-    % panel #2
-    fprint_1Dn([data_Tatm(:,1) data_Tatm(:,2)],[par_pathout '/' str_filename '.panel2_atmT.res'],'%3i','%3i',true,false);
-    fprint_1Dn([data_seaice(:,1) data_seaice(:,3)],[par_pathout '/' str_filename '.panel2_seaice.res'],'%3i','%3i',true,false);
-    % optional panels
-    if (~isempty(data1)),
-        fprint_1Dn([data1(:,1) data1(:,data1_n)],[par_pathout '/' str_filename '.panel3_datacolumn' num2str(data1_n) '.res'],'%3i','%3i',true,false);
+    if (opt_rebinned),
+        %
+        % *** SAVE INVERSION ANALYSIS DATA ************************************** %
+        %
+        % rebinned data
+        % bin ends
+        fprint_1Dn(bins_FCO2_t(2:end),[par_pathout '/' str_filename '.binends.res'],'%3i','%3i',true,false);
+        % bin centers
+        fprint_1Dn(binctrs_FCO2(:),[par_pathout '/' str_filename '.bincenters.res'],'%3i','%3i',true,false);
+        % emissions rate
+        fprint_1Dn(bindata_FCO2_dF(:),[par_pathout '/' str_filename '.demissions.res'],'%3i','%3i',true,false);
+        % cumulative emissons
+        fprint_1Dn(bindata_FCO2_sum(:),[par_pathout '/' str_filename '.sumemissions.res'],'%3i','%3i',true,false);
+        % d13C of emissons
+        fprint_1Dn(bindata_FCO2_13C(:),[par_pathout '/' str_filename '.d13Cemissions.res'],'%3i','%3i',true,false);
+        %
+    else
+        %
+        % *** SAVE OTHER PLOTED DATA ******************************************** %
+        %
+        % panel #1
+        fprint_1Dn([data_pCO2(:,1) 1.0E6*data_pCO2(:,3)],[par_pathout '/' str_filename '.panel1_pCO2.res'],'%3i','%3i',true,false);
+        fprint_1Dn([data_pCO2_13C(:,1) data_pCO2_13C(:,3)],[par_pathout '/' str_filename '.panel1_pCO2_d13C.res'],'%3i','%3i',true,false);
+        % panel #2
+        fprint_1Dn([data_Tatm(:,1) data_Tatm(:,2)],[par_pathout '/' str_filename '.panel2_atmT.res'],'%3i','%3i',true,false);
+        fprint_1Dn([data_seaice(:,1) data_seaice(:,3)],[par_pathout '/' str_filename '.panel2_seaice.res'],'%3i','%3i',true,false);
+        % optional panels
+        if (~isempty(data1)),
+            fprint_1Dn([data1(:,1) data1(:,data1_n)],[par_pathout '/' str_filename '.panel3_datacolumn' num2str(data1_n) '.res'],'%3i','%3i',true,false);
+        end
+        if (~isempty(data2)),
+            fprint_1Dn([data2(:,1) data2(:,data2_n)],[par_pathout '/' str_filename '.panel4_datacolumn' num2str(data2_n) '.res'],'%3i','%3i',true,false);
+        end
+        if (~isempty(data3)),
+            fprint_1Dn([data3(:,1) data3(:,data3_n)],[par_pathout '/' str_filename '.panel5_datacolumn' num2str(data3_n) '.res'],'%3i','%3i',true,false);
+        end
+        %
     end
-    if (~isempty(data2)),
-        fprint_1Dn([data2(:,1) data2(:,data2_n)],[par_pathout '/' str_filename '.panel4_datacolumn' num2str(data2_n) '.res'],'%3i','%3i',true,false);
-    end
-    if (~isempty(data3)),
-        fprint_1Dn([data3(:,1) data3(:,data3_n)],[par_pathout '/' str_filename '.panel5_datacolumn' num2str(data3_n) '.res'],'%3i','%3i',true,false);
-    end
+    %
+    % *** /\/\/\/\ ****************************************************** %
     %
 end
 %

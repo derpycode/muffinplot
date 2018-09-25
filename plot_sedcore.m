@@ -131,7 +131,7 @@ function [] = plot_sedcore(PEXP,PCORE,PMIN,PMAX,PREFAGE,PDATA1,PDATA2,POPT,PNAME
 %             rather than the entire filename
 %   15/04/02: added date to end of filename string
 %             fixed fat format plotting
-%   15/04/24: fixed accidental blanket invalidation of negative ages 
+%   15/04/24: fixed accidental blanket invalidation of negative ages
 %   15/04/26: corrected const detrital flux age model
 %             (now accounts for specific densities of each fraction)
 %             fixed age offset in time-series plots
@@ -165,6 +165,9 @@ function [] = plot_sedcore(PEXP,PCORE,PMIN,PMAX,PREFAGE,PDATA1,PDATA2,POPT,PNAME
 %             *** VERSION 1.05 ********************************************
 %   18/08/21: rename current_path string
 %             *** VERSION 1.12 ********************************************
+%   18/09/24: made diagnostics data saving optional
+%             made timeseries saving optional [true by default]
+%             *** VERSION 1.13 ********************************************
 %
 %   ***********************************************************************
 
@@ -173,9 +176,9 @@ function [] = plot_sedcore(PEXP,PCORE,PMIN,PMAX,PREFAGE,PDATA1,PDATA2,POPT,PNAME
 % *********************************************************************** %
 %
 % *** initialize ******************************************************** %
-% 
+%
 % set version!
-par_ver = 1.12;
+par_ver = 1.13;
 % set function name
 str_function = mfilename;
 % close plot windows
@@ -187,7 +190,7 @@ eval(POPT);
 str_date = [datestr(date,11), datestr(date,5), datestr(date,7)];
 %
 % *** backwards compatability ******************************************* %
-% 
+%
 % overlay data
 if ~exist('overlaydata1_file','var'), overlaydata1_file = ''; end
 if ~exist('overlaydata2_file','var'), overlaydata2_file = ''; end
@@ -204,9 +207,12 @@ if ~exist('par_pathout','var'),  par_pathout  = 'PLOTS'; end
 if ~exist('par_pathdata','var'), par_pathdata = 'DATA'; end
 if ~exist('par_pathmask','var'), par_pathmask = 'MASKS'; end
 if ~exist('par_pathexam','var'), par_pathexam = 'EXAMPLES'; end
+% data saving
+if ~exist('opt_save_diagnostics','var'), opt_save_diagnostics = false; end
+if ~exist('opt_save_timeseries','var'), opt_save_timeseries = true; end
 %
 % *** copy passed parameters ******************************************** %
-% 
+%
 % set dummy variables
 expid = PEXP;
 coreid = PCORE;
@@ -247,7 +253,7 @@ str_mutlab = tmp_mutlab(1:4);
 par_mutlab = str2num(str_mutlab);
 %
 % *** SET PATHS & DIRECTORIES ******************************************* %
-% 
+%
 % find current path
 str_current_path = pwd;
 % find where str_function lives ...
@@ -282,7 +288,7 @@ par_pathout = [str_current_path '/' par_pathout];
 if ~(exist(par_pathout,'dir') == 7), mkdir(par_pathout);  end
 % check/add data path
 if ~(exist([str_current_path '/' par_pathdata],'dir') == 7),
-    mkdir([str_current_path '/' par_pathdata]); 
+    mkdir([str_current_path '/' par_pathdata]);
 end
 addpath([str_current_path '/' par_pathdata]);
 % check plot format setting
@@ -743,7 +749,7 @@ if (opt_ashagemodel && opt_detagemodel),
     % (above the strat marker)
     % NOTE: ash maximum occurs at an age = experiment duration,
     %       NOT necessarily the reference age
-    % NOTE: originally calculated simply as: 
+    % NOTE: originally calculated simply as:
     %       (1 - porosity) * layer thickness * detrital wt%
     %       *now* accounting for differing mineral densities!
     % NOTE: 4 == wt% CaCO3
@@ -1438,66 +1444,16 @@ end
 % *** EXTRACT DIAGNOSTIC  DATA ****************************************** %
 % *********************************************************************** %
 %
-%
-loc_str_data = struct('name', {}, 'timeORdepth', {}, 'value', {});
-%
-% *** DATA #1 *********************************************************** %
-%
-loc_str = 'CaCO3';
-loc_data = data(axis_n_min:axis_n_max,4);
-loc_data_notNaNn = find(~isnan(loc_data));
-loc_data_t = loc_ydata(axis_n_min:axis_n_max);
-loc_data_t_notNaNn = find(~isnan(loc_data_t));
-loc_data_min = min(loc_data);
-loc_data_min_t = loc_data_t(find(loc_data == loc_data_min));
-if (length(loc_data_min_t) > 1), loc_data_min_t = loc_data_min_t(1); end;
-loc_data_max = max(loc_data);
-loc_data_max_t = loc_data_t(find(loc_data == loc_data_max));
-if (length(loc_data_max_t) > 1), loc_data_max_t = loc_data_max_t(1); end;
-loc_str_data = setfield(loc_str_data, {1}, 'name', [loc_str '_end']);
-loc_str_data = setfield(loc_str_data, {1}, 'timeORdepth', loc_data_t(loc_data_t_notNaNn(1)));
-loc_str_data = setfield(loc_str_data, {1}, 'value', loc_data(loc_data_notNaNn(1)));
-loc_str_data = setfield(loc_str_data, {2}, 'name', [loc_str '_start']);
-loc_str_data = setfield(loc_str_data, {2}, 'timeORdepth', loc_data_t(loc_data_t_notNaNn(end)));
-loc_str_data = setfield(loc_str_data, {2}, 'value', loc_data(loc_data_notNaNn(end)));
-loc_str_data = setfield(loc_str_data, {3}, 'name', [loc_str '_min']);
-loc_str_data = setfield(loc_str_data, {3}, 'timeORdepth', loc_data_min_t);
-loc_str_data = setfield(loc_str_data, {3}, 'value', loc_data_min);
-loc_str_data = setfield(loc_str_data, {4}, 'name', [loc_str '_max']);
-loc_str_data = setfield(loc_str_data, {4}, 'timeORdepth', loc_data_max_t);
-loc_str_data = setfield(loc_str_data, {4}, 'value', loc_data_max);
-%
-% *** DATA #2 *********************************************************** %
-%
-loc_str = 'CaCO3_13C';
-loc_data = data(axis_n_min:axis_n_max,5);
-loc_data_notNaNn = find(~isnan(loc_data));
-loc_data_t = loc_ydata(axis_n_min:axis_n_max);
-loc_data_t_notNaNn = find(~isnan(loc_data_t));
-loc_data_min = min(loc_data);
-loc_data_min_t = loc_data_t(find(loc_data == loc_data_min));
-if (length(loc_data_min_t) > 1), loc_data_min_t = loc_data_min_t(1); end;
-loc_data_max = max(loc_data);
-loc_data_max_t = loc_data_t(find(loc_data == loc_data_max));
-if (length(loc_data_max_t) > 1), loc_data_max_t = loc_data_max_t(1); end;
-loc_str_data = setfield(loc_str_data, {5}, 'name', [loc_str '_end']);
-loc_str_data = setfield(loc_str_data, {5}, 'timeORdepth', loc_data_t(loc_data_t_notNaNn(1)));
-loc_str_data = setfield(loc_str_data, {5}, 'value', loc_data(loc_data_notNaNn(1)));
-loc_str_data = setfield(loc_str_data, {6}, 'name', [loc_str '_start']);
-loc_str_data = setfield(loc_str_data, {6}, 'timeORdepth', loc_data_t(loc_data_t_notNaNn(end)));
-loc_str_data = setfield(loc_str_data, {6}, 'value', loc_data(loc_data_notNaNn(end)));
-loc_str_data = setfield(loc_str_data, {7}, 'name', [loc_str '_min']);
-loc_str_data = setfield(loc_str_data, {7}, 'timeORdepth', loc_data_min_t);
-loc_str_data = setfield(loc_str_data, {7}, 'value', loc_data_min);
-loc_str_data = setfield(loc_str_data, {8}, 'name', [loc_str '_max']);
-loc_str_data = setfield(loc_str_data, {8}, 'timeORdepth', loc_data_max_t);
-loc_str_data = setfield(loc_str_data, {8}, 'value', loc_data_max);
-%
-% *** DATA #3 (OPTIONAL DATA #1) **************************************** %
-%
-if (~isempty(data1) && isempty(data1_ts)),
-    loc_str = strrep(plot_data1_title,' ','_');
-    loc_data = data(axis_n_min:axis_n_max,13);
+if (opt_save_diagnostics)
+    %
+    % *** \/\/\/\/ ****************************************************** %
+    %
+    loc_str_data = struct('name', {}, 'timeORdepth', {}, 'value', {});
+    %
+    % *** DATA #1 ******************************************************* %
+    %
+    loc_str = 'CaCO3';
+    loc_data = data(axis_n_min:axis_n_max,4);
     loc_data_notNaNn = find(~isnan(loc_data));
     loc_data_t = loc_ydata(axis_n_min:axis_n_max);
     loc_data_t_notNaNn = find(~isnan(loc_data_t));
@@ -1507,25 +1463,23 @@ if (~isempty(data1) && isempty(data1_ts)),
     loc_data_max = max(loc_data);
     loc_data_max_t = loc_data_t(find(loc_data == loc_data_max));
     if (length(loc_data_max_t) > 1), loc_data_max_t = loc_data_max_t(1); end;
-    loc_str_data = setfield(loc_str_data, {9}, 'name', [loc_str '_end']);
-    loc_str_data = setfield(loc_str_data, {9}, 'timeORdepth', loc_data_t(loc_data_t_notNaNn(1)));
-    loc_str_data = setfield(loc_str_data, {9}, 'value', loc_data(loc_data_notNaNn(1)));
-    loc_str_data = setfield(loc_str_data, {10}, 'name', [loc_str '_start']);
-    loc_str_data = setfield(loc_str_data, {10}, 'timeORdepth', loc_data_t(loc_data_t_notNaNn(end)));
-    loc_str_data = setfield(loc_str_data, {10}, 'value', loc_data(loc_data_notNaNn(end)));
-    loc_str_data = setfield(loc_str_data, {11}, 'name', [loc_str '_min']);
-    loc_str_data = setfield(loc_str_data, {11}, 'timeORdepth', loc_data_min_t);
-    loc_str_data = setfield(loc_str_data, {11}, 'value', loc_data_min);
-    loc_str_data = setfield(loc_str_data, {12}, 'name', [loc_str '_max']);
-    loc_str_data = setfield(loc_str_data, {12}, 'timeORdepth', loc_data_max_t);
-    loc_str_data = setfield(loc_str_data, {12}, 'value', loc_data_max);
-end
-%
-% *** DATA #3 (OPTIONAL DATA #2) **************************************** %
-%
-if (~isempty(data2) && isempty(data2_ts)),
-    loc_str = strrep(plot_data2_title,' ','_');
-    loc_data = data(axis_n_min:axis_n_max,14);
+    loc_str_data = setfield(loc_str_data, {1}, 'name', [loc_str '_end']);
+    loc_str_data = setfield(loc_str_data, {1}, 'timeORdepth', loc_data_t(loc_data_t_notNaNn(1)));
+    loc_str_data = setfield(loc_str_data, {1}, 'value', loc_data(loc_data_notNaNn(1)));
+    loc_str_data = setfield(loc_str_data, {2}, 'name', [loc_str '_start']);
+    loc_str_data = setfield(loc_str_data, {2}, 'timeORdepth', loc_data_t(loc_data_t_notNaNn(end)));
+    loc_str_data = setfield(loc_str_data, {2}, 'value', loc_data(loc_data_notNaNn(end)));
+    loc_str_data = setfield(loc_str_data, {3}, 'name', [loc_str '_min']);
+    loc_str_data = setfield(loc_str_data, {3}, 'timeORdepth', loc_data_min_t);
+    loc_str_data = setfield(loc_str_data, {3}, 'value', loc_data_min);
+    loc_str_data = setfield(loc_str_data, {4}, 'name', [loc_str '_max']);
+    loc_str_data = setfield(loc_str_data, {4}, 'timeORdepth', loc_data_max_t);
+    loc_str_data = setfield(loc_str_data, {4}, 'value', loc_data_max);
+    %
+    % *** DATA #2 ******************************************************* %
+    %
+    loc_str = 'CaCO3_13C';
+    loc_data = data(axis_n_min:axis_n_max,5);
     loc_data_notNaNn = find(~isnan(loc_data));
     loc_data_t = loc_ydata(axis_n_min:axis_n_max);
     loc_data_t_notNaNn = find(~isnan(loc_data_t));
@@ -1535,25 +1489,150 @@ if (~isempty(data2) && isempty(data2_ts)),
     loc_data_max = max(loc_data);
     loc_data_max_t = loc_data_t(find(loc_data == loc_data_max));
     if (length(loc_data_max_t) > 1), loc_data_max_t = loc_data_max_t(1); end;
-    loc_str_data = setfield(loc_str_data, {13}, 'name', [loc_str '_end']);
-    loc_str_data = setfield(loc_str_data, {13}, 'timeORdepth', loc_data_t(loc_data_t_notNaNn(1)));
-    loc_str_data = setfield(loc_str_data, {13}, 'value', loc_data(loc_data_notNaNn(1)));
-    loc_str_data = setfield(loc_str_data, {14}, 'name', [loc_str '_start']);
-    loc_str_data = setfield(loc_str_data, {14}, 'timeORdepth', loc_data_t(loc_data_t_notNaNn(end)));
-    loc_str_data = setfield(loc_str_data, {14}, 'value', loc_data(loc_data_notNaNn(end)));
-    loc_str_data = setfield(loc_str_data, {15}, 'name', [loc_str '_min']);
-    loc_str_data = setfield(loc_str_data, {15}, 'timeORdepth', loc_data_min_t);
-    loc_str_data = setfield(loc_str_data, {15}, 'value', loc_data_min);
-    loc_str_data = setfield(loc_str_data, {16}, 'name', [loc_str '_max']);
-    loc_str_data = setfield(loc_str_data, {16}, 'timeORdepth', loc_data_max_t);
-    loc_str_data = setfield(loc_str_data, {16}, 'value', loc_data_max);
+    loc_str_data = setfield(loc_str_data, {5}, 'name', [loc_str '_end']);
+    loc_str_data = setfield(loc_str_data, {5}, 'timeORdepth', loc_data_t(loc_data_t_notNaNn(1)));
+    loc_str_data = setfield(loc_str_data, {5}, 'value', loc_data(loc_data_notNaNn(1)));
+    loc_str_data = setfield(loc_str_data, {6}, 'name', [loc_str '_start']);
+    loc_str_data = setfield(loc_str_data, {6}, 'timeORdepth', loc_data_t(loc_data_t_notNaNn(end)));
+    loc_str_data = setfield(loc_str_data, {6}, 'value', loc_data(loc_data_notNaNn(end)));
+    loc_str_data = setfield(loc_str_data, {7}, 'name', [loc_str '_min']);
+    loc_str_data = setfield(loc_str_data, {7}, 'timeORdepth', loc_data_min_t);
+    loc_str_data = setfield(loc_str_data, {7}, 'value', loc_data_min);
+    loc_str_data = setfield(loc_str_data, {8}, 'name', [loc_str '_max']);
+    loc_str_data = setfield(loc_str_data, {8}, 'timeORdepth', loc_data_max_t);
+    loc_str_data = setfield(loc_str_data, {8}, 'value', loc_data_max);
+    %
+    % *** DATA #3 (OPTIONAL DATA #1) ************************************ %
+    %
+    if (~isempty(data1) && isempty(data1_ts)),
+        loc_str = strrep(plot_data1_title,' ','_');
+        loc_data = data(axis_n_min:axis_n_max,13);
+        loc_data_notNaNn = find(~isnan(loc_data));
+        loc_data_t = loc_ydata(axis_n_min:axis_n_max);
+        loc_data_t_notNaNn = find(~isnan(loc_data_t));
+        loc_data_min = min(loc_data);
+        loc_data_min_t = loc_data_t(find(loc_data == loc_data_min));
+        if (length(loc_data_min_t) > 1), loc_data_min_t = loc_data_min_t(1); end;
+        loc_data_max = max(loc_data);
+        loc_data_max_t = loc_data_t(find(loc_data == loc_data_max));
+        if (length(loc_data_max_t) > 1), loc_data_max_t = loc_data_max_t(1); end;
+        loc_str_data = setfield(loc_str_data, {9}, 'name', [loc_str '_end']);
+        loc_str_data = setfield(loc_str_data, {9}, 'timeORdepth', loc_data_t(loc_data_t_notNaNn(1)));
+        loc_str_data = setfield(loc_str_data, {9}, 'value', loc_data(loc_data_notNaNn(1)));
+        loc_str_data = setfield(loc_str_data, {10}, 'name', [loc_str '_start']);
+        loc_str_data = setfield(loc_str_data, {10}, 'timeORdepth', loc_data_t(loc_data_t_notNaNn(end)));
+        loc_str_data = setfield(loc_str_data, {10}, 'value', loc_data(loc_data_notNaNn(end)));
+        loc_str_data = setfield(loc_str_data, {11}, 'name', [loc_str '_min']);
+        loc_str_data = setfield(loc_str_data, {11}, 'timeORdepth', loc_data_min_t);
+        loc_str_data = setfield(loc_str_data, {11}, 'value', loc_data_min);
+        loc_str_data = setfield(loc_str_data, {12}, 'name', [loc_str '_max']);
+        loc_str_data = setfield(loc_str_data, {12}, 'timeORdepth', loc_data_max_t);
+        loc_str_data = setfield(loc_str_data, {12}, 'value', loc_data_max);
+    end
+    %
+    % *** DATA #3 (OPTIONAL DATA #2) ************************************ %
+    %
+    if (~isempty(data2) && isempty(data2_ts)),
+        loc_str = strrep(plot_data2_title,' ','_');
+        loc_data = data(axis_n_min:axis_n_max,14);
+        loc_data_notNaNn = find(~isnan(loc_data));
+        loc_data_t = loc_ydata(axis_n_min:axis_n_max);
+        loc_data_t_notNaNn = find(~isnan(loc_data_t));
+        loc_data_min = min(loc_data);
+        loc_data_min_t = loc_data_t(find(loc_data == loc_data_min));
+        if (length(loc_data_min_t) > 1), loc_data_min_t = loc_data_min_t(1); end;
+        loc_data_max = max(loc_data);
+        loc_data_max_t = loc_data_t(find(loc_data == loc_data_max));
+        if (length(loc_data_max_t) > 1), loc_data_max_t = loc_data_max_t(1); end;
+        loc_str_data = setfield(loc_str_data, {13}, 'name', [loc_str '_end']);
+        loc_str_data = setfield(loc_str_data, {13}, 'timeORdepth', loc_data_t(loc_data_t_notNaNn(1)));
+        loc_str_data = setfield(loc_str_data, {13}, 'value', loc_data(loc_data_notNaNn(1)));
+        loc_str_data = setfield(loc_str_data, {14}, 'name', [loc_str '_start']);
+        loc_str_data = setfield(loc_str_data, {14}, 'timeORdepth', loc_data_t(loc_data_t_notNaNn(end)));
+        loc_str_data = setfield(loc_str_data, {14}, 'value', loc_data(loc_data_notNaNn(end)));
+        loc_str_data = setfield(loc_str_data, {15}, 'name', [loc_str '_min']);
+        loc_str_data = setfield(loc_str_data, {15}, 'timeORdepth', loc_data_min_t);
+        loc_str_data = setfield(loc_str_data, {15}, 'value', loc_data_min);
+        loc_str_data = setfield(loc_str_data, {16}, 'name', [loc_str '_max']);
+        loc_str_data = setfield(loc_str_data, {16}, 'timeORdepth', loc_data_max_t);
+        loc_str_data = setfield(loc_str_data, {16}, 'value', loc_data_max);
+    end
+    %
+    % *** SAVE DATA ***************************************************** %
+    %
+    if (par_mutlab >= 2014),
+        loc_table = struct2table(loc_str_data);
+        writetable(loc_table,[par_pathout '/' str_filename '.' str_date '.txt'],'Delimiter',' ');
+    end
+    %
+    % *** /\/\/\/\ ****************************************************** %
+    %
 end
 %
+% *********************************************************************** %
+
+% *********************************************************************** %
 % *** SAVE DATA ********************************************************* %
+% *********************************************************************** %
 %
-if (par_mutlab >= 2014),
-    loc_table = struct2table(loc_str_data);
-    writetable(loc_table,[par_pathout '/' str_filename '.' str_date '.txt'],'Delimiter',' ');
+if (opt_save_timeseries)
+    %
+    % *** \/\/\/\/ ****************************************************** %
+    %
+    % *** SAVE PLOTTED DATA ************************************************* %
+    %
+    % panel #1,2
+    fprint_1Dn([loc_ydata(axis_n_min:axis_n_max) data(axis_n_min:axis_n_max,4)],[par_pathout '/' str_filename '.panel1_CaCO3.res'],'%3i','%3i',true,false);
+    fprint_1Dn([loc_ydata(axis_n_min:axis_n_max) data(axis_n_min:axis_n_max,5)],[par_pathout '/' str_filename '.panel2_CaCO3_d13C.res'],'%3i','%3i',true,false);
+    % panel #3
+    if ~opt_minplot,
+        if (opt_refage),
+            fprint_1Dn([loc_ydata(axis_n_min:axis_n_max) data(axis_n_min:axis_n_max,2)],[par_pathout '/' str_filename '.panel3_agemodel.res'],'%3i','%3i',true,false);
+        else
+            fprint_1Dn([loc_ydata(axis_n_min:axis_n_max) data(axis_n_min:axis_n_max,3)],[par_pathout '/' str_filename '.panel3_agemodel.res'],'%3i','%3i',true,false);
+        end
+    else
+        fprint_1Dn([0.0 0.0],[par_pathout '/' str_filename '.panel3_agemodel.res'],'%3i','%3i',true,false);
+    end
+    % panel #4
+    if ~opt_minplot,
+        if (opt_refage),
+            fprint_1Dn([loc_ydataSR(axis_n_min:axis_n_max) data_SR(axis_n_min:axis_n_max,3)],[par_pathout '/' str_filename '.panel4_sedrate.res'],'%3i','%3i',true,false);
+        else
+            fprint_1Dn([loc_ydataSR(axis_n_min:axis_n_max) data_SR(axis_n_min:axis_n_max,3)],[par_pathout '/' str_filename '.panel4_sedrate.res'],'%3i','%3i',true,false);
+        end
+    else
+        fprint_1Dn([0.0 0.0],[par_pathout '/' str_filename '.panel4_sedrate.res'],'%3i','%3i',true,false);
+    end
+    % panel #5
+    if ~opt_minplot,
+        fprint_1Dn([loc_ydata(axis_n_min:axis_n_max) data(axis_n_min:axis_n_max,6)],[par_pathout '/' str_filename '.panel5_ash.res'],'%3i','%3i',true,false);
+    else
+        fprint_1Dn([0.0 0.0],[par_pathout '/' str_filename '.panel5_ash.res'],'%3i','%3i',true,false);
+    end
+    % panel #6
+    if ~isempty(data1),
+        if (isempty(data1_ts)),
+            fprint_1Dn([loc_ydata(axis_n_min:axis_n_max) data(axis_n_min:axis_n_max,13)],[par_pathout '/' str_filename '.panel6_data1.res'],'%3i','%3i',true,false);
+        elseif (opt_refage),
+            fprint_1Dn([((data1_ts(:,1)-data1_ts(end,1))/1.0e3)+refage data1_ts(:,plot_data1_ts_n)],[par_pathout '/' str_filename '.panel6_data1.res'],'%3i','%3i',true,false);
+        end
+    else
+        fprint_1Dn([0.0 0.0],[par_pathout '/' str_filename '.panel6_data1.res'],'%3i','%3i',true,false);
+    end
+    % panel #7
+    if ~isempty(data2),
+        if (isempty(data2_ts)),
+            fprint_1Dn([loc_ydata(axis_n_min:axis_n_max) data(axis_n_min:axis_n_max,14)],[par_pathout '/' str_filename '.panel7_data2.res'],'%3i','%3i',true,false);
+        elseif (opt_refage),
+            fprint_1Dn([((data2_ts(:,1)-data2_ts(end,1))/1.0e3)+refage data2_ts(:,plot_data2_ts_n)],[par_pathout '/' str_filename '.panel7_data2.res'],'%3i','%3i',true,false);
+        end
+    else
+        fprint_1Dn([0.0 0.0],[par_pathout '/' str_filename '.panel7_data2.res'],'%3i','%3i',true,false);
+    end
+    %
+    % *** /\/\/\/\ ****************************************************** %
+    %
 end
 %
 % *********************************************************************** %

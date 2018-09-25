@@ -145,5 +145,8 @@ opt_fatplot=false;         % [false] FATTER PLOTS?
 opt_minplot=false;         % [false] MINIMAL PLOT?
 str_plot_title = '';       % [  '']  PLOT TITLE!
 str_plot_yaxis = '';       % [  '']  Y-AXIS LABEL
+%                          *** data saving s ***
+opt_save_diagnostics=false;% [false] 
+opt_savetimeseries=true;   % [true] 
 %
 % *********************************************************************** %

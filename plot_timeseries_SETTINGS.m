@@ -124,5 +124,8 @@ plot_format_old = 'y';     % [  'y']  'OLD' STYLE PLOTTING
 plot_format = '';          % [  '']  FORMAT OF (NEW STYLE) PLOT
 opt_fatplot=false;         % [false] FATTER PLOTS?
 plot_title = '';           % [  '']  OPTIONAL REPLACEMENT TITLE
+%                          *** data saving s ***
+opt_save_diagnostics=false;% [false] 
+opt_savetimeseries=true;   % [true] 
 %
 % *********************************************************************** %
