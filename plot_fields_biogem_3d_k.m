@@ -244,6 +244,7 @@ function [STATM] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,P
 %             adjusted mask path search
 %             *** VERSION 1.12 ********************************************
 %   18/10/04: bug-fix of overlay label filtering
+%             added option to force all data to be seafloor (depth) data
 %             *** VERSION 1.13 ********************************************
 %
 % *********************************************************************** %
@@ -272,11 +273,13 @@ str_date = [datestr(date,11), datestr(date,5), datestr(date,7)];
 % data point scaling
 if ~exist('data_scalepoints','var'), data_scalepoints = 'n'; end
 % data saving
-if ~exist('data_saveall','var'), data_saveall = 'n'; end
+if ~exist('data_saveall','var'),     data_saveall = 'n'; end
 if ~exist('data_saveallinfo','var'), data_saveallinfo = 'n'; end
 % extracting min / max / range from seasonal data
-if ~exist('data_minmax','var'),  data_minmax  = ''; end
-if ~exist('data_nseas','var'),   data_nseas   = 0; end
+if ~exist('data_minmax','var'),      data_minmax  = ''; end
+if ~exist('data_nseas','var'),       data_nseas   = 0; end
+% model-data
+if ~exist('data_seafloor','var'),    data_seafloor = 'n'; end
 % paths
 if ~exist('par_pathin','var'),   par_pathin   = 'cgenie_output'; end
 if ~exist('par_pathlib','var'),  par_pathlib  = 'source'; end
@@ -1117,7 +1120,7 @@ if ~isempty(overlaydataid)
             n = 1;
             while (n < nmax),
                 loc_k1 = grid_k1(overlaydata_ijk(n,2),overlaydata_ijk(n,1));
-                if (overlaydata_ijk(n,3) > loc_k1),
+                if ( (overlaydata_ijk(n,3) ~= loc_k1) && (data_seafloor == 'n') ),
                     overlaydata_ijk(n,:)  = [];
                     overlaydata_raw(n,:)  = [];
                     overlaylabel_raw(n,:) = [];
@@ -1137,12 +1140,13 @@ if ~isempty(overlaydataid)
         overlaydata_ijk(:,:) = double(overlaydata_ijk(:,:));
         overlaydata_ijk(:,4) = overlaydata_raw(:,4);
     else
-        % force to ocean floor (if k value too deep)
+        % force shallower to ocean floor (if k value too deep)
+        % ... or force down from ocean interior to seafloor ... (optional)
         if (kplot == -1),
             for n = 1:nmax,
                 loc_k1 = grid_k1(overlaydata_raw(n,2),overlaydata_raw(n,1));
-                if (overlaydata_raw(n,3) < loc_k1),
-                    overlaydata_raw(n,3) = loc_k1;                    
+                if ( (overlaydata_raw(n,3) ~= loc_k1) && (data_seafloor == 'y') ),
+                    overlaydata_raw(n,3) = loc_k1;                  
                 end
             end            
         end

@@ -134,6 +134,7 @@ data_ijk = 'n';         % [ 'n']  DATA AS (i,j,(k)) VS. (lon,lat,depth)?
 data_ijk_mean = 'n';    % [ 'n']  AVERAGE DATA BY MODEL CELL?
 data_shapecol = 'n';    % [ 'n']  DATA COLUMNS TO SET POINT SHAPE & COLOR?
 data_land = 'n';        % [ 'n']  PLOT DATA OVER LAND?
+data_seafloor = 'n';    % [ 'n']  ASSUME DATA IS SEAFLOOR (DEPTH)
 data_anomoly = 'n';     % [ 'n']  PLOT AS MODEL-DATA ANOMOLY ONLY?
 data_only = 'n';        % [ 'n']  PLOT ONLY DATA (no model values)?
 data_siteonly = 'n';    % [ 'n']  PLOT DATA AS SITES (no data values)?
