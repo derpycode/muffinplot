@@ -243,6 +243,9 @@ function [STATM] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,P
 %   18/08/21: rename current_path string
 %             adjusted mask path search
 %             *** VERSION 1.12 ********************************************
+%   18/10/04: bug-fix of overlay label filtering
+%             *** VERSION 1.13 ********************************************
+%
 % *********************************************************************** %
 %%
 
@@ -253,7 +256,7 @@ function [STATM] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,P
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.12;
+par_ver = 1.13;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -1104,8 +1107,9 @@ if ~isempty(overlaydataid)
             % delete data lines with depth levels not equal to kplot
             wronglayer_locations = find(overlaydata_ijk(:,3)~=kplot);
             wronglayer_n = size(wronglayer_locations);
-            overlaydata_ijk(wronglayer_locations,:) = [];
-            overlaydata_raw(wronglayer_locations,:) = [];
+            overlaydata_ijk(wronglayer_locations,:)  = [];
+            overlaydata_raw(wronglayer_locations,:)  = [];
+            overlaylabel_raw(wronglayer_locations,:) = [];
             nmax = nmax-wronglayer_n(1);
         elseif (kplot == -1),
             % delete data lines with depth levels not equal to loc_k1
@@ -1114,8 +1118,9 @@ if ~isempty(overlaydataid)
             while (n < nmax),
                 loc_k1 = grid_k1(overlaydata_ijk(n,2),overlaydata_ijk(n,1));
                 if (overlaydata_ijk(n,3) > loc_k1),
-                    overlaydata_ijk(n,:) = [];
-                    overlaydata_raw(n,:) = [];
+                    overlaydata_ijk(n,:)  = [];
+                    overlaydata_raw(n,:)  = [];
+                    overlaylabel_raw(n,:) = [];
                     nmax = nmax-1;
                 else
                     overlaydata_ijk(n,3) = loc_k1;
@@ -1157,14 +1162,14 @@ if ~isempty(overlaydataid)
         end
     end
     overlaylabel_raw(isnan(overlaydata_raw(:,4)),:) = [];
-    overlaydata_raw(isnan(overlaydata_raw(:,4)),:) = [];
-    overlaydata_ijk(isnan(overlaydata_ijk(:,4)),:) = [];
+    overlaydata_raw(isnan(overlaydata_raw(:,4)),:)  = [];
+    overlaydata_ijk(isnan(overlaydata_ijk(:,4)),:)  = [];
     % update value of nmax
     overlaydata_size = size(overlaydata_raw(:,:));
     nmax=overlaydata_size(1);
     % BLAH
     overlaylabel(:,:) = overlaylabel_raw(:,:);
-    overlaydata(:,:) = overlaydata_raw(:,:);
+    overlaydata(:,:)  = overlaydata_raw(:,:);
     % convert lat to sin(lat) for plotting
     if (plot_equallat == 'n'), overlaydata(:,2) = sin(pi*overlaydata_raw(:,2)/180.0); end
     % grid (and average per cell) data if requested
