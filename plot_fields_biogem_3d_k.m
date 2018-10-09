@@ -246,6 +246,8 @@ function [STATM] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,P
 %   18/10/04: bug-fix of overlay label filtering
 %             added option to force all data to be seafloor (depth) data
 %             *** VERSION 1.13 ********************************************
+%   18/10/09: bug-fix of text label plotting when averaging is selected
+%             *** VERSION 1.14 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -257,7 +259,7 @@ function [STATM] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,P
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.13;
+par_ver = 1.14;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -1793,7 +1795,7 @@ if (plot_main == 'y'),
                 end
             end
         end
-        if (data_sitelabel == 'y'),
+        if ( (data_sitelabel == 'y') && (data_ijk_mean == 'n') ),
             text(overlaydata(:,1)+(data_size/30),overlaydata(:,2)+(data_size/1200),overlaylabel(:,:),'FontSize',data_fontsz,'Color',data_sitecolor);
         end
     end
