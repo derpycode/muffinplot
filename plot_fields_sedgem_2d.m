@@ -188,6 +188,10 @@ function [STATM] = plot_fields_sedgem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,PMA
 %   18/08/21: rename current_path string
 %             adjusted mask path search
 %             *** VERSION 1.12 ********************************************
+%   18/10/25: added automatic identification of number of data columns
+%             (and of selection of explicit shapes and colors)
+%             plus checking of rows in data file (+ simple lon-lat check)
+%             *** VERSION 1.15 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -199,7 +203,7 @@ function [STATM] = plot_fields_sedgem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,PMA
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.12;
+par_ver = 1.15;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -339,6 +343,11 @@ if (plot_format_old == 'n'),
 end
 % now make make str_function text-friendly
 str_function = strrep(str_function,'_','-');
+%
+% *** FILTER OPTIONS **************************************************** %
+% 
+% there will be no site labels if data is averaged ...
+if (data_ijk_mean == 'y'), data_sitelabel = 'n'; end
 %
 % *********************************************************************** %
 
@@ -626,16 +635,40 @@ nmax = n;
 % *********************************************************************** %
 %
 if ~isempty(overlaydataid)
-    % load overlay datafile
+    % set filename
     overlaydatafile = [overlaydataid];
-    fid = fopen([overlaydatafile]);
-    if (data_shapecol == 'n'),
+    % determine number if lines
+    fid = fopen(overlaydatafile,'r');
+    loc_C = textscan(fid,'%s','delimiter','\n');
+    fclose(fid);
+    n_rows = length(loc_C{1,1});
+    % determine number of tab-, comma-, OR space-seperated columns
+    % NOTE: no mix of seperators allowed ...
+    fid = fopen(overlaydatafile,'r');
+    loc_line = fgets(fid);
+    delimiter = char(9); % tab
+    n_columns = numel(strfind(loc_line,delimiter)) + 1;
+    delimiter = char(32); % space
+    n_columns = max(n_columns,numel(strfind(loc_line,delimiter)) + 1);
+    delimiter = char(44); % comma
+    n_columns = max(n_columns,numel(strfind(loc_line,delimiter)) + 1);
+    fclose(fid);
+    % load overlay datafile
+    fid = fopen(overlaydatafile);
+    if (n_columns == 4),
         % lon, lat, value, LABEL
         C = textscan(fid, '%f %f %f %s', 'CommentStyle', '%');
         overlaydata_raw = cell2mat(C(1:3));
         CC = C(4);
         overlaylabel_raw = char(CC{1}(:));
-    else
+    elseif (n_columns == 5),
+        % lon, lat, depth, value, LABEL
+        C = textscan(fid, '%f %f %f %f %s', 'CommentStyle', '%');
+        overlaydata_raw = cell2mat(C(1:4));
+        overlaydata_raw(:,3) = [];
+        CC = C(5);
+        overlaylabel_raw = char(CC{1}(:));
+    elseif (n_columns == 7),
         % lon, lat, value, LABEL, SHAPE, EDGE COLOR, FILL COLOR
         C = textscan(fid, '%f %f %f %s %s %s %s', 'CommentStyle', '%');
         overlaydata_raw = cell2mat(C(1:3));
@@ -647,10 +680,51 @@ if ~isempty(overlaydataid)
         overlaydata_ecol = char(CC{1}(:));
         CC = C(7);
         overlaydata_fcol = char(CC{1}(:));
+    elseif (n_columns == 8),
+        % lon, lat, depth, value, LABEL, SHAPE, EDGE COLOR, FILL COLOR
+        C = textscan(fid, '%f %f %f %s %s %s %s', 'CommentStyle', '%');
+        overlaydata_raw = cell2mat(C(1:4));
+        overlaydata_raw(:,3) = [];
+        CC = C(5);
+        overlaylabel_raw = char(CC{1}(:));
+        CC = C(6);
+        overlaydata_shape = char(CC{1}(:));
+        CC = C(7);
+        overlaydata_ecol = char(CC{1}(:));
+        CC = C(8);
+        overlaydata_fcol = char(CC{1}(:));
+    else
+        disp([' ']);
+        disp([' * ERROR: Data format not recognized:']);
+        disp(['   Number of data columns found == ' num2str(n_columns)']);
+        disp(['   Columns must be space, comma, OR tab seperated (and not a mixture).']);
+        disp([' ']);
+        fclose(fid);
+        return;
     end
     fclose(fid);
+    % determine data size
     overlaydata_size = size(overlaydata_raw(:,:));
     nmax=overlaydata_size(1);
+    % check for incomplete file read
+    if (nmax < n_rows),
+        disp([' ']);
+        disp([' * ERROR: Problem in data format (e.g. string must not contain spaces):']);
+        disp(['   Number of data rows read == ' num2str(nmax)]);
+        disp(['   Number of lines in file  == ' num2str(n_rows)]);
+        disp([' ']);
+        return;        
+    end
+    % check for mixed up lon-lat ... i.e. not (LON, LAT) format
+    if ( (min(overlaydata_raw(:,2)) < -90) || (max(overlaydata_raw(:,2)) > 90) ),
+        loc_tmp = overlaydata_raw(:,1);
+        overlaydata_raw(:,1) = overlaydata_raw(:,2);
+        overlaydata_raw(:,2) = loc_tmp;
+        disp([' ']);
+        disp([' * WARNING: lon-lat is not in (LON, LAT) column order format:']);
+        disp(['   Swapping ...'])
+        disp([' ']);
+    end
     % create (i,j) from (lon,lat) and vice versa (depending on data input type)
     if (data_ijk == 'n')
         % precondition lon

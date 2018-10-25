@@ -198,6 +198,9 @@ function [grid_lat,zz] = plot_fields_biogem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,P
 %             (and of selection of explicit shapes and colors)
 %             plus checking of rows in data file (+ simple lon-lat check)
 %             *** VERSION 1.13 ********************************************
+%   18/10/25: [minor reformatting]
+%             *** VERSION 1.15 ********************************************
+%
 % *********************************************************************** %
 %%
 
@@ -208,7 +211,7 @@ function [grid_lat,zz] = plot_fields_biogem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,P
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.13;
+par_ver = 1.15;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -929,16 +932,6 @@ if ~isempty(overlaydataid)
         return;
     end
     fclose(fid);
-    % check for mixed up lon-lat ... i.e. not (LON, LAT) format
-    if ( (min(overlaydata_raw(:,2)) < -90) || (max(overlaydata_raw(:,2)) > 90) ),
-        loc_tmp = overlaydata_raw(:,1);
-        overlaydata_raw(:,1) = overlaydata_raw(:,2);
-        overlaydata_raw(:,2) = loc_tmp;
-        disp([' ']);
-        disp([' * WARNING: lon-lat is not in (LON, LAT) column order format:']);
-        disp(['   Swapping ...'])
-        disp([' ']);
-    end
     % determine data size
     overlaydata_size = size(overlaydata_raw(:,:));
     nmax=overlaydata_size(1);
@@ -950,6 +943,16 @@ if ~isempty(overlaydataid)
         disp(['   Number of lines in file  == ' num2str(n_rows)]);
         disp([' ']);
         return;        
+    end
+    % check for mixed up lon-lat ... i.e. not (LON, LAT) format
+    if ( (min(overlaydata_raw(:,2)) < -90) || (max(overlaydata_raw(:,2)) > 90) ),
+        loc_tmp = overlaydata_raw(:,1);
+        overlaydata_raw(:,1) = overlaydata_raw(:,2);
+        overlaydata_raw(:,2) = loc_tmp;
+        disp([' ']);
+        disp([' * WARNING: lon-lat is not in (LON, LAT) column order format:']);
+        disp(['   Swapping ...'])
+        disp([' ']);
     end
     % create (i,j) from (lon,lat) and vice versa (depending on data input type)
     if (data_ijk == 'n')
