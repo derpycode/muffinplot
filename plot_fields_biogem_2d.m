@@ -360,7 +360,7 @@ str_function = strrep(str_function,'_','-');
 % *** FILTER OPTIONS **************************************************** %
 % 
 % there will be no site labels if data is averaged ...
-if (data_ijk_mean == 'y'), data_sitelabel = 'n';, end
+if (data_ijk_mean == 'y'), data_sitelabel = 'n'; end
 %
 % *********************************************************************** %
 
