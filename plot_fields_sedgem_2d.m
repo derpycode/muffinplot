@@ -191,6 +191,7 @@ function [STATM] = plot_fields_sedgem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,PMA
 %   18/10/25: added automatic identification of number of data columns
 %             (and of selection of explicit shapes and colors)
 %             plus checking of rows in data file (+ simple lon-lat check)
+%   18/10/25: shape parameter bug-fix
 %             *** VERSION 1.15 ********************************************
 %
 % *********************************************************************** %
@@ -661,6 +662,7 @@ if ~isempty(overlaydataid)
         overlaydata_raw = cell2mat(C(1:3));
         CC = C(4);
         overlaylabel_raw = char(CC{1}(:));
+        data_shapecol = 'n';
     elseif (n_columns == 5),
         % lon, lat, depth, value, LABEL
         C = textscan(fid, '%f %f %f %f %s', 'CommentStyle', '%');
@@ -668,6 +670,7 @@ if ~isempty(overlaydataid)
         overlaydata_raw(:,3) = [];
         CC = C(5);
         overlaylabel_raw = char(CC{1}(:));
+        data_shapecol = 'n';
     elseif (n_columns == 7),
         % lon, lat, value, LABEL, SHAPE, EDGE COLOR, FILL COLOR
         C = textscan(fid, '%f %f %f %s %s %s %s', 'CommentStyle', '%');
@@ -680,6 +683,7 @@ if ~isempty(overlaydataid)
         overlaydata_ecol = char(CC{1}(:));
         CC = C(7);
         overlaydata_fcol = char(CC{1}(:));
+        data_shapecol = 'y';
     elseif (n_columns == 8),
         % lon, lat, depth, value, LABEL, SHAPE, EDGE COLOR, FILL COLOR
         C = textscan(fid, '%f %f %f %s %s %s %s', 'CommentStyle', '%');
@@ -693,6 +697,7 @@ if ~isempty(overlaydataid)
         overlaydata_ecol = char(CC{1}(:));
         CC = C(8);
         overlaydata_fcol = char(CC{1}(:));
+        data_shapecol = 'y';
     else
         disp([' ']);
         disp([' * ERROR: Data format not recognized:']);

@@ -251,6 +251,7 @@ function [STATM] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,P
 %   18/10/25: added automatic identification of number of data columns
 %             (and of selection of explicit shapes and colors)
 %             plus checking of rows in data file (+ simple lon-lat check)
+%   18/10/25: shape parameter bug-fix
 %             *** VERSION 1.15 ********************************************
 %
 % *********************************************************************** %
@@ -1098,6 +1099,7 @@ if ~isempty(overlaydataid)
         overlaydata_raw = cell2mat(C(1:4));
         CC = C(5);
         overlaylabel_raw = char(CC{1}(:));
+        data_shapecol = 'n';
     elseif (n_columns == 8),
         % lon, lat, depth, value, LABEL, SHAPE, EDGE COLOR, FILL COLOR
         C = textscan(fid, '%f %f %f %f %s %s %s %s', 'CommentStyle', '%');
@@ -1110,6 +1112,7 @@ if ~isempty(overlaydataid)
         overlaydata_ecol = char(CC{1}(:));
         CC = C(8);
         overlaydata_fcol = char(CC{1}(:));
+        data_shapecol = 'y';
     else
         disp([' ']);
         disp([' * ERROR: Data format not recognized:']);
