@@ -1092,7 +1092,7 @@ if ~isempty(overlaydataid)
     fclose(fid);
     % load overlay datafile
     fid = fopen(overlaydatafile);
-    if (n_columns == 4),
+    if (n_columns == 5),
         % lon, lat, depth, value, LABEL
         C = textscan(fid, '%f %f %f %f %s', 'CommentStyle', '%');
         overlaydata_raw = cell2mat(C(1:4));
