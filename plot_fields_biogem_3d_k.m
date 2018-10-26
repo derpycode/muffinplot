@@ -252,6 +252,7 @@ function [STATM] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,P
 %             (and of selection of explicit shapes and colors)
 %             plus checking of rows in data file (+ simple lon-lat check)
 %   18/10/25: shape parameter bug-fix
+%   18/10/25: bug-fix of seafloor (depth) forcing
 %             *** VERSION 1.15 ********************************************
 %
 % *********************************************************************** %
@@ -1177,7 +1178,7 @@ if ~isempty(overlaydataid)
             % delete data lines with depth levels not equal to loc_k1
             % NOTE: allow data k values *deeper* than the ocean grid
             n = 1;
-            while (n < nmax),
+            while (n <= nmax),
                 loc_k1 = grid_k1(overlaydata_ijk(n,2),overlaydata_ijk(n,1));
                 if ( (overlaydata_ijk(n,3) ~= loc_k1) && (data_seafloor == 'n') ),
                     overlaydata_ijk(n,:)  = [];
