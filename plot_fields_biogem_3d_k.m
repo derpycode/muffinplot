@@ -254,6 +254,9 @@ function [STATM] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,P
 %   18/10/25: shape parameter bug-fix
 %   18/10/25: bug-fix of seafloor (depth) forcing
 %             *** VERSION 1.15 ********************************************
+%   18/11/07: added ps rendering fix ... hopefuly ...
+%             for MUTLAB version shenanigans
+%             *** VERSION 1.16 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -265,7 +268,7 @@ function [STATM] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,P
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.15;
+par_ver = 1.16;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -275,6 +278,10 @@ if isempty(POPT), POPT='plot_fields_SETTINGS'; end
 eval(POPT);
 % set date
 str_date = [datestr(date,11), datestr(date,5), datestr(date,7)];
+% determine whcih stupid version of MUTLAB we are using
+tmp_mutlab = version('-release');
+str_mutlab = tmp_mutlab(1:4);
+par_mutlab = str2num(str_mutlab);
 %
 % *** backwards compatability ******************************************* %
 % 
@@ -1576,8 +1583,10 @@ if (plot_main == 'y'),
     % *** CONFIGURE AND CREATE PLOTTING WINDOW ****************************** %
     %
     % create figure
+    % NOTE: explicitly specify renderer is using useless recent version
     scrsz = get(0,'ScreenSize');
-    figure('Position',[((1 - plot_dscrsz)/2)*plot_dscrsz*scrsz(3) (1 - plot_dscrsz)*plot_dscrsz*scrsz(4) plot_dscrsz*scrsz(3) plot_dscrsz*scrsz(4)])
+    hfig = figure('Position',[((1 - plot_dscrsz)/2)*plot_dscrsz*scrsz(3) (1 - plot_dscrsz)*plot_dscrsz*scrsz(4) plot_dscrsz*scrsz(3) plot_dscrsz*scrsz(4)]);
+    if (par_mutlab > 2015), hfig.Renderer='Painters'; end    
     clf;
     % define plotting regions
     if (plot_format_old == 'y')
@@ -1923,7 +1932,11 @@ if (plot_main == 'y'),
     %
     set(gcf,'CurrentAxes',fh(1));
     if (plot_format_old == 'y')
-        print('-dpsc2', [par_pathout '/' filename '.' str_date '.ps']);
+        if (par_mutlab > 2015),
+            print('-dpsc2', '-bestfit', [par_pathout '/' filename '.' str_date '.ps']);
+        else
+            print('-dpsc2', [par_pathout '/' filename '.' str_date '.ps']);
+        end
     else
         switch plot_format
             case 'png'
