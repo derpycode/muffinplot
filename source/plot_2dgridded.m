@@ -1,12 +1,12 @@
-function [] = plot_2dgridded(PDATAIN,PDATATH,POPT,PDATAID,PDATATITLE)
+function [] = plot_2dgridded(PDATAIN,PDATATH,POPT,PDATAID,PDATATITLE,PDATALIMS)
 % plot_2dgridded
 %
 %   ***********************************************************************
 %   *** plot 2D gridded data **********************************************
 %   ***********************************************************************
 %
-%   plot_2dgridded(POPT)
-%   BLAH
+%   plot_2dgridded(PDATAIN,PDATATH,POPT,PDATAID,PDATATITLE,PDATALIMS)
+%   displays and saves a 2-D array of data in a block/grid plot
 %
 %   PDATAIN [ARRAY] (e.g. data)
 %   --> the 2D gridded data array to plot
@@ -21,6 +21,10 @@ function [] = plot_2dgridded(PDATAIN,PDATATH,POPT,PDATAID,PDATATITLE)
 %   --> ID label for creating a filename etc.
 %   PDATATITLE [STRING] (e.g., 'Ocean surface saturation')
 %   --> title
+%   PDATALIMS [VECTOR) (e.g. [0.0 10.0])
+%   --> speficy color scale limits rather than allowing auto-scaling
+%       of the data
+%   --> OPTIONAL (defaullt -- no passed parameter, is auto-scaling)
 %
 %   ***********************************************************************
 %   *** HISTORY ***********************************************************
@@ -38,6 +42,10 @@ function [] = plot_2dgridded(PDATAIN,PDATATH,POPT,PDATAID,PDATATITLE)
 %             updated make_cmap function call
 %   16/08/30: removed 'gridded' from filename
 %   18/02/05: altered behavor of data_threshold (now only ABOVE is NaN-ed)
+%   18/11/15: cleaned up
+%   18/11/15: added ps rendering fix ... hopefuly ...
+%             for MUTLAB version shenanigans
+%             *** VERSION 1.16 ********************************************
 %
 %   ***********************************************************************
 
@@ -45,26 +53,33 @@ function [] = plot_2dgridded(PDATAIN,PDATATH,POPT,PDATAID,PDATATITLE)
 % *** INITIALIZE PARAMETERS & VARIABLES ********************************* %
 % *********************************************************************** %
 %
+% set version!
+par_ver = 1.16;
+% set function name
+str_function = mfilename;
 % close open windows
-% NOTE: don't clear variable space here ...
 close all;
 % load plotting options
 if isempty(POPT), POPT='plot_fields_SETTINGS'; end
 eval(POPT);
-% set dummy variables
+% set date
+str_date = [datestr(date,11), datestr(date,5), datestr(date,7)];
+% determine whcih stupid version of MUTLAB we are using
+tmp_mutlab = version('-release');
+str_mutlab = tmp_mutlab(1:4);
+par_mutlab = str2num(str_mutlab);
+%
+% *** copy passed parameters ******************************************** %
+% 
+% set passed parameters
 data = PDATAIN;
 data_threshold = PDATATH;
 data_id = PDATAID;
 data_title = PDATATITLE;
-% determine grid size
-loc_size = size(data);
-imax = loc_size(2);
-jmax = loc_size(1);
-plot_xy_scaling = jmax/imax;
-% set date
-str_date = [datestr(date,11), datestr(date,5), datestr(date,7)];
-% set function name
-str_function = 'plot-2dgridded';
+% set default plot name
+if isempty(data_id), 
+    data_id = str_function; 
+end
 %
 % *** DEFINE COLORS ***************************************************** %
 %
@@ -74,17 +89,36 @@ color_g = [0.75 0.75 0.75];
 color_b = [0.00 0.00 0.00];
 % define white(!?)
 color_w = [1.00 1.00 1.00];
-%
+% set n colors
 c_max =256;
-loc_data = data;
-loc_data(find(data(:,:)     > abs(data_threshold)))  = NaN;
-loc_data(find(loc_data(:,:) < -abs(data_threshold))) = NaN;
-data_max = max(max(loc_data));
-data_min = min(min(loc_data));
+% set plot limits
+% NOTE: if limits are not explicitl specified, 
+%       data > threshold is excluded (NaN) in finding the (min,max) limits
+if exist('PDATALIMS','var'),
+    data_min = PDATALIMS(1);
+    data_max = PDATALIMS(2);
+    data(find(data(:,:) < data_min)) = data_min;
+    data(find(data(:,:) > data_max)) = data_max;
+else
+    loc_data = data;
+    loc_data(find(data(:,:)     > abs(data_threshold)))  = NaN;
+    loc_data(find(loc_data(:,:) < -abs(data_threshold))) = NaN;
+    data_max = max(max(loc_data));
+    data_min = min(min(loc_data));
+end
+% catch identical limits ...
 if (data_min == data_max)
     data_max = 1.001*data_max;
     data_min = 0.999*data_min;
 end
+%
+% *** SCALING *********************************************************** %
+% 
+% determine grid size
+loc_size = size(data);
+imax = loc_size(2);
+jmax = loc_size(1);
+plot_xy_scaling = jmax/imax;
 %
 % *********************************************************************** %
 
@@ -95,8 +129,10 @@ end
 % *** CONFIGURE AND CREATE PLOTTING WINDOW ****************************** %
 %
 % create figure
+% NOTE: explicitly specify renderer is using useless recent version
 scrsz = get(0,'ScreenSize');
-figure('Position',[((1 - plot_dscrsz)/2)*plot_dscrsz*scrsz(3) (1 - plot_dscrsz)*plot_dscrsz*scrsz(4) 1.1*plot_dscrsz*scrsz(4) plot_dscrsz*scrsz(4)])
+hfig = figure('Position',[((1 - plot_dscrsz)/2)*plot_dscrsz*scrsz(3) (1 - plot_dscrsz)*plot_dscrsz*scrsz(4) 1.1*plot_dscrsz*scrsz(4) plot_dscrsz*scrsz(4)]);
+if (par_mutlab > 2015), hfig.Renderer='Painters'; end    
 clf;
 % define plotting regions
 fh(1) = axes('Position',[0 0 1 1],'Visible','off');
@@ -190,19 +226,10 @@ hold off;
 set(gcf,'CurrentAxes',fh(1));
 set(gcf,'renderer','painters');
 filename = data_id;
-if (plot_format_old == 'y')
-    print('-dpsc2', [filename '.' str_date '.ps']);
+if (par_mutlab > 2015),
+    print('-dpsc2', '-bestfit', [filename '.' str_date '.ps']);
 else
-    switch plot_format
-        case 'png'
-            export_fig([filename '.' str_date '.png'], '-png', '-r150', '-nocrop');
-        case 'pngT'
-            export_fig([filename '.' str_date '.png'], '-png', '-r150', '-nocrop', '-transparent');
-        case 'jpg'
-            export_fig([filename '.' str_date '.jpg'], '-jpg', '-r150', '-nocrop');
-        otherwise
-            export_fig([filename '.' str_date '.eps'], '-eps', '-nocrop');
-    end
+    print('-dpsc2', [filename '.' str_date '.ps']);
 end
 %
 % *********************************************************************** %
