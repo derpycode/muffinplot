@@ -204,6 +204,8 @@ function [grid_lat,zz] = plot_fields_biogem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,P
 %   18/11/07: added ps rendering fix ... hopefuly ...
 %             for MUTLAB version shenanigans
 %             *** VERSION 1.16 ********************************************
+%   18/11/16: further developed model-data (ASCII data) output
+%             *** VERSION 1.17 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -215,7 +217,7 @@ function [grid_lat,zz] = plot_fields_biogem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,P
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.16;
+par_ver = 1.17;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -1019,6 +1021,8 @@ if ~isempty(overlaydataid)
         overlaydata_ij_old(:,:) = overlaydata_ij(:,:);
         overlaydata_ij(:,:) = [];
         overlaydata(:,:)    = [];
+        overlaylabel(:,:)   = [];
+        overlaylabel        = 'n/a';
         overlaydata_gridded = zeros(jmax,imax);
         overlaydata_gridded(:,:) = -0.999999E+19;
         m=0;
@@ -1031,14 +1035,16 @@ if ~isempty(overlaydataid)
                         m=m+1;
                         samecell_mean = mean(overlaydata_ij_old(samecell_locations,3));
                         overlaydata_ij(m,:) = [i j samecell_mean];
-                        overlaydata(m,1) = grid_lon_origin + 360.0*(overlaydata_ij(m,1) - 0.5)/jmax;
-                        overlaydata(m,2) = 2.0*(overlaydata_ij(m,2) - 0.5)/jmax - 1.0;
-                        overlaydata(m,3) = samecell_mean;
+                        overlaydata(m,1)    = grid_lon_origin + 360.0*(overlaydata_ij(m,1) - 0.5)/jmax;
+                        overlaydata(m,2)    = 2.0*(overlaydata_ij(m,2) - 0.5)/jmax - 1.0;
+                        overlaydata(m,3)    = samecell_mean;
+                        overlaylabel        = [overlaylabel; 'n/a'];
                         overlaydata_gridded(j,i) = overlaydata(m,3);
                     end
                 end
             end
         end
+        overlaylabel(end,:) = [];
         nmax=m;
         % save data on grid
         fprint_2D_d(overlaydata_gridded(:,:),[overlaydatafile, '.griddedOBS.', str_date, '.dat']);
@@ -1134,8 +1140,8 @@ end
 % STATM(9,:) = R2;
 % STATM(10,:) = M;
 if (data_stats == 'y')
-    if (~isempty(dataid_2) | (~isempty(overlaydataid) && ((data_only == 'n') || (data_anomoly == 'y'))))
-        fid = fopen([par_pathout '/' filename '_STATS' '.dat'], 'wt');
+    if (~isempty(dataid_2) || (~isempty(overlaydataid) && ((data_only == 'n') || (data_anomoly == 'y'))))
+        fid = fopen([par_pathout '/' filename '_STATS', '.', str_date '.dat'], 'wt');
         fprintf(fid, '\n');
         fprintf(fid, '=== STATS SUMMARY ===');
         fprintf(fid, '\n');
@@ -1159,20 +1165,58 @@ end
 %
 % save model data at the data locations
 if (~isempty(overlaydataid) && (data_only == 'n'))
-    fid = fopen([par_pathout '/' filename '_MODELPOINTS', '.', str_date '.dat'], 'wt');
+    fid = fopen([par_pathout '/' filename '_MODELDATAPOINTS', '.', str_date '.dat'], 'wt');
     fprintf(fid, '%% Model value at data locations');
     fprintf(fid, '\n');
-    fprintf(fid, '%% Format: i, j, lon, lat, value, label');
+    if (data_ijk == 'y'),
+        fprintf(fid, '%% Format: i, j, model lon, model lat, model value, data value, data label');
+    elseif (data_ijk_mean == 'y')
+        fprintf(fid, '%% Format: i, j, model lon, model lat, model value, re-gridded data value, (no data label)');
+    else
+        fprintf(fid, '%% Format: i, j, data lon, data lat, model value, data value, data label');
+    end
     fprintf(fid, '\n');
     for n = 1:nmax,
-        fprintf(fid, '%d %d %8.3f %8.3f %8.6e %s \n', int16(overlaydata_ij(n,1)), int16(overlaydata_ij(n,2)), overlaydata(n,1), 180.0*asin(overlaydata(n,2))/pi, data_vector_2(n), overlaylabel(n,:));
+        fprintf(fid, '%d %d %8.3f %8.3f %8.6e %8.6e %s \n', int16(overlaydata_ij(n,1)), int16(overlaydata_ij(n,2)), overlaydata(n,1), 180.0*asin(overlaydata(n,2))/pi, data_vector_2(n), data_vector_1(n), overlaylabel(n,:));
+    end
+    fclose(fid);
+elseif (~isempty(overlaydataid) && (data_only == 'y') && (data_anomoly == 'n') ),
+    fid = fopen([par_pathout '/' filename '_DATAPOINTS', '.', str_date '.dat'], 'wt');
+    fprintf(fid, '%% Data');
+    fprintf(fid, '\n');
+    if (data_ijk == 'y'),
+        fprintf(fid, '%% Format: i, j, model lon, model lat, data value, data label');
+    elseif (data_ijk_mean == 'y')
+        fprintf(fid, '%% Format: i, j, model lon, model lat, re-gridded data value, (no data label)');
+    else
+        fprintf(fid, '%% Format: i, j, data lon, data lat, data value, data label');
+    end
+    fprintf(fid, '\n');
+    for n = 1:nmax,
+        fprintf(fid, '%d %d %8.3f %8.3f %8.6e %s \n', int16(overlaydata_ij(n,1)), int16(overlaydata_ij(n,2)), overlaydata(n,1), 180.0*asin(overlaydata(n,2))/pi, data_vector_1(n), overlaylabel(n,:));
+    end
+    fclose(fid);
+elseif (~isempty(overlaydataid) && (data_only == 'y') && (data_anomoly == 'y') ),
+    fid = fopen([par_pathout '/' filename '_DATAANOMPOINTS', '.', str_date '.dat'], 'wt');
+    fprintf(fid, '%% Model-data anomoly');
+    fprintf(fid, '\n');
+    if (data_ijk == 'y'),
+        fprintf(fid, '%% Format: i, j, model lon, model lat, data anomaly, data label');
+    elseif (data_ijk_mean == 'y')
+        fprintf(fid, '%% Format: i, j, model lon, model lat, re-gridded data anomaly, (no data label)');
+    else
+        fprintf(fid, '%% Format: i, j, data lon, data lat, data anomaly, data label');
+    end
+    fprintf(fid, '\n');
+    for n = 1:nmax,
+        fprintf(fid, '%d %d %8.3f %8.3f %8.6e %s \n', int16(overlaydata_ij(n,1)), int16(overlaydata_ij(n,2)), overlaydata(n,1), 180.0*asin(overlaydata(n,2))/pi, data_vector_2(n) - data_vector_1(n), overlaylabel(n,:));
     end
     fclose(fid);
 elseif (data_saveall == 'y')
-    fid = fopen([par_pathout '/' filename '_ALLPOINTS', '.', str_date '.dat'], 'wt');
+    fid = fopen([par_pathout '/' filename '_ALLMODELPOINTS', '.', str_date '.dat'], 'wt');
     fprintf(fid, '%% Model value at mask locations');
     fprintf(fid, '\n');
-    fprintf(fid, '%% Format: i, j, lon, lat, model value, label');
+    fprintf(fid, '%% Format: i, j, model lon, model lat, model value');
     fprintf(fid, '\n');
     for j = 1:jmax,
         for i = 1:imax,
