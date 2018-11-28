@@ -37,6 +37,9 @@ function [] = plot_2dgridded2(PDATAIN,PDATALIMS,PDATACOL,OSTRUCTTEXT)
 %   18/11/15: CREATED -- DERIVED FROM plot_2dgridded
 %             ... then some sh*t was added
 %             *** VERSION 0.90 ********************************************
+%   18/11/28: added parameter fo x-tick text angle
+%             moved main fram slightly in (positive) (x,y) direction
+%             *** VERSION 0.91 ********************************************
 %
 %   ***********************************************************************
 
@@ -44,8 +47,15 @@ function [] = plot_2dgridded2(PDATAIN,PDATALIMS,PDATACOL,OSTRUCTTEXT)
 % *** INITIALIZE PARAMETERS & VARIABLES ********************************* %
 % *********************************************************************** %
 %
+% *** USER PARAMETERS *************************************************** %
+%
+% angle of xtick labels in degrees
+par_xtickangle = 90.0;
+%
+% *** INITIALIZE ******************************************************** %
+%
 % set version!
-par_ver = 0.90;
+par_ver = 0.91;
 % set function name
 str_function = mfilename;
 str_function(find(str_function(:)=='_')) = '-';
@@ -216,8 +226,8 @@ if (par_mutlab > 2015), hfig.Renderer='Painters'; end
 clf;
 % define plotting regions
 fh(1) = axes('Position',[0 0 1 1],'Visible','off');
-fh(2) = axes('Position',[0.05 0.10 0.70 0.70]);
-fh(3) = axes('Position',[0.80 0.10 0.10 0.70],'Visible','off');
+fh(2) = axes('Position',[0.10 0.20 0.70 0.70]);
+fh(3) = axes('Position',[0.80 0.20 0.10 0.70],'Visible','off');
 % define colormap
 cmap = make_cmap(colorbar_name,c_max);
 if (colorbar_inv == 'y'), cmap = flipdim(cmap,1); end,
@@ -234,6 +244,7 @@ hold on;
 caxis([data_min data_max]);
 set(gca,'PlotBoxAspectRatio',[1.0 plot_xy_scaling*1.0 1.0]);
 axis([0.0 double(xmax) 0.0 double(ymax)]);
+xtickangle(par_xtickangle);
 set(gca,'XLabel',text('String',str_xlabel,'FontSize',18),'XTick',[0.5:1:xmax-0.5],'XTickLabel',v_xticks,'fontsize',36*(1/xmax)^0.5);
 set(gca,'YLabel',text('String',str_ylabel,'FontSize',18),'YTick',[0.5:1:ymax-0.5],'YTickLabel',v_yticks,'fontsize',36*(1/ymax)^0.5);
 set(gca,'TickDir','out');
