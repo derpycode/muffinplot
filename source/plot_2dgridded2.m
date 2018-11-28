@@ -37,8 +37,8 @@ function [] = plot_2dgridded2(PDATAIN,PDATALIMS,PDATACOL,OSTRUCTTEXT)
 %   18/11/15: CREATED -- DERIVED FROM plot_2dgridded
 %             ... then some sh*t was added
 %             *** VERSION 0.90 ********************************************
-%   18/11/28: added parameter fo x-tick text angle
-%             moved main fram slightly in (positive) (x,y) direction
+%   18/11/28: added parameter got x-tick text angle
+%             moved main frame slightly in (positive) (x,y) direction
 %             *** VERSION 0.91 ********************************************
 %
 %   ***********************************************************************
