@@ -45,6 +45,8 @@ function [] = plot_2dgridded2(PDATAIN,PDATALIMS,PDATACOL,OSTRUCTTEXT)
 %             adjusted tick / font size scaling
 %             added x tick angle to plotting parameter structure input
 %             *** VERSION 0.92 ********************************************
+%   19/01/06: bug fix of defalt plotting parameters
+%             *** VERSION 0.93 ********************************************
 %
 %   ***********************************************************************
 
@@ -52,22 +54,10 @@ function [] = plot_2dgridded2(PDATAIN,PDATALIMS,PDATACOL,OSTRUCTTEXT)
 % *** INITIALIZE PARAMETERS & VARIABLES ********************************* %
 % *********************************************************************** %
 %
-% *** SET PLOTTING DEFAULTS ********************************************* %
-%
-str_title      = '';
-str_xlabel     = 'x-axis';
-str_ylabel     = 'y-axis';
-str_unitslabel = 'scale (n/a)';
-loc_tick = [1:xmax]';
-v_xticks = num2str(loc_tick);
-loc_tick = [1:ymax]';
-v_yticks = num2str(loc_tick);
-par_xtickangle = 90.0;
-%
 % *** INITIALIZE ******************************************************** %
 %
 % set version!
-par_ver = 0.92;
+par_ver = 0.93;
 % set function name
 str_function = mfilename;
 str_function(find(str_function(:)=='_')) = '-';
@@ -169,6 +159,18 @@ else
     disp([' ']);
     return;
 end
+%
+% *** SET PLOTTING DEFAULTS ********************************************* %
+%
+str_title      = '';
+str_xlabel     = 'x-axis';
+str_ylabel     = 'y-axis';
+str_unitslabel = 'scale (n/a)';
+loc_tick = [1:xmax]';
+v_xticks = num2str(loc_tick);
+loc_tick = [1:ymax]';
+v_yticks = num2str(loc_tick);
+par_xtickangle = 90.0;
 %
 % *** sort out strings/text ********************************************* %
 %
