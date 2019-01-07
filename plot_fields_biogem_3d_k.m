@@ -259,6 +259,8 @@ function [STATM] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,P
 %             *** VERSION 1.16 ********************************************
 %   18/11/16: further developed model-data (ASCII data) output
 %             *** VERSION 1.17 ********************************************
+%   19/01/07: added data save option
+%             *** VERSION 1.18 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -270,7 +272,7 @@ function [STATM] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,P
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.17;
+par_ver = 1.18;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -290,6 +292,7 @@ par_mutlab = str2num(str_mutlab);
 % data point scaling
 if ~exist('data_scalepoints','var'), data_scalepoints = 'n'; end
 % data saving
+if ~exist('data_save','var'),        data_save = 'y'; end % save (mode) data?
 if ~exist('data_saveall','var'),     data_saveall = 'n'; end
 if ~exist('data_saveallinfo','var'), data_saveallinfo = 'n'; end
 % extracting min / max / range from seasonal data
@@ -1420,58 +1423,85 @@ end
 % *** SAVE EQUIVALENT MODEL DATA **************************************** %
 %
 % save model data at the data locations
-if (~isempty(overlaydataid) && (data_only == 'n')),
-    fid = fopen([par_pathout '/' filename '_MODELDATAPOINTS', '.', str_date '.dat'], 'wt');
-    fprintf(fid, '%% Model value at data locations');
-    fprintf(fid, '\n');
-    if (data_ijk == 'y'),
-        fprintf(fid, '%% Format: i, j, model lon, model lat, model depth, model value, data value, data label');
-    elseif (data_ijk_mean == 'y')
-        fprintf(fid, '%% Format: i, j, model lon, model lat, model depth, model value, re-gridded data value, (no data label)');
-    else
-        fprintf(fid, '%% Format: i, j, data lon, data lat, data depth, model value, data value, data label');
-    end
-    fprintf(fid, '\n');
-    for n = 1:nmax,
-        loc_i = int16(overlaydata_ijk(n,1));
-        loc_j = int16(overlaydata_ijk(n,2));
-        loc_k = int16(overlaydata_ijk(n,3));
-        if (plot_equallat == 'y'),
-            fprintf(fid, '%d %d %d %8.3f %8.3f %8.3f %8.6e %8.6e %s \n', loc_i, loc_j, loc_k, overlaydata(n,1), overlaydata(n,2), grid_zt(loc_k), data_vector_2(n), data_vector_1(n), overlaylabel(n,:));
+if (data_save == 'y'),
+    if (~isempty(overlaydataid) && (data_only == 'n')),
+        fid = fopen([par_pathout '/' filename '_MODELDATAPOINTS', '.', str_date '.dat'], 'wt');
+        fprintf(fid, '%% Model value at data locations');
+        fprintf(fid, '\n');
+        if (data_ijk == 'y'),
+            fprintf(fid, '%% Format: i, j, model lon, model lat, model depth, model value, data value, data label');
+        elseif (data_ijk_mean == 'y')
+            fprintf(fid, '%% Format: i, j, model lon, model lat, model depth, model value, re-gridded data value, (no data label)');
         else
-            fprintf(fid, '%d %d %d %8.3f %8.3f %8.3f %8.6e %8.6e %s \n', loc_i, loc_j, loc_k, overlaydata(n,1), 180.0*asin(overlaydata(n,2))/pi, grid_zt(loc_k), data_vector_2(n), data_vector_1(n), overlaylabel(n,:));
+            fprintf(fid, '%% Format: i, j, data lon, data lat, data depth, model value, data value, data label');
         end
-    end
-    fclose(fid);
-elseif (~isempty(overlaydataid)),
-    fid = fopen([par_pathout '/' filename '_DATAPOINTS', '.', str_date '.dat'], 'wt');
-    fprintf(fid, '%% Model value at data locations');
-    fprintf(fid, '\n');
-    if (data_ijk == 'y'),
-        fprintf(fid, '%% Format: model lon, model lat, model depth, data value, data label');
-    elseif (data_ijk_mean == 'y')
-        fprintf(fid, '%% Format: model lon, model lat, model depth, re-gridded data value, (no data label)');
-    else
-        fprintf(fid, '%% Format: data lon, data lat, data depth, data value, data label');
-    end
-    fprintf(fid, '\n');
-    for n = 1:nmax,
-        if (plot_equallat == 'y'),
-            fprintf(fid, '%8.3f %8.3f %8.3f %8.6e %s \n', overlaydata(n,1), overlaydata(n,2), -overlaydata(n,3), overlaydata(n,4), overlaylabel(n,:));
+        fprintf(fid, '\n');
+        for n = 1:nmax,
+            loc_i = int16(overlaydata_ijk(n,1));
+            loc_j = int16(overlaydata_ijk(n,2));
+            loc_k = int16(overlaydata_ijk(n,3));
+            if (plot_equallat == 'y'),
+                fprintf(fid, '%d %d %d %8.3f %8.3f %8.3f %8.6e %8.6e %s \n', loc_i, loc_j, loc_k, overlaydata(n,1), overlaydata(n,2), grid_zt(loc_k), data_vector_2(n), data_vector_1(n), overlaylabel(n,:));
+            else
+                fprintf(fid, '%d %d %d %8.3f %8.3f %8.3f %8.6e %8.6e %s \n', loc_i, loc_j, loc_k, overlaydata(n,1), 180.0*asin(overlaydata(n,2))/pi, grid_zt(loc_k), data_vector_2(n), data_vector_1(n), overlaylabel(n,:));
+            end
+        end
+        fclose(fid);
+    elseif (~isempty(overlaydataid)),
+        fid = fopen([par_pathout '/' filename '_DATAPOINTS', '.', str_date '.dat'], 'wt');
+        fprintf(fid, '%% Model value at data locations');
+        fprintf(fid, '\n');
+        if (data_ijk == 'y'),
+            fprintf(fid, '%% Format: model lon, model lat, model depth, data value, data label');
+        elseif (data_ijk_mean == 'y')
+            fprintf(fid, '%% Format: model lon, model lat, model depth, re-gridded data value, (no data label)');
         else
-            fprintf(fid, '%8.3f %8.3f %8.3f %8.6e %s \n', overlaydata(n,1), 180.0*asin(overlaydata(n,2))/pi, -overlaydata(n,3), overlaydata(n,4), overlaylabel(n,:));
+            fprintf(fid, '%% Format: data lon, data lat, data depth, data value, data label');
         end
-    end
-    fclose(fid);
-elseif ~isempty(maskid)
-    fid = fopen([par_pathout '/' filename '_MASKPOINTS', '.', str_date '.dat'], 'wt');
-    fprintf(fid, '%% Model value at mask locations');
-    fprintf(fid, '\n');
-    fprintf(fid, '%% Format: i, j, k, model lon, model lat, model depth, model value');
-    fprintf(fid, '\n');
-    for j = 1:jmax,
-        for i = 1:imax,
-            if ~isnan(zm(j,i))
+        fprintf(fid, '\n');
+        for n = 1:nmax,
+            if (plot_equallat == 'y'),
+                fprintf(fid, '%8.3f %8.3f %8.3f %8.6e %s \n', overlaydata(n,1), overlaydata(n,2), -overlaydata(n,3), overlaydata(n,4), overlaylabel(n,:));
+            else
+                fprintf(fid, '%8.3f %8.3f %8.3f %8.6e %s \n', overlaydata(n,1), 180.0*asin(overlaydata(n,2))/pi, -overlaydata(n,3), overlaydata(n,4), overlaylabel(n,:));
+            end
+        end
+        fclose(fid);
+    elseif ~isempty(maskid)
+        fid = fopen([par_pathout '/' filename '_MASKPOINTS', '.', str_date '.dat'], 'wt');
+        fprintf(fid, '%% Model value at mask locations');
+        fprintf(fid, '\n');
+        fprintf(fid, '%% Format: i, j, k, model lon, model lat, model depth, model value');
+        fprintf(fid, '\n');
+        for j = 1:jmax,
+            for i = 1:imax,
+                if ~isnan(zm(j,i))
+                    loc_i = i;
+                    loc_j = j;
+                    if (kplot > 0), % process single depth layer
+                        loc_k = kplot;
+                    elseif (kplot == 0), % create water column integral
+                        loc_k = 0;
+                    elseif (kplot == -1), % benthic layer
+                        loc_k = grid_k1(j,i);
+                    end
+                    loc_lon = xm(j,i);
+                    loc_lat = ym(j,i);
+                    loc_depth = laym(j,i);
+                    loc_value = zm(j,i);
+                    fprintf(fid, '%2d %2d %2d %8.3f %8.3f %8.3f %8.6e %s \n', loc_i, loc_j, loc_k, loc_lon, loc_lat, -loc_depth, loc_value, '%');
+                end
+            end
+        end
+        fclose(fid);
+    elseif (data_saveall == 'y')
+        fid = fopen([par_pathout '/' filename '_ALLPOINTS', '.', str_date '.dat'], 'wt');
+        fprintf(fid, '%% Model value at all grid locations');
+        fprintf(fid, '\n');
+        fprintf(fid, '%% Format: i, j, k, lon, lat, model depth, model value');
+        fprintf(fid, '\n');
+        for j = 1:jmax,
+            for i = 1:imax,
                 loc_i = i;
                 loc_j = j;
                 if (kplot > 0), % process single depth layer
@@ -1488,45 +1518,20 @@ elseif ~isempty(maskid)
                 fprintf(fid, '%2d %2d %2d %8.3f %8.3f %8.3f %8.6e %s \n', loc_i, loc_j, loc_k, loc_lon, loc_lat, -loc_depth, loc_value, '%');
             end
         end
-    end
-    fclose(fid);
-elseif (data_saveall == 'y')
-    fid = fopen([par_pathout '/' filename '_ALLPOINTS', '.', str_date '.dat'], 'wt');
-    fprintf(fid, '%% Model value at all grid locations');
-    fprintf(fid, '\n');
-    fprintf(fid, '%% Format: i, j, k, lon, lat, model depth, model value');
-    fprintf(fid, '\n');
-    for j = 1:jmax,
-        for i = 1:imax,
-            loc_i = i;
-            loc_j = j;
-            if (kplot > 0), % process single depth layer
-                loc_k = kplot;
-            elseif (kplot == 0), % create water column integral
-                loc_k = 0;
-            elseif (kplot == -1), % benthic layer
-                loc_k = grid_k1(j,i);
+        fclose(fid);
+    elseif (data_saveallinfo == 'y')
+        fid = fopen([par_pathout '/' filename '_ALLINFOPOINTS', '.', str_date '.dat'], 'wt');
+        fprintf(fid, '%% Model value at all grid locations');
+        fprintf(fid, '\n');
+        fprintf(fid, '%% Format: lon_W, lon_m, lon_W, lat_S, lat_m, lat_N, depth_B, depth_M, depth_T, model value');
+        fprintf(fid, '\n');
+        for j = 1:jmax,
+            for i = 1:imax,
+                fprintf(fid, '%8.3f %8.3f %8.3f %8.3f %8.3f %8.3f %8.3f %8.3f %8.3f %8.6e \n', lonw(j,i), lonm(j,i), lone(j,i), asin(lats(j,i))*180.0/pi, latm(j,i), asin(latn(j,i))*180.0/pi, -layb(j,i), -laym(j,i), -layt(j,i), zm(j,i));
             end
-            loc_lon = xm(j,i);
-            loc_lat = ym(j,i);
-            loc_depth = laym(j,i);
-            loc_value = zm(j,i);
-            fprintf(fid, '%2d %2d %2d %8.3f %8.3f %8.3f %8.6e %s \n', loc_i, loc_j, loc_k, loc_lon, loc_lat, -loc_depth, loc_value, '%');
         end
+        fclose(fid);
     end
-    fclose(fid);
-elseif (data_saveallinfo == 'y')
-    fid = fopen([par_pathout '/' filename '_ALLINFOPOINTS', '.', str_date '.dat'], 'wt');
-    fprintf(fid, '%% Model value at all grid locations');
-    fprintf(fid, '\n');
-    fprintf(fid, '%% Format: lon_W, lon_m, lon_W, lat_S, lat_m, lat_N, depth_B, depth_M, depth_T, model value');
-    fprintf(fid, '\n');
-    for j = 1:jmax,
-        for i = 1:imax,
-            fprintf(fid, '%8.3f %8.3f %8.3f %8.3f %8.3f %8.3f %8.3f %8.3f %8.3f %8.6e \n', lonw(j,i), lonm(j,i), lone(j,i), asin(lats(j,i))*180.0/pi, latm(j,i), asin(latn(j,i))*180.0/pi, -layb(j,i), -laym(j,i), -layt(j,i), zm(j,i));
-        end
-    end
-    fclose(fid);
 end
 %
 % *********************************************************************** %

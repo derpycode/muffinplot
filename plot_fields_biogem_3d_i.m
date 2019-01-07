@@ -218,6 +218,8 @@ function [STATM,DIAG] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,
 %             *** VERSION 1.16 ********************************************
 %   18/11/16: further developed model-data (ASCII data) output
 %             *** VERSION 1.17 ********************************************
+%   19/01/07: added data save option
+%             *** VERSION 1.18 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -229,7 +231,7 @@ function [STATM,DIAG] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.17;
+par_ver = 1.18;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -249,7 +251,8 @@ par_mutlab = str2num(str_mutlab);
 % data point scaling
 if ~exist('data_scalepoints','var'), data_scalepoints = 'n'; end
 % data saving
-if ~exist('data_saveall','var'), data_saveall = 'n'; end
+if ~exist('data_save','var'),        data_save = 'y'; end % save (mode) data?
+if ~exist('data_saveall','var'),     data_saveall = 'n'; end
 if ~exist('data_saveallinfo','var'), data_saveallinfo = 'n'; end
 % extracting min / max / range from seasonal data
 if ~exist('data_minmax','var'),  data_minmax  = ''; end
@@ -261,6 +264,9 @@ if ~exist('par_pathout','var'),  par_pathout  = 'PLOTS'; end
 if ~exist('par_pathdata','var'), par_pathdata = 'DATA'; end
 if ~exist('par_pathmask','var'), par_pathmask = 'MASKS'; end
 if ~exist('par_pathexam','var'), par_pathexam = 'EXAMPLES'; end
+% plotting panel options
+if ~exist('plot_profile','var'), plot_profile = 'y'; end % PLOT PROFILE
+if ~exist('plot_zonal','var'),   plot_zonal   = 'y'; end % PLOT ZONAL
 %
 % *** initialize parameters ********************************************* %
 % 
@@ -1327,42 +1333,44 @@ end
 % *** SAVE EQUIVALENT MODEL DATA **************************************** %
 %
 % save model data at the data locations
-if (~isempty(overlaydataid) && (data_only == 'n'))
-    fid = fopen([par_pathout '/' filename '_MODELDATAPOINTS', '.', str_date '.dat'], 'wt');
-    fprintf(fid, '%% Model value at data locations');
-    fprintf(fid, '\n');
-    if (data_ijk == 'y'),
-        fprintf(fid, '%% Format: i, j, model lon, model lat, model depth, model value, data value, data label');
-    elseif (data_ijk_mean == 'y')
-        fprintf(fid, '%% Format: i, j, model lon, model lat, model depth, model value, re-gridded data value, (no data label)');
-    else
-        fprintf(fid, '%% Format: i, j, data lon, data lat, data depth, model value, data value, data label');
-    end
-    fprintf(fid, '\n');
-    for n = 1:nmax,
-        loc_i = int16(overlaydata_ijk(n,1));
-        loc_j = int16(overlaydata_ijk(n,2));
-        loc_k = int16(overlaydata_ijk(n,3));
-        fprintf(fid, '%d %d %d %8.3f %8.3f %8.3f %8.6e %8.6e %s \n', loc_i, loc_j, loc_k, overlaydata(n,1), overlaydata(n,2), -overlaydata(n,3), data_vector_2(n), data_vector_1(n), overlaylabel(n,:));
-    end
-    fclose(fid);
-elseif (data_saveall == 'y')
-    fid = fopen([par_pathout '/' filename '_ALLMODELPOINTS', '.', str_date '.dat'], 'wt');
-    fprintf(fid, '%% Model value at mask locations');
-    fprintf(fid, '\n');
-    fprintf(fid, '%% Format: i, j, k, model lon, model lat, model depth, model value');
-    fprintf(fid, '\n');
-    for k = 1:kmax,
-        for j = 1:jmax,
-            loc_k = k;
-            loc_j = j;
-            loc_lat = ym(k,j);
-            loc_depth = laym(k,j);
-            loc_value = zm(k,j);
-            fprintf(fid, '%2d %2d %8.3f %8.3f %8.6e %s \n', loc_j, loc_k, loc_lat, -loc_depth, loc_value, '%');
+if (data_save == 'y'),
+    if (~isempty(overlaydataid) && (data_only == 'n'))
+        fid = fopen([par_pathout '/' filename '_MODELDATAPOINTS', '.', str_date '.dat'], 'wt');
+        fprintf(fid, '%% Model value at data locations');
+        fprintf(fid, '\n');
+        if (data_ijk == 'y'),
+            fprintf(fid, '%% Format: i, j, model lon, model lat, model depth, model value, data value, data label');
+        elseif (data_ijk_mean == 'y')
+            fprintf(fid, '%% Format: i, j, model lon, model lat, model depth, model value, re-gridded data value, (no data label)');
+        else
+            fprintf(fid, '%% Format: i, j, data lon, data lat, data depth, model value, data value, data label');
         end
+        fprintf(fid, '\n');
+        for n = 1:nmax,
+            loc_i = int16(overlaydata_ijk(n,1));
+            loc_j = int16(overlaydata_ijk(n,2));
+            loc_k = int16(overlaydata_ijk(n,3));
+            fprintf(fid, '%d %d %d %8.3f %8.3f %8.3f %8.6e %8.6e %s \n', loc_i, loc_j, loc_k, overlaydata(n,1), overlaydata(n,2), -overlaydata(n,3), data_vector_2(n), data_vector_1(n), overlaylabel(n,:));
+        end
+        fclose(fid);
+    elseif (data_saveall == 'y')
+        fid = fopen([par_pathout '/' filename '_ALLMODELPOINTS', '.', str_date '.dat'], 'wt');
+        fprintf(fid, '%% Model value at mask locations');
+        fprintf(fid, '\n');
+        fprintf(fid, '%% Format: i, j, k, model lon, model lat, model depth, model value');
+        fprintf(fid, '\n');
+        for k = 1:kmax,
+            for j = 1:jmax,
+                loc_k = k;
+                loc_j = j;
+                loc_lat = ym(k,j);
+                loc_depth = laym(k,j);
+                loc_value = zm(k,j);
+                fprintf(fid, '%2d %2d %8.3f %8.3f %8.6e %s \n', loc_j, loc_k, loc_lat, -loc_depth, loc_value, '%');
+            end
+        end
+        fclose(fid);
     end
-    fclose(fid);
 end
 %
 % *** CREATE DATA VECTOR FOR HISTOGRAM ********************************** %
@@ -1764,7 +1772,7 @@ if (plot_secondary == 'y'),
     %
     % *** PLOT FIGURE (profile) ***************************************** %
     %
-    if (data_only == 'n'),
+    if ((data_only == 'n') && (plot_profile == 'y')),
         %
         figure
         plot(zl(:),-grid_zt(:));
@@ -1801,11 +1809,11 @@ if (plot_secondary == 'y'),
     %
     % *** SAVE DATA (profile) ******************************************* %
     %
-    if (data_only == 'n'), fprint_1D2_d([flipud(grid_zt(:)) flipud(zl(:))],[par_pathout '/' filename '.PROFILE.', str_date, '.res']); end
+    if ((data_only == 'n') && (plot_profile == 'y')), fprint_1D2_d([flipud(grid_zt(:)) flipud(zl(:))],[par_pathout '/' filename '.PROFILE.', str_date, '.res']); end
     %
     % *** PLOT FIGURE (surface zonal mean) ****************************** %
     %
-    if (data_only == 'n'),
+    if ((data_only == 'n') && (plot_zonal == 'y')),
         %
         figure
         plot(grid_lat,zz(kmax,:));
@@ -1833,7 +1841,7 @@ if (plot_secondary == 'y'),
     %
     % *** SAVE DATA (surface zonal mean) ******************************** %
     %
-    if (data_only == 'n'), fprint_1Dn_d([flipud(grid_lat) rot90(zz(kmax,:),1)],[par_pathout '/' filename '.ZONAL.', str_date, '.res']); end
+    if ((data_only == 'n') && (plot_zonal == 'y')), fprint_1Dn_d([flipud(grid_lat) rot90(zz(kmax,:),1)],[par_pathout '/' filename '.ZONAL.', str_date, '.res']); end
     %
     % *** PLOT FIGURE (cross-plot) ************************************** %
     %
