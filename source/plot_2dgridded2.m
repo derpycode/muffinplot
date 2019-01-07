@@ -27,6 +27,7 @@ function [] = plot_2dgridded2(PDATAIN,PDATALIMS,PDATACOL,OSTRUCTTEXT)
 %       OSTRUCTTEXT.unitslabel -- label for colorbar
 %       OSTRUCTTEXT.xticks     -- vector of x-tick labels
 %       OSTRUCTTEXT.yticks     -- vector of y-tick labels
+%       OSTRUCTTEXT.xtickangle -- angle of xtick labels in degrees
 %       OSTRUCTTEXT.filename   -- filename (excluding '.ps' extension)
 %   --> defaults are used if any (or the entire structure) are missing
 %
@@ -40,6 +41,10 @@ function [] = plot_2dgridded2(PDATAIN,PDATALIMS,PDATACOL,OSTRUCTTEXT)
 %   18/11/28: added parameter got x-tick text angle
 %             moved main frame slightly in (positive) (x,y) direction
 %             *** VERSION 0.91 ********************************************
+%   19/01/05: added version filter for use of xtickangle
+%             adjusted tick / font size scaling
+%             added x tick angle to plotting parameter structure input
+%             *** VERSION 0.92 ********************************************
 %
 %   ***********************************************************************
 
@@ -47,15 +52,22 @@ function [] = plot_2dgridded2(PDATAIN,PDATALIMS,PDATACOL,OSTRUCTTEXT)
 % *** INITIALIZE PARAMETERS & VARIABLES ********************************* %
 % *********************************************************************** %
 %
-% *** USER PARAMETERS *************************************************** %
+% *** SET PLOTTING DEFAULTS ********************************************* %
 %
-% angle of xtick labels in degrees
+str_title      = '';
+str_xlabel     = 'x-axis';
+str_ylabel     = 'y-axis';
+str_unitslabel = 'scale (n/a)';
+loc_tick = [1:xmax]';
+v_xticks = num2str(loc_tick);
+loc_tick = [1:ymax]';
+v_yticks = num2str(loc_tick);
 par_xtickangle = 90.0;
 %
 % *** INITIALIZE ******************************************************** %
 %
 % set version!
-par_ver = 0.91;
+par_ver = 0.92;
 % set function name
 str_function = mfilename;
 str_function(find(str_function(:)=='_')) = '-';
@@ -131,6 +143,8 @@ if (l == 0)
         data_max = 1.001*data_max;
         data_min = 0.999*data_min;
     end
+    data_minmin = data_min;
+    data_maxmax = data_max;
 elseif (l == 2)
     data_min = data_lims(1);
     data_max = data_lims(2);
@@ -158,48 +172,40 @@ end
 %
 % *** sort out strings/text ********************************************* %
 %
+% apply any and all structure-specified plotting parameters
 if exist('OSTRUCTTEXT','var'),
     s = OSTRUCTTEXT;
     if  isstruct(s)
         if (isfield(s,'title'))
             str_title = s.title;
-        else
-            str_title = '';
         end
         if (isfield(s,'xlabel'))
             str_xlabel = s.xlabel;
-        else
-            str_xlabel = 'x';
         end
         if (isfield(s,'ylabel'))
             str_ylabel = s.ylabel;
-        else
-            str_ylabel = 'y';
         end
         if (isfield(s,'unitslabel'))
             str_unitslabel = s.unitslabel;
-        else
-            str_unitslabel = 'n/a';
         end
         if (isfield(s,'xticks'))
             v_xticks = s.xticks;
-        else
-            loc_tick = [1:xmax]';
-            v_xticks = num2str(loc_tick);
         end
         if (isfield(s,'yticks'))            
             v_yticks = s.yticks;
-        else
-            loc_tick = [1:ymax]';
-            v_yticks = num2str(loc_tick);
+        end
+        if (isfield(s,'xtickangle'))
+            par_xtickangle = s.xtickangle;
         end
         if (isfield(s,'filename'))
             str_filename = s.filename;
-        else
+        elseif (isfield(s,'title'))
+            % NOTE: create filename from title if filename is not given,
+            %       but title is
             loc_title = str_title;
             loc_title(find(loc_title(:)==' ')) = '_';
             str_filename = [loc_title '.' str_date];
-        end
+        end 
     else
         disp([' ']);
         disp([' * ERROR: 5th parameter is not a structure array ...']);
@@ -244,9 +250,11 @@ hold on;
 caxis([data_min data_max]);
 set(gca,'PlotBoxAspectRatio',[1.0 plot_xy_scaling*1.0 1.0]);
 axis([0.0 double(xmax) 0.0 double(ymax)]);
-xtickangle(par_xtickangle);
-set(gca,'XLabel',text('String',str_xlabel,'FontSize',18),'XTick',[0.5:1:xmax-0.5],'XTickLabel',v_xticks,'fontsize',36*(1/xmax)^0.5);
-set(gca,'YLabel',text('String',str_ylabel,'FontSize',18),'YTick',[0.5:1:ymax-0.5],'YTickLabel',v_yticks,'fontsize',36*(1/ymax)^0.5);
+if (par_mutlab > 2016),
+    xtickangle(par_xtickangle);
+end
+set(gca,'XLabel',text('String',str_xlabel,'FontSize',18),'XTick',[0.5:1:xmax-0.5],'XTickLabel',v_xticks,'fontsize',9*(12/xmax)^0.5);
+set(gca,'YLabel',text('String',str_ylabel,'FontSize',18),'YTick',[0.5:1:ymax-0.5],'YTickLabel',v_yticks,'fontsize',9*(12/ymax)^0.5);
 set(gca,'TickDir','out');
 title(str_title,'FontSize',21);
 % draw filled rectangles
