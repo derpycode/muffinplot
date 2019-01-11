@@ -220,6 +220,8 @@ function [STATM,DIAG] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,
 %             *** VERSION 1.17 ********************************************
 %   19/01/07: added data save option
 %             *** VERSION 1.18 ********************************************
+%   19/01/10: added csv format overlay data detection
+%             *** VERSION 1.19 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -231,7 +233,7 @@ function [STATM,DIAG] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.18;
+par_ver = 1.19;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -1083,19 +1085,34 @@ if ~isempty(overlaydataid)
     n_columns = max(n_columns,numel(strfind(loc_line,delimiter)) + 1);
     delimiter = char(44); % comma
     n_columns = max(n_columns,numel(strfind(loc_line,delimiter)) + 1);
+    % set flag for comma-seperated file
+    delimiter = char(44); % comma
+    if (numel(strfind(loc_line,delimiter)) > 0),
+       flag_csv = true;
+    else
+       flag_csv = false;
+    end
     fclose(fid);
     % load overlay data
     fid = fopen(overlaydatafile);
     if (n_columns == 5),
         % lon, lat, depth, value, LABEL
-        C = textscan(fid, '%f %f %f %f %s', 'CommentStyle', '%');
+        if flag_csv
+            C = textscan(fid, '%f %f %f %f %s', 'CommentStyle', '%', 'EmptyValue', NaN, 'Delimiter', ',');             
+        else
+            C = textscan(fid, '%f %f %f %f %s', 'CommentStyle', '%', 'EmptyValue', NaN);            
+        end
         overlaydata_raw = cell2mat(C(1:4));
         CC = C(5);
         overlaylabel_raw = char(CC{1}(:));
         data_shapecol = 'n';
     elseif (n_columns == 8),
         % lon, lat, depth, value, LABEL, SHAPE, EDGE COLOR, FILL COLOR
-        C = textscan(fid, '%f %f %f %f %s %s %s %s', 'CommentStyle', '%');
+        if flag_csv
+            C = textscan(fid, '%f %f %f %f %s %s %s %s', 'CommentStyle', '%', 'EmptyValue', NaN, 'Delimiter', ',');             
+        else
+            C = textscan(fid, '%f %f %f %f %s %s %s %s', 'CommentStyle', '%', 'EmptyValue', NaN);            
+        end
         overlaydata_raw = cell2mat(C(1:4));
         CC = C(5);
         overlaylabel_raw = char(CC{1}(:));

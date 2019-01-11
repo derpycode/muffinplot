@@ -209,6 +209,8 @@ function [grid_lat,zz] = plot_fields_biogem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,P
 %   19/01/07: added data save option
 %             plus minor site location plotting plotting adjustments
 %             *** VERSION 1.18 ********************************************
+%   19/01/10: added csv format overlay data detection
+%             *** VERSION 1.19 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -220,7 +222,7 @@ function [grid_lat,zz] = plot_fields_biogem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,P
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.18;
+par_ver = 1.19;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -882,7 +884,7 @@ end
 if ~isempty(overlaydataid)
     % set filename
     overlaydatafile = [overlaydataid];
-    % determine number if lines
+    % determine number of lines
     fid = fopen(overlaydatafile,'r');
     loc_C = textscan(fid,'%s','delimiter','\n');
     fclose(fid);
@@ -897,19 +899,34 @@ if ~isempty(overlaydataid)
     n_columns = max(n_columns,numel(strfind(loc_line,delimiter)) + 1);
     delimiter = char(44); % comma
     n_columns = max(n_columns,numel(strfind(loc_line,delimiter)) + 1);
+    % set flag for comma-seperated file
+    delimiter = char(44); % comma
+    if (numel(strfind(loc_line,delimiter)) > 0),
+       flag_csv = true;
+    else
+       flag_csv = false;
+    end
     fclose(fid);
     % load overlay datafile
     fid = fopen(overlaydatafile);
     if (n_columns == 4),
         % lon, lat, value, LABEL
-        C = textscan(fid, '%f %f %f %s', 'CommentStyle', '%');
+        if flag_csv
+            C = textscan(fid, '%f %f %f %s', 'CommentStyle', '%', 'EmptyValue', NaN, 'Delimiter', ',');             
+        else
+            C = textscan(fid, '%f %f %f %s', 'CommentStyle', '%', 'EmptyValue', NaN);            
+        end
         overlaydata_raw = cell2mat(C(1:3));
         CC = C(4);
         overlaylabel_raw = char(CC{1}(:));
         data_shapecol = 'n';
     elseif (n_columns == 5),
         % lon, lat, depth, value, LABEL
-        C = textscan(fid, '%f %f %f %f %s', 'CommentStyle', '%');
+        if flag_csv
+            C = textscan(fid, '%f %f %f %f %s', 'CommentStyle', '%', 'EmptyValue', NaN, 'Delimiter', ',');             
+        else
+            C = textscan(fid, '%f %f %f %f %s', 'CommentStyle', '%', 'EmptyValue', NaN);            
+        end
         overlaydata_raw = cell2mat(C(1:4));
         overlaydata_raw(:,3) = [];
         CC = C(5);
@@ -917,7 +934,11 @@ if ~isempty(overlaydataid)
         data_shapecol = 'n';
     elseif (n_columns == 7),
         % lon, lat, value, LABEL, SHAPE, EDGE COLOR, FILL COLOR
-        C = textscan(fid, '%f %f %f %s %s %s %s', 'CommentStyle', '%');
+        if flag_csv
+            C = textscan(fid, '%f %f %f %s %s %s %s', 'CommentStyle', '%', 'EmptyValue', NaN, 'Delimiter', ',');             
+        else
+            C = textscan(fid, '%f %f %f %s %s %s %s', 'CommentStyle', '%', 'EmptyValue', NaN);            
+        end
         overlaydata_raw = cell2mat(C(1:3));
         CC = C(4);
         overlaylabel_raw = char(CC{1}(:));
@@ -930,7 +951,11 @@ if ~isempty(overlaydataid)
         data_shapecol = 'y';
     elseif (n_columns == 8),
         % lon, lat, depth, value, LABEL, SHAPE, EDGE COLOR, FILL COLOR
-        C = textscan(fid, '%f %f %f %s %s %s %s', 'CommentStyle', '%');
+        if flag_csv
+            C = textscan(fid, '%f %f %f %s %s %s %s', 'CommentStyle', '%', 'EmptyValue', NaN, 'Delimiter', ',');             
+        else
+            C = textscan(fid, '%f %f %f %s %s %s %s', 'CommentStyle', '%', 'EmptyValue', NaN);            
+        end
         overlaydata_raw = cell2mat(C(1:4));
         overlaydata_raw(:,3) = [];
         CC = C(5);
