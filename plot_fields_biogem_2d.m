@@ -210,6 +210,8 @@ function [grid_lat,zz] = plot_fields_biogem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,P
 %             plus minor site location plotting plotting adjustments
 %             *** VERSION 1.18 ********************************************
 %   19/01/10: added csv format overlay data detection
+%             added site label character filter
+%             added alternative mask of (i,j) vector (single) location
 %             *** VERSION 1.19 ********************************************
 %
 % *********************************************************************** %
@@ -752,7 +754,17 @@ if (~isempty(exp_2)) || (timesliceid_2 >= 0.0) || (~isempty(dataid_2))
 else
     filename = [exp_1, '.', 'y', num2str(timesliceid_1), '.', dataid_1];
 end
+% NOTE: mask single location coordinate is (i,j)
+%       but written to the array as (j,i)
 if ~isempty(maskid)
+    if isnumeric(maskid)
+        maskid = ['i', num2str(maskid(1)), 'j', num2str(maskid(2))];
+    elseif ischar(maskid)
+        % (OK)
+    else
+        disp([' ']);
+        error('*WARNING*: Unknown mask parameter type (must be character array or vector location) ... ')
+    end
     filename = [filename, '.', maskid];
 end
 if ~isempty(overlaydataid),
@@ -978,6 +990,10 @@ if ~isempty(overlaydataid)
         return;
     end
     fclose(fid);
+    % filter label
+    for n = 1:n_rows,
+        overlaylabel_raw(n,:) = strrep(overlaylabel_raw(n,:),'_',' ');
+    end
     % determine data size
     overlaydata_size = size(overlaydata_raw(:,:));
     nmax=overlaydata_size(1);

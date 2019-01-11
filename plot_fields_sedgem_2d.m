@@ -199,6 +199,8 @@ function [STATM] = plot_fields_sedgem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,PMA
 %   18/11/16: further developed model-data (ASCII data) output
 %             *** VERSION 1.17 ********************************************
 %   19/01/10: added csv format overlay data detection
+%             added site label character filter
+%             added alternative mask of (i,j) vector (single) location
 %             *** VERSION 1.19 ********************************************
 %
 % *********************************************************************** %
@@ -398,13 +400,6 @@ else
 end
 % read netCDf information
 [ndims,nvars,ngatts,unlimdimid] = netcdf.inq(ncid_1);
-% load mask data
-% NOTE: flip in j-direction to make consistent with netCDF grid
-maskfile = maskid;
-if ~isempty(maskid)
-    mask = load([maskfile],'-ascii');
-    mask = flipdim(mask,1);
-end
 %
 % *********************************************************************** %
 
@@ -455,6 +450,26 @@ if ~isempty(plot_mask_netcdf)
     varid  = netcdf.inqVarID(ncid_1,plot_mask_netcdf);
     rawdata = netcdf.getVar(ncid_1,varid);
     grid_mask(1:jmax,1:imax) = rawdata(1:imax,1:jmax)';
+end
+% test for mask 'type'
+% load mask data or create mask
+% NOTE: mask single location coordinate is (i,j)
+%       but written to the array as (j,i)
+% NOTE: when loading from file,
+%       flip in j-direction to make consistent with netCDF grid
+if ~isempty(maskid)
+    if isnumeric(maskid)
+        mask = zeros(jmax,imax);
+        mask(maskid(2),maskid(1)) = 1.0;
+        maskid = ['i', num2str(maskid(1)), 'j', num2str(maskid(2))];
+    elseif ischar(maskid)
+        maskfile = maskid;
+        mask = load([maskfile],'-ascii');
+        mask = flipdim(mask,1);
+    else
+        disp([' ']);
+        error('*WARNING*: Unknown mask parameter type (must be character array or vector location) ... ')
+    end
 end
 %
 % *********************************************************************** %
@@ -742,6 +757,10 @@ if ~isempty(overlaydataid)
         return;
     end
     fclose(fid);
+    % filter label
+    for n = 1:n_rows,
+        overlaylabel_raw(n,:) = strrep(overlaylabel_raw(n,:),'_',' ');
+    end
     % determine data size
     overlaydata_size = size(overlaydata_raw(:,:));
     nmax=overlaydata_size(1);
