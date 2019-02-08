@@ -29,7 +29,7 @@
 %      colorbar_name = 'parula'; colorbar color scale name
 %      colorbar_inv = 'n';    Invert colorbar colors?
 %      data_log10 = 'n';      	
-%      data_offset = 0.0;     Applied data offset (e.g. 273.15 for K->C)
+%      data_offset = 0.0;     Applied offset to model (eg 273.15 for K->C)
 %   DATA FORMAT
 %      data_ijk = 'n';        Data as (i,j(,k)) va. (lon,lat(,depth))?
 %      data_ijk_mean = 'y';   Average DATA by cell?
@@ -47,6 +47,7 @@
 %      data_stats = 'n';      Calculate and plot model-data statistics?
 %      data_fit_n = 1;        Polynomial fit order
 %      data_scalepoints = 'y';Also scale data points
+%      data_save = 'n';       SAVE MODEL DATA?
 %      data_saveall = 'n';    SAVE ALL DATA (in plotted section)?
 %      data_saveallinfo = 'n';SAVE ALL DATA + grid info?
 %      data_minmax = '';      EXTRACT MIN / MAX FROM SEASONAL DATA
@@ -129,7 +130,7 @@ colorbar_inv = 'n';     % [ 'n']  INVERT COLORBAR
 data_kmin = 1;          % [   1]  min k for data processing
 data_kmax = 16;         % [   1]  max k for data processing
 data_log10 = 'n';       % [ 'n']  PLOT LOG10 OF THE DATA
-data_offset = 0.0;      % [ 0.0]  APPLIED DATA OFFSET
+data_offset = 0.0;      % [ 0.0]  APPLIED DATA OFFSET (to model)
 data_ijk = 'n';         % [ 'n']  DATA AS (i,j,(k)) VS. (lon,lat,depth)?
 data_ijk_mean = 'n';    % [ 'n']  AVERAGE DATA BY MODEL CELL?
 data_shapecol = 'n';    % [ 'n']  DATA COLUMNS TO SET POINT SHAPE & COLOR?
@@ -146,6 +147,7 @@ data_fontsz = 8;        % [   8]  LABEL FONT SIZE
 data_stats = 'n';       % [ 'n']  CALCULATE & PLOT STATS?
 data_fit_n = 1;         % [   1]  POLYNOMIAL FIT ORDER
 data_scalepoints = 'y'; % [ 'y']  ALSO SCALE DATA POINTS (same as model)?
+data_save = 'n';        % [ 'n']  SAVE MODEL DATA?
 data_saveall = 'n';     % [ 'n']  SAVE ALL DATA (in plotted section)?
 data_saveallinfo = 'n'; % [ 'n']  SAVE ALL DATA + grid info?
 data_minmax = '';       % [ '']  EXTRACT MIN / MAX FROM SEASONAL DATA
