@@ -23,7 +23,6 @@
 %      contour_hltval = 3.0;  Highlight contour value
 %      contour_hlt2 = 'n';    Add a 2nd bold highlight contour?
 %      contour_hltval2 = 3.0; 2nd Highlight contour value
-%      contour_zero = 'y';    Highlight the zero contour?
 %      contour_file = '';     Filename of optional external plotting scale
 %   COLOR AND SCALING
 %      colorbar_name = 'parula'; colorbar color scale name
@@ -123,7 +122,6 @@ contour_hlt = 'n';      % [ 'n']  ADD HIGHLIGHT CONTOUR?
 contour_hltval = 0.0;   % [ 0.0]  HIGHLIGHT CONTOUR VALUE
 contour_hlt2 = 'n';     % [ 'n']  ADD 2nd HIGHLIGHT CONTOUR?
 contour_hltval2 = 0.0;  % [ 0.0]  2nd HIGHLIGHT CONTOUR VALUE
-contour_zero = 'y';     % [ 'y']  PLOT ZERO CONTOUR
 contour_file = '';      % [  '']  OPTIONAL EXTERNAL PLOTTING SCALE
 colorbar_name='parula'; % ['parula'] COLORBAR COLOR SCALE NAME
 colorbar_inv = 'n';     % [ 'n']  INVERT COLORBAR

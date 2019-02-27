@@ -224,6 +224,8 @@ function [STATM,DIAG] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,
 %             added site label character filter
 %             added alternative mask of (i,j) vector (single) location
 %             *** VERSION 1.19 ********************************************
+%   19/02/27: removed zero contour line, fixed up the 2 alternatives
+%             *** VERSION 1.20 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -235,7 +237,7 @@ function [STATM,DIAG] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.19;
+par_ver = 1.20;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -1623,9 +1625,16 @@ if (plot_main == 'y'),
                 clabel(C,h);
             end
         end
+        % additional highlight contours
+        loc_lim = 2.0*(abs(con_min) + abs(con_max));
         if (contour_hlt == 'y'),
-            v = [-1.0E19+contour_hltval:1.0E19:1.0E19+contour_hltval];
-            [C,h] = contour(xm,ym,zm,v,'w');
+            v = [-loc_lim+contour_hltval:loc_lim:loc_lim+contour_hltval];
+            [C,h] = contour(xm,ym,zm,v,'w-');
+            set(h,'LineWidth',1.0);
+        end
+        if (contour_hlt2 == 'y'),
+            v = [-loc_lim+contour_hltval2:loc_lim:loc_lim+contour_hltval2];
+            [C,h] = contour(xm,ym,zm,v,'w--');
             set(h,'LineWidth',1.0);
         end
     end

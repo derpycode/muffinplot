@@ -265,6 +265,8 @@ function [STATM] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,P
 %             added site label character filter
 %             added alternative mask of (i,j) vector (single) location
 %             *** VERSION 1.19 ********************************************
+%   19/02/27: removed zero contour line, fixed up the 2 alternatives
+%             *** VERSION 1.20 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -276,7 +278,7 @@ function [STATM] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,P
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.19;
+par_ver = 1.20;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -1809,12 +1811,23 @@ if (plot_main == 'y'),
         elseif contour_label == 'y'
             clabel(C,h);
         end
+        % additional highlight contours
+        loc_lim = 2.0*(abs(con_min) + abs(con_max));
         if (contour_hlt == 'y'),
-            v = [contour_hltval];
+            v = [-loc_lim+contour_hltval:loc_lim:loc_lim+contour_hltval];
             if (plot_equallat == 'n'),
-                [C,h] = contour(xm_ex,sin(pi*ym_ex/180.0),zm_ex,v,'k');
+                [C,h] = contour(xm_ex,sin(pi*ym_ex/180.0),zm_ex,v,'w-');
             else
-                [C,h] = contour(xm_ex,ym_ex,zm_ex,v,'k');
+                [C,h] = contour(xm_ex,ym_ex,zm_ex,v,'w-');
+            end
+            set(h,'LineWidth',1.0);
+        end
+        if (contour_hlt2 == 'y'),
+            v = [-loc_lim+contour_hltval2:loc_lim:loc_lim+contour_hltval2];
+            if (plot_equallat == 'n'),
+                [C,h] = contour(xm_ex,sin(pi*ym_ex/180.0),zm_ex,v,'w--');
+            else
+                [C,h] = contour(xm_ex,ym_ex,zm_ex,v,'w--');
             end
             set(h,'LineWidth',1.0);
         end

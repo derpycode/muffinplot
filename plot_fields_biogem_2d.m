@@ -213,6 +213,8 @@ function [grid_lat,zz] = plot_fields_biogem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,P
 %             added site label character filter
 %             added alternative mask of (i,j) vector (single) location
 %             *** VERSION 1.19 ********************************************
+%   19/02/27: removed zero contour line, fixed up the 2 alternatives
+%             *** VERSION 1.20 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -224,7 +226,7 @@ function [grid_lat,zz] = plot_fields_biogem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,P
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.19;
+par_ver = 1.20;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -1502,21 +1504,17 @@ if (plot_main == 'y'),
             set(h,'LineWidth',0.50);
             if contour_label == 'y', clabel(C,h); end
         end
-        if contour_zero == 'y',
-            v = [-1.0e19:1.0e19:1.0E19];
-            [C,h] = contour(xm_ex,sin(pi*ym_ex/180.0),zm_ex,v,'k-');
-            set(h,'LineWidth',1.0);
-            if contour_label == 'y', clabel(C,h); end
-        end
+        % additional highlight contours
+        loc_lim = 2.0*(abs(con_min) + abs(con_max));
         if (contour_hlt == 'y'),
-            v = [-1.0e9+contour_hltval:1.0e9:1.0E9+contour_hltval];
-            [C,h] = contour(xm_ex,sin(pi*ym_ex/180.0),zm_ex,v,'k-');
+            v = [-loc_lim+contour_hltval:loc_lim:loc_lim+contour_hltval];
+            [C,h] = contour(xm_ex,sin(pi*ym_ex/180.0),zm_ex,v,'w-');
             set(h,'LineWidth',1.0);
             if contour_label == 'y', clabel(C,h); end
         end
         if (contour_hlt2 == 'y'),
-            v = [-1.0e9+contour_hltval2:1.0e9:1.0E9+contour_hltval];
-            [C,h] = contour(xm_ex,sin(pi*ym_ex/180.0),zm_ex,v,'k-.');
+            v = [-loc_lim+contour_hltval2:loc_lim:loc_lim+contour_hltval2];
+            [C,h] = contour(xm_ex,sin(pi*ym_ex/180.0),zm_ex,v,'w--');
             set(h,'LineWidth',1.0);
             if contour_label == 'y', clabel(C,h); end
         end
