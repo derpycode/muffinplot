@@ -202,6 +202,8 @@ function [STATM] = plot_fields_sedgem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,PMA
 %             added site label character filter
 %             added alternative mask of (i,j) vector (single) location
 %             *** VERSION 1.19 ********************************************
+%   19/03/18: bug fix for non equal area grids
+%             *** VERSION 1.21 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -213,7 +215,7 @@ function [STATM] = plot_fields_sedgem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,PMA
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.19;
+par_ver = 1.21;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -985,7 +987,7 @@ end
 %
 % extend gridded data in +/- longitude
 lon_start = min(min(lonw));
-i_start = round((lon_min-(lon_start-360.0))/(360.0/jmax)) + 1;
+i_start = round((lon_min-(lon_start-360.0))/(360.0/imax)) + 1;
 xm_ex = [xm - 360.0 xm + 000.0 xm + 360.0];
 ym_ex = [ym + 000.0 ym + 000.0 ym + 000.0];
 zm_ex = [zm zm zm];

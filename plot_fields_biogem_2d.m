@@ -215,6 +215,8 @@ function [grid_lat,zz] = plot_fields_biogem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,P
 %             *** VERSION 1.19 ********************************************
 %   19/02/27: removed zero contour line, fixed up the 2 alternatives
 %             *** VERSION 1.20 ********************************************
+%   19/03/18: bug fix for non equal area grids
+%             *** VERSION 1.21 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -226,7 +228,7 @@ function [grid_lat,zz] = plot_fields_biogem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,P
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.20;
+par_ver = 1.21;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -1318,7 +1320,7 @@ lonw_ex = [lonw - 360.0 lonw + 000.0 lonw + 360.0];
 layb_ex = [layb layb layb];
 % shorten to conform to desired lon start value
 lon_start = min(min(lonw));
-i_start = round((lon_min-(lon_start-360.0))/(360.0/jmax)) + 1;
+i_start = round((lon_min-(lon_start-360.0))/(360.0/imax)) + 1;
 xm = xm_ex(:,i_start:i_start+imax-1);
 ym = ym_ex(:,i_start:i_start+imax-1);
 zm = zm_ex(:,i_start:i_start+imax-1);
