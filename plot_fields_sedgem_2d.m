@@ -1,4 +1,4 @@
-function [STATM] = plot_fields_sedgem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,PMASK,PCSCALE,PCMIN,PCMAX,PCN,PDATA,POPT,PNAME)
+function [OUTPUT] = plot_fields_sedgem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,PMASK,PCSCALE,PCMIN,PCMAX,PCN,PDATA,POPT,PNAME)
 % plot_fields_sedgem_2d
 %
 %   *******************************************************************   %
@@ -204,6 +204,9 @@ function [STATM] = plot_fields_sedgem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,PMA
 %             *** VERSION 1.19 ********************************************
 %   19/03/18: bug fix for non equal area grids
 %             *** VERSION 1.21 ********************************************
+%   19/03/25: made stats plot optional (selected as secondary plot)
+%             added alternative structure return from function
+%             *** VERSION 1.22 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -215,7 +218,7 @@ function [STATM] = plot_fields_sedgem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,PMA
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.21;
+par_ver = 1.22;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -232,6 +235,8 @@ par_mutlab = str2num(str_mutlab);
 %
 % *** backwards compatability ******************************************* %
 % 
+% data saving
+if ~exist('data_output_old','var'), data_output_old = 'y'; end % return STATM
 % paths
 if ~exist('par_pathin','var'),   par_pathin   = 'cgenie_output'; end
 if ~exist('par_pathlib','var'),  par_pathlib  = 'source'; end
@@ -895,12 +900,14 @@ if (~isempty(overlaydataid) && ((data_only == 'n') || (data_anomoly == 'y')))
     if (data_stats == 'y')
         % calculate stats
         STATM = calc_allstats(data_vector_1,data_vector_2);
-        % plot Taylor diagram
-        taylordiag_vargout = plot_taylordiag(STATM(2,1:2),STATM(3,1:2),STATM(4,1:2));
-        print('-depsc2', [filename, '_TaylorDiagram.', str_date, '.eps']);
-        %%%% plot Target diagram
-        %%%targetdiag_vargout = plot_target(STATM(7,1:2),STATM(8,1:2),'r',1.0,[],[]);
-        %%%print('-depsc2', [filename, '_TargetDiagram.', str_date, '.eps']);
+        if (plot_secondary=='y')
+            % plot Taylor diagram
+            taylordiag_vargout = plot_taylordiag(STATM(2,1:2),STATM(3,1:2),STATM(4,1:2));
+            print('-depsc2', [filename, '_TaylorDiagram.', str_date, '.eps']);
+            %%%% plot Target diagram
+            %%%targetdiag_vargout = plot_target(STATM(7,1:2),STATM(8,1:2),'r',1.0,[],[]);
+            %%%print('-depsc2', [filename, '_TargetDiagram.', str_date, '.eps']);
+        end
     end
 else
     STATM = [];
@@ -1342,6 +1349,47 @@ if (plot_secondary == 'y'),
     %
     if ( ~isempty(dataid_2) || (~isempty(overlaydataid) && (data_only == 'n')) ), fprint_1Dn_d([loc_x_data loc_y_data],[par_pathout '/' filename '.CROSSPLOT.', str_date, '.res']); end
     %
+end
+%
+% *********************************************************************** %
+
+% *********************************************************************** %
+% *** FUNCTION RETURN *************************************************** %
+% *********************************************************************** %
+%
+% NOTE: 
+%       STATM(1,2) = MEAN;
+%       STATM(2,2) = STD;
+%       STATM(3,2) = RMSD;
+%       STATM(4,2) = CORRELATIONS;
+%       STATM(5,2) = N;
+%       STATM(6,2) = TOTAL RMSD;
+%       STATM(7,2) = STANDARD DEVIATION NORMALISED RMSD;
+%       STATM(8,2) = NORMALISED BIAS;
+%       STATM(9,2) = R2;
+%       STATM(10,2) = M;
+%
+if (data_output_old == 'y')
+    OUTPUT = STATM;
+else
+    output.data_min   = min(min(zm));
+    output.data_max   = max(max(zm));
+    %
+    output.statm = STATM; 
+    if ~isempty(STATM)
+        output.statm_mean     = STATM(1,2);
+        output.statm_std      = STATM(2,2);
+        output.statm_rmsd     = STATM(3,2);
+        output.statm_corr     = STATM(4,2);
+        output.statm_n        = STATM(5,2);
+        output.statm_tot_rmsd = STATM(6,2);
+        output.statm_sdn_rmsd = STATM(7,2);
+        output.statm_bias     = STATM(8,2);
+        output.statm_r2       = STATM(9,2);
+        output.statm_m        = STATM(10,2); 
+    end
+    % set returned data
+    OUTPUT = output;
 end
 %
 % *********************************************************************** %

@@ -1,4 +1,4 @@
-function [STATM,DIAG] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,PMASK,PCSCALE,PCMIN,PCMAX,PCN,PDATA,POPT,PNAME)
+function [OUTPUT] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,PMASK,PCSCALE,PCMIN,PCMAX,PCN,PDATA,POPT,PNAME)
 % plot_fields_biogem_3d_i
 %
 %   *******************************************************************   %
@@ -226,6 +226,10 @@ function [STATM,DIAG] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,
 %             *** VERSION 1.19 ********************************************
 %   19/02/27: removed zero contour line, fixed up the 2 alternatives
 %             *** VERSION 1.20 ********************************************
+%   19/03/25: made stats plot optional (selected as secondary plot)
+%             added alternative structure return from function
+%             added MOC diagnostics
+%             *** VERSION 1.22 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -237,7 +241,7 @@ function [STATM,DIAG] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.20;
+par_ver = 1.22;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -260,6 +264,7 @@ if ~exist('data_scalepoints','var'), data_scalepoints = 'n'; end
 if ~exist('data_save','var'),        data_save = 'y'; end % save (mode) data?
 if ~exist('data_saveall','var'),     data_saveall = 'n'; end
 if ~exist('data_saveallinfo','var'), data_saveallinfo = 'n'; end
+if ~exist('data_output_old','var'),  data_output_old = 'y'; end % return STATM
 % extracting min / max / range from seasonal data
 if ~exist('data_minmax','var'),  data_minmax  = ''; end
 if ~exist('data_nseas','var'),   data_nseas   = 0; end
@@ -304,7 +309,6 @@ maskid = PMASK;
 overlaydataid = PDATA;
 altfilename = PNAME;
 STATM = [];
-DIAG = [];
 %
 % *** DEFINE COLORS ***************************************************** %
 %
@@ -1290,12 +1294,14 @@ if (~isempty(dataid_2))
     %       STATM(5,:) => N
     if (data_stats=='y'),
         STATM = calc_allstats(data_vector_1,data_vector_2);
-        % plot Taylor diagram
-        taylordiag_vargout = plot_taylordiag(STATM(2,1:2),STATM(3,1:2),STATM(4,1:2));
-        print('-depsc2', [par_pathout '/' filename, '_TaylorDiagram.', str_date, '.eps']);
-        %%%% plot Target diagram
-        %%%targetdiag_vargout = plot_target(STATM(7,1:2),STATM(8,1:2),'r',1.0,[],[]);
-        %%%print('-depsc2', [filename, '_TargetDiagram.', str_date, '.eps']);
+        if (plot_secondary=='y')
+            % plot Taylor diagram
+            taylordiag_vargout = plot_taylordiag(STATM(2,1:2),STATM(3,1:2),STATM(4,1:2));
+            print('-depsc2', [par_pathout '/' filename, '_TaylorDiagram.', str_date, '.eps']);
+            %%%% plot Target diagram
+            %%%targetdiag_vargout = plot_target(STATM(7,1:2),STATM(8,1:2),'r',1.0,[],[]);
+            %%%print('-depsc2', [filename, '_TargetDiagram.', str_date, '.eps']);
+        end
     else
         STATM = [];
     end
@@ -1324,12 +1330,14 @@ if (~isempty(overlaydataid)),
     % calculate stats
     if (data_stats=='y'),
         STATM = calc_allstats(data_vector_1,data_vector_2);
-        % plot Taylor diagram
-        taylordiag_vargout = plot_taylordiag(STATM(2,1:2),STATM(3,1:2),STATM(4,1:2));
-        print('-depsc2', [par_pathout '/' filename, '_TaylorDiagram.', str_date, '.eps']);
-        %%%% plot Target diagram
-        %%%targetdiag_vargout = plot_target(STATM(7,1:2),STATM(8,1:2),'r',1.0,[],[]);
-        %%%print('-depsc2', [filename, '_TargetDiagram.', str_date, '.eps']);
+        if (plot_secondary=='y')
+            % plot Taylor diagram
+            taylordiag_vargout = plot_taylordiag(STATM(2,1:2),STATM(3,1:2),STATM(4,1:2));
+            print('-depsc2', [par_pathout '/' filename, '_TaylorDiagram.', str_date, '.eps']);
+            %%%% plot Target diagram
+            %%%targetdiag_vargout = plot_target(STATM(7,1:2),STATM(8,1:2),'r',1.0,[],[]);
+            %%%print('-depsc2', [filename, '_TargetDiagram.', str_date, '.eps']);
+        end
     else
         STATM = [];
     end
@@ -1936,11 +1944,62 @@ end
 % *********************************************************************** %
 
 % *********************************************************************** %
+% *** FUNCTION RETURN *************************************************** %
+% *********************************************************************** %
+%
+% NOTE: 
+%       STATM(1,2) = MEAN;
+%       STATM(2,2) = STD;
+%       STATM(3,2) = RMSD;
+%       STATM(4,2) = CORRELATIONS;
+%       STATM(5,2) = N;
+%       STATM(6,2) = TOTAL RMSD;
+%       STATM(7,2) = STANDARD DEVIATION NORMALISED RMSD;
+%       STATM(8,2) = NORMALISED BIAS;
+%       STATM(9,2) = R2;
+%       STATM(10,2) = M;
+%
+if (data_output_old == 'y')
+    % return diagnostics
+    DIAG = [z/z_V 1027.649*z];
+    %
+    OUTPUT = [STATM, DIAG];
+else
+    %
+    output.data_inventory = 1027.649*z;
+    output.data_mean = z/z_V;
+    output.data_min   = min(min(zm));
+    output.data_max   = max(max(zm));
+    % MOC
+   if ~isempty(plot_opsi)
+       loc_opsi = opsizm(find(opsigrid_zt<(-plot_D_min)));
+       output.moc_min = min(loc_opsi);
+       output.moc_max = max(loc_opsi);
+   end
+    %
+    output.statm = STATM;
+    if ~isempty(STATM)
+        output.statm_mean     = STATM(1,2);
+        output.statm_std      = STATM(2,2);
+        output.statm_rmsd     = STATM(3,2);
+        output.statm_corr     = STATM(4,2);
+        output.statm_n        = STATM(5,2);
+        output.statm_tot_rmsd = STATM(6,2);
+        output.statm_sdn_rmsd = STATM(7,2);
+        output.statm_bias     = STATM(8,2);
+        output.statm_r2       = STATM(9,2);
+        output.statm_m        = STATM(10,2);       
+    end
+    % set returned data
+    OUTPUT = output;
+end
+%
+% *********************************************************************** %
+
+% *********************************************************************** %
 % *** END *************************************************************** %
 % *********************************************************************** %
 %
-% return diagnostics
-DIAG = [z/z_V 1027.649*z];
 % close netCDF files
 netcdf.close(ncid_1);
 if ~isempty(exp_2)

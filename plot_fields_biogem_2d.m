@@ -217,6 +217,8 @@ function [grid_lat,zz] = plot_fields_biogem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,P
 %             *** VERSION 1.20 ********************************************
 %   19/03/18: bug fix for non equal area grids
 %             *** VERSION 1.21 ********************************************
+%   19/03/25: made stats plot optional (selected as secondary plot)
+%             *** VERSION 1.22 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -228,7 +230,7 @@ function [grid_lat,zz] = plot_fields_biogem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,P
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.21;
+par_ver = 1.22;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -1139,12 +1141,14 @@ if ~isempty(dataid_2)
         % 	    STATM(4,:) => Correlation
         %       STATM(5,:) => N
         STATM = calc_allstats(data_vector_1,data_vector_2);
-        % plot Taylor diagram
-        taylordiag_vargout = plot_taylordiag(STATM(2,1:2),STATM(3,1:2),STATM(4,1:2));
-        print('-depsc2', [par_pathout '/' filename, '_TaylorDiagram.', str_date, '.eps']);
-        %%%% plot Target diagram
-        %%%targetdiag_vargout = plot_target(STATM(7,1:2),STATM(8,1:2),'r',1.0,[],[]);
-        %%%print('-depsc2', [filename, '_TargetDiagram.', str_date, '.eps']);
+        if (plot_secondary=='y')
+            % plot Taylor diagram
+            taylordiag_vargout = plot_taylordiag(STATM(2,1:2),STATM(3,1:2),STATM(4,1:2));
+            print('-depsc2', [par_pathout '/' filename, '_TaylorDiagram.', str_date, '.eps']);
+            %%%% plot Target diagram
+            %%%targetdiag_vargout = plot_target(STATM(7,1:2),STATM(8,1:2),'r',1.0,[],[]);
+            %%%print('-depsc2', [filename, '_TargetDiagram.', str_date, '.eps']);
+        end
     else
         STATM = [];
     end
@@ -1168,12 +1172,14 @@ elseif ~isempty(overlaydataid)
     if ((data_stats == 'y') && (data_only == 'n')),
         % calculate stats
         STATM = calc_allstats(data_vector_1,data_vector_2);
-        % plot Taylor diagram
-        taylordiag_vargout = plot_taylordiag(STATM(2,1:2),STATM(3,1:2),STATM(4,1:2));
-        print('-depsc2', [par_pathout '/' filename, '_TaylorDiagram.', str_date, '.eps']);
-        %%%% plot Target diagram
-        %%%targetdiag_vargout = plot_target(STATM(7,1:2),STATM(8,1:2),'r',1.0,[],[]);
-        %%%print('-depsc2', [filename, '_TargetDiagram.', str_date, '.eps']);
+        if (plot_secondary=='y')
+            % plot Taylor diagram
+            taylordiag_vargout = plot_taylordiag(STATM(2,1:2),STATM(3,1:2),STATM(4,1:2));
+            print('-depsc2', [par_pathout '/' filename, '_TaylorDiagram.', str_date, '.eps']);
+            %%%% plot Target diagram
+            %%%targetdiag_vargout = plot_target(STATM(7,1:2),STATM(8,1:2),'r',1.0,[],[]);
+            %%%print('-depsc2', [filename, '_TargetDiagram.', str_date, '.eps']);
+        end
     else
         STATM = [];
     end
