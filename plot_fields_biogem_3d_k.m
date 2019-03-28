@@ -272,6 +272,8 @@ function [OUTPUT] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 %   19/03/25: made stats plot optional (selected as secondary plot)
 %             added alternative structure return from function
 %             *** VERSION 1.22 ********************************************
+%   19/03/27: bug fix of STATM -> OUTPUT
+%             *** VERSION 1.23 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -283,7 +285,7 @@ function [OUTPUT] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.22;
+par_ver = 1.23;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -2240,14 +2242,18 @@ end
 %       STATM(9,2) = R2;
 %       STATM(10,2) = M;
 %
-if (data_output_old == 'y')
-    OUTPUT = STATM;
+if (data_output_old == 'y') 
+    if exist('STATM')
+        OUTPUT = STATM;
+    else
+        OUTPUT = [];        
+    end
 else
     output.data_min   = min(min(zm));
     output.data_max   = max(max(zm));
     %
-    output.statm = STATM; 
-    if ~isempty(STATM)
+    if exist('STATM')
+        output.statm = STATM;
         output.statm_mean     = STATM(1,2);
         output.statm_std      = STATM(2,2);
         output.statm_rmsd     = STATM(3,2);

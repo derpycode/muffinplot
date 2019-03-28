@@ -230,6 +230,8 @@ function [OUTPUT] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 %             added alternative structure return from function
 %             added MOC diagnostics
 %             *** VERSION 1.22 ********************************************
+%   19/03/27: bug fix of STATM -> OUTPUT
+%             *** VERSION 1.23 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -241,7 +243,7 @@ function [OUTPUT] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.22;
+par_ver = 1.23;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -1963,7 +1965,11 @@ if (data_output_old == 'y')
     % return diagnostics
     DIAG = [z/z_V 1027.649*z];
     %
-    OUTPUT = [STATM, DIAG];
+    if exist('STATM')
+        OUTPUT = [STATM, DIAG];
+    else
+        OUTPUT = [DIAG];
+    end
 else
     %
     output.data_inventory = 1027.649*z;
@@ -1971,14 +1977,14 @@ else
     output.data_min   = min(min(zm));
     output.data_max   = max(max(zm));
     % MOC
-   if ~isempty(plot_opsi)
-       loc_opsi = opsizm(find(opsigrid_zt<(-plot_D_min)));
-       output.moc_min = min(loc_opsi);
-       output.moc_max = max(loc_opsi);
-   end
+    if ~isempty(plot_opsi)
+        loc_opsi = opsizm(find(opsigrid_zt<(-plot_D_min)));
+        output.moc_min = min(loc_opsi);
+        output.moc_max = max(loc_opsi);
+    end
     %
-    output.statm = STATM;
-    if ~isempty(STATM)
+    if exist('STATM')
+        output.statm = STATM;
         output.statm_mean     = STATM(1,2);
         output.statm_std      = STATM(2,2);
         output.statm_rmsd     = STATM(3,2);
@@ -1988,7 +1994,7 @@ else
         output.statm_sdn_rmsd = STATM(7,2);
         output.statm_bias     = STATM(8,2);
         output.statm_r2       = STATM(9,2);
-        output.statm_m        = STATM(10,2);       
+        output.statm_m        = STATM(10,2);
     end
     % set returned data
     OUTPUT = output;
