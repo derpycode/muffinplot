@@ -209,6 +209,8 @@ function [OUTPUT] = plot_fields_sedgem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,PM
 %             *** VERSION 1.22 ********************************************
 %   19/03/27: bug fix of STATM -> OUTPUT
 %             *** VERSION 1.23 ********************************************
+%   19/03/31: removed generation of empty STATM array
+%             *** VERSION 1.24 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -220,7 +222,7 @@ function [OUTPUT] = plot_fields_sedgem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,PM
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.23;
+par_ver = 1.24;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -911,8 +913,6 @@ if (~isempty(overlaydataid) && ((data_only == 'n') || (data_anomoly == 'y')))
             %%%print('-depsc2', [filename, '_TargetDiagram.', str_date, '.eps']);
         end
     end
-else
-    STATM = [];
 end
 %
 % *** SAVE STATS DATA *************************************************** %

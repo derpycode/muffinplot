@@ -219,6 +219,8 @@ function [grid_lat,zz] = plot_fields_biogem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,P
 %             *** VERSION 1.21 ********************************************
 %   19/03/25: made stats plot optional (selected as secondary plot)
 %             *** VERSION 1.22 ********************************************
+%   19/03/31: removed generation of empty STATM array
+%             *** VERSION 1.24 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -230,7 +232,7 @@ function [grid_lat,zz] = plot_fields_biogem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,P
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.22;
+par_ver = 1.24;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -1149,8 +1151,6 @@ if ~isempty(dataid_2)
             %%%targetdiag_vargout = plot_target(STATM(7,1:2),STATM(8,1:2),'r',1.0,[],[]);
             %%%print('-depsc2', [filename, '_TargetDiagram.', str_date, '.eps']);
         end
-    else
-        STATM = [];
     end
 elseif ~isempty(overlaydataid)
     %
@@ -1180,8 +1180,6 @@ elseif ~isempty(overlaydataid)
             %%%targetdiag_vargout = plot_target(STATM(7,1:2),STATM(8,1:2),'r',1.0,[],[]);
             %%%print('-depsc2', [filename, '_TargetDiagram.', str_date, '.eps']);
         end
-    else
-        STATM = [];
     end
 end
 %

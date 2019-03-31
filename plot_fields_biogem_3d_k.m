@@ -274,6 +274,8 @@ function [OUTPUT] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 %             *** VERSION 1.22 ********************************************
 %   19/03/27: bug fix of STATM -> OUTPUT
 %             *** VERSION 1.23 ********************************************
+%   19/03/31: removed generation of empty STATM array
+%             *** VERSION 1.24 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -285,7 +287,7 @@ function [OUTPUT] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.23;
+par_ver = 1.24;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -1388,8 +1390,6 @@ if (~isempty(dataid_2))
             %%%targetdiag_vargout = plot_target(STATM(7,1:2),STATM(8,1:2),'r',1.0,[],[]);
             %%%print('-depsc2', [filename, '_TargetDiagram.', str_date, '.eps']);
         end
-    else
-        STATM = [];
     end
 end
 %
@@ -1431,8 +1431,6 @@ if (~isempty(overlaydataid) && ((data_only == 'n') || (data_anomoly == 'y')))
             %%%targetdiag_vargout = plot_target(STATM(7,1:2),STATM(8,1:2),'r',1.0,[],[]);
             %%%print('-depsc2', [filename, '_TargetDiagram.', str_date, '.eps']);
         end
-    else
-        STATM = [];
     end
 end
 %
