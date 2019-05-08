@@ -121,6 +121,8 @@ function [] = plot_timeseries_biogem(PEXP1,PEXP2,PTMIN,PTMAX,PDATA1,PDATA1N,PDAT
 %   18/09/24: made diagnostics data saving optional
 %             made timeseries saving optional [true by default]
 %             *** VERSION 1.14 ********************************************
+%   19/05/08: altered auto-scale failure detection and consequences ...
+%             *** VERSION 1.15 ********************************************
 %
 %   ***********************************************************************
 
@@ -131,7 +133,7 @@ function [] = plot_timeseries_biogem(PEXP1,PEXP2,PTMIN,PTMAX,PDATA1,PDATA1N,PDAT
 % *** initialize ******************************************************** %
 %
 % set version!
-par_ver = 1.14;
+par_ver = 1.15;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -987,7 +989,11 @@ if (axis_pCO2min == axis_pCO2max),
     axis_pCO2min = 1.0E6*min(data_pCO2(:,3));
     axis_pCO2max = 1.0E6*max(data_pCO2(:,3));
 end
-if (axis_pCO2min == axis_pCO2max), disp(['ERROR: Failed to autoscale pCO2 ... ']); return; end
+% if (axis_pCO2min == axis_pCO2max), disp(['ERROR: Failed to autoscale pCO2 ... ']); return; end
+if (axis_pCO2min == axis_pCO2max)
+    axis_pCO2min = (1.0 - sign(axis_pCO2min)/1000.0)*axis_pCO2min;
+    axis_pCO2max = (1.0 + sign(axis_pCO2min)/1000.0)*axis_pCO2max;
+end
 %
 if opt_log10,
     hl1 = line(log10(data_pCO2(:,1)),1.0E6*data_pCO2(:,3),'Color','r','LineWidth',1.0);
@@ -1006,7 +1012,11 @@ if (axis_d13Cmin == axis_d13Cmax),
     axis_d13Cmin = min(data_pCO2_13C(:,3));
     axis_d13Cmax = max(data_pCO2_13C(:,3));
 end
-if (axis_d13Cmin == axis_d13Cmax), disp(['ERROR: Failed to autoscale \delta^{13}C of pCO_{2} ... ']); return; end
+% if (axis_d13Cmin == axis_d13Cmax), disp(['ERROR: Failed to autoscale \delta^{13}C of pCO_{2} ... ']); return; end
+if (axis_d13Cmin == axis_d13Cmax)
+    axis_d13Cmin = (1.0 - sign(axis_d13Cmin)/1000.0)*axis_d13Cmin;
+    axis_d13Cmax = (1.0 + sign(axis_d13Cmax)/1000.0)*axis_d13Cmax;
+end
 %
 ax2 = axes('Position',get(ax1,'Position'),'Color','none','YAxisLocation','right','YColor','b');
 if opt_log10,
@@ -1032,7 +1042,11 @@ if (axis_Tatmmin == axis_Tatmmax),
     axis_Tatmmin = min(data_Tatm(:,2));
     axis_Tatmmax = max(data_Tatm(:,2));
 end
-if (axis_Tatmmin == axis_Tatmmax), disp(['ERROR: Failed to autoscale T(atm) ... ']); return; end
+% if (axis_Tatmmin == axis_Tatmmax), disp(['ERROR: Failed to autoscale T(atm) ... ']); return; end
+if (axis_Tatmmin == axis_Tatmmax)
+    axis_Tatmmin = (1.0 - sign(axis_Tatmmin)/1000.0)*axis_Tatmmin;
+    axis_Tatmmax = (1.0 + sign(axis_Tatmmax)/1000.0)*axis_Tatmmax;
+end
 %
 if opt_log10,
     hl1 = line(log10(data_Tatm(:,1)),data_Tatm(:,2),'Color','r','LineWidth',1.0);
@@ -1050,7 +1064,11 @@ if (axis_icemin == axis_icemax),
     axis_icemin = min(data_seaice(:,3));
     axis_icemax = max(data_seaice(:,3));
 end
-if (axis_icemin == axis_icemax), disp(['ERROR: Failed to autoscale seaice cover ... ']); return; end
+% if (axis_icemin == axis_icemax), disp(['ERROR: Failed to autoscale seaice cover ... ']); return; end
+if (axis_icemin == axis_icemax)
+    axis_icemin = (1.0 - sign(axis_icemin)/1000.0)*axis_icemin;
+    axis_icemax = (1.0 + sign(axis_icemax)/1000.0)*axis_icemax;
+end
 % set 2nd axes
 ax2 = axes('Position',get(ax1,'Position'),'Color','none','YAxisLocation','right','YColor','b');
 if opt_log10,
@@ -1087,7 +1105,11 @@ if (~isempty(data1))
         axis_data1_min = min(data1(:,data1_n));
         axis_data1_max = max(data1(:,data1_n));
     end
-    if (axis_data1_min >= axis_data1_max), disp(['ERROR: Failed to autoscale data1 ... ']); return; end
+    %     if (axis_data1_min >= axis_data1_max), disp(['ERROR: Failed to autoscale data1 ... ']); return; end
+    if (axis_data1_min == axis_data1_max)
+        axis_data1_min = (1.0 - sign(axis_data1_min)/1000.0)*axis_data1_min;
+        axis_data1_max = (1.0 + sign(axis_data1_max)/1000.0)*axis_data1_max;
+    end
     % plot data
     if opt_log10,
         hl1 = line(log10(data1(:,1)),data1(:,data1_n),'Color','k','LineWidth',1.0);
@@ -1164,7 +1186,11 @@ if (~isempty(data2))
         axis_data2_min = min(data2(:,data2_n));
         axis_data2_max = max(data2(:,data2_n));
     end
-    if (axis_data2_min >= axis_data2_max), disp(['ERROR: Failed to autoscale data2 ... ']); return; end
+%     if (axis_data2_min >= axis_data2_max), disp(['ERROR: Failed to autoscale data2 ... ']); return; end
+    if (axis_data2_min == axis_data2_max)
+        axis_data2_min = (1.0 - sign(axis_data2_min)/1000.0)*axis_data2_min;
+        axis_data2_max = (1.0 + sign(axis_data2_max)/1000.0)*axis_data2_max;
+    end
     % plot data
     if opt_log10,
         hl1 = line(log10(data2(:,1)),data2(:,data2_n),'Color','k','LineWidth',1.0);
@@ -1247,7 +1273,11 @@ if (~isempty(data3))
         axis_data3_min = min(data3(:,data3_n));
         axis_data3_max = max(data3(:,data3_n));
     end
-    if (axis_data3_min >= axis_data3_max), disp(['ERROR: Failed to autoscale data3 ... ']); return; end
+%     if (axis_data3_min >= axis_data3_max), disp(['ERROR: Failed to autoscale data3 ... ']); return; end
+    if (axis_data3_min == axis_data3_max)
+        axis_data3_min = (1.0 - sign(axis_data3_min)/1000.0)*axis_data3_min;
+        axis_data3_max = (1.0 + sign(axis_data3_max)/1000.0)*axis_data3_max;
+    end
     % plot data
     if opt_log10,
         hl1 = line(log10(data3(:,1)),data3(:,data3_n),'Color','k','LineWidth',1.0);
