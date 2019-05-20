@@ -234,6 +234,8 @@ function [OUTPUT] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 %             *** VERSION 1.23 ********************************************
 %   19/03/31: removed generation of empty STATM array
 %             *** VERSION 1.24 ********************************************
+%   19/05/20: another bug fix of STATM -> OUTPUT
+%             *** VERSION 1.25 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -245,7 +247,7 @@ function [OUTPUT] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.24;
+par_ver = 1.25;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -1963,7 +1965,7 @@ if (data_output_old == 'y')
     DIAG = [z/z_V 1027.649*z];
     %
     if exist('STATM')
-        OUTPUT = [STATM, DIAG];
+        OUTPUT = [STATM; DIAG];
     else
         OUTPUT = [DIAG];
     end
