@@ -33,6 +33,7 @@
 %      data_ijk = 'n';        Data as (i,j(,k)) va. (lon,lat(,depth))?
 %      data_ijk_mean = 'y';   Average DATA by cell?
 %      data_shapecol = 'n';   Additional columns for point shape & color?  
+%      data_output_old = 'y'; Old function return data format (array)? 
 %   DATA PLOTTING
 %      data_land = 'n';       Plot data points overlying land?
 %      data_anomoly = 'n';    Plot data values as model-data anomoly?
@@ -150,6 +151,7 @@ data_saveall = 'n';     % [ 'n']  SAVE ALL DATA (in plotted section)?
 data_saveallinfo = 'n'; % [ 'n']  SAVE ALL DATA + grid info?
 data_minmax = '';       % [ '']  EXTRACT MIN / MAX FROM SEASONAL DATA
 data_nseas = 12;        % [ '12']  NUMBER OF SUB-YEAR SLICES
+data_output_old = 'y';  % [ 'y']  old function return data format (array)? 
 plot_dataid_alt1='';    % [  '']  DATA FIELD #1 REPLACEMENT FILE
 plot_dataid_alt2='';    % [  '']  DATA FIELD #2 REPLACEMENT FILE
 plot_landvalues='n';    % [ 'n']  PLOT VALUES OVER LAND?
