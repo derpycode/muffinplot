@@ -276,6 +276,8 @@ function [OUTPUT] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 %             *** VERSION 1.23 ********************************************
 %   19/03/31: removed generation of empty STATM array
 %             *** VERSION 1.24 ********************************************
+%   19/05/20: adjusted data filtering
+%             *** VERSION 1.26 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -287,7 +289,7 @@ function [OUTPUT] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.24;
+par_ver = 1.26;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -377,7 +379,7 @@ end
 % set global flag if no alt plotting scale is set
 % NOTE: catch possibility of one axis being set, but the other @ default
 %       (min and max with indetical values)
-if ((plot_lat_min == plot_lat_max) && (plot_lon_min == plot_lon_max)),
+if ((plot_lat_min == plot_lat_max) && (plot_lon_min == plot_lon_max))
     plot_global = true;
     plot_xy_scaling = 1.0;
 else
@@ -448,6 +450,10 @@ str_function = strrep(str_function,'_','-');
 % 
 % there will be no site labels if data is averaged ...
 if (data_ijk_mean == 'y'), data_sitelabel = 'n'; end
+% don't plot the water column inventory if there is data
+if ( ~isempty(overlaydataid) && (kplot == 0) )
+    data_only == 'y';
+end
 %
 % *********************************************************************** %
 
@@ -1221,12 +1227,13 @@ if ~isempty(overlaydataid)
         % NOTE: function 'calc_find_ij' takes input in order: (lon,lat)
         %       i.e., the same as the raw overlay data, which is (lon,lat) (i.e., (i,j)) format
         % NOTE: !!! gridded data is (j,i) !!!
+        % NOTE: for data deeper than the depth of layer 1, k=1 is returned
         overlaydata_ijk(:,:) = zeros(size(overlaydata_raw(:,:)));
         for n = 1:nmax,
             overlaydata_ijk(n,1:2) = calc_find_ij(overlaydata_raw(n,1),overlaydata_raw(n,2),grid_lon_origin,imax,jmax);
             overlaydata_ijk(n,3)   = calc_find_k(overlaydata_raw(n,3),kmax);
         end
-        if (kplot > 0),
+        if (kplot > 0)
             % delete data lines with depth levels not equal to kplot
             wronglayer_locations = find(overlaydata_ijk(:,3)~=kplot);
             wronglayer_n = size(wronglayer_locations);
@@ -1234,9 +1241,31 @@ if ~isempty(overlaydataid)
             overlaydata_raw(wronglayer_locations,:)  = [];
             overlaylabel_raw(wronglayer_locations,:) = [];
             nmax = nmax-wronglayer_n(1);
-        elseif (kplot == -1),
+        elseif (kplot == 0)
             % delete data lines with depth levels not equal to loc_k1
-            % NOTE: allow data k values *deeper* than the ocean grid
+            % UNLESS the data_seafloor option is set:
+            %        => move too-deep data to local bottom level
+            n = 1;
+            while (n <= nmax),
+                loc_k1 = grid_k1(overlaydata_ijk(n,2),overlaydata_ijk(n,1));
+                if ( (overlaydata_ijk(n,3) < loc_k1) && (data_seafloor == 'n') ),
+                    overlaydata_ijk(n,:)  = [];
+                    overlaydata_raw(n,:)  = [];
+                    overlaylabel_raw(n,:) = [];
+                    nmax = nmax-1;
+                elseif ( (overlaydata_ijk(n,3) < loc_k1) )
+                    overlaydata_ijk(n,3) = loc_k1;
+                    n = n+1;
+                else
+                    overlaydata_ijk(n,3) = overlaydata_ijk(n,3);
+                    n = n+1;
+                end
+            end
+        elseif (kplot == -1)
+            % delete data lines with depth levels not equal to loc_k1
+            % UNLESS the data_seafloor option is set:
+            %        => allow data k values *deeper* than the ocean grid
+            %           and also shallower
             n = 1;
             while (n <= nmax),
                 loc_k1 = grid_k1(overlaydata_ijk(n,2),overlaydata_ijk(n,1));
@@ -1260,15 +1289,24 @@ if ~isempty(overlaydataid)
         overlaydata_ijk(:,:) = double(overlaydata_ijk(:,:));
         overlaydata_ijk(:,4) = overlaydata_raw(:,4);
     else
-        % force shallower to ocean floor (if k value too deep)
-        % ... or force down from ocean interior to seafloor ... (optional)
-        if (kplot == -1),
-            for n = 1:nmax,
+        % optional data depth processing
+        if (kplot == 0)
+            % force shallower to ocean floor (if k value too deep)
+            for n = 1:nmax
                 loc_k1 = grid_k1(overlaydata_raw(n,2),overlaydata_raw(n,1));
-                if ( (overlaydata_raw(n,3) ~= loc_k1) && (data_seafloor == 'y') ),
-                    overlaydata_raw(n,3) = loc_k1;                  
+                if ( (overlaydata_raw(n,3) < loc_k1) && (data_seafloor == 'y') )
+                    overlaydata_raw(n,3) = loc_k1;
                 end
-            end            
+            end
+        elseif (kplot == -1)
+            % also force deeper from ocean interior to seafloor
+            % for benthic plotting
+            for n = 1:nmax
+                loc_k1 = grid_k1(overlaydata_raw(n,2),overlaydata_raw(n,1));
+                if ( (overlaydata_raw(n,3) ~= loc_k1) && (data_seafloor == 'y') )
+                    overlaydata_raw(n,3) = loc_k1;
+                end
+            end
         end
         % convert (i,j) overlay data to (lon,lat)
         % NOTE: save (i,j,k) data first
@@ -1305,25 +1343,45 @@ if ~isempty(overlaydataid)
         overlaylabel(:,:)    = [];
         overlaylabel         = 'n/a';
         m=0;
-        for i = 1:imax,
-            for j = 1:jmax,
+        for i = 1:imax
+            for j = 1:jmax
                 if (~isnan(overlaydata_zm(j,i)))
-                    if (kplot == -1),
-                        k = grid_k1(j,i);
+                    if (kplot == 0)
+                        % search all k values
+                        loc_k1 = grid_k1(j,i);
+                        for k = loc_k1:kmax
+                            samecell_locations = find((int32(overlaydata_ijk_old(:,1))==i)&(int32(overlaydata_ijk_old(:,2))==j)&(int32(overlaydata_ijk_old(:,3))==k));
+                            samecell_n = size(samecell_locations);
+                            if (samecell_n(1) > 0)
+                                m=m+1;
+                                samecell_mean = mean(overlaydata_ijk_old(samecell_locations,4));
+                                overlaydata_ijk(m,:) = [i j k samecell_mean];
+                                overlaydata(m,1)     = grid_lon_origin + 360.0*(overlaydata_ijk(m,1) - 0.5)/jmax;
+                                overlaydata(m,2)     = 2.0*(overlaydata_ijk(m,2) - 0.5)/jmax - 1.0;
+                                overlaydata(m,3)     = double(laym(j,i));
+                                overlaydata(m,4)     = samecell_mean;
+                                overlaylabel         = [overlaylabel; 'n/a'];
+                            end
+                        end
                     else
-                        k = kplot;
-                    end
-                    samecell_locations = find((int32(overlaydata_ijk_old(:,1))==i)&(int32(overlaydata_ijk_old(:,2))==j)&(int32(overlaydata_ijk_old(:,3))==k));
-                    samecell_n = size(samecell_locations);
-                    if (samecell_n(1) > 0)
-                        m=m+1;
-                        samecell_mean = mean(overlaydata_ijk_old(samecell_locations,4));
-                        overlaydata_ijk(m,:) = [i j k samecell_mean];
-                        overlaydata(m,1)     = grid_lon_origin + 360.0*(overlaydata_ijk(m,1) - 0.5)/jmax;
-                        overlaydata(m,2)     = 2.0*(overlaydata_ijk(m,2) - 0.5)/jmax - 1.0;
-                        overlaydata(m,3)     = double(laym(j,i));
-                        overlaydata(m,4)     = samecell_mean;
-                        overlaylabel         = [overlaylabel; 'n/a'];
+                        % specify specific k value
+                        if (kplot == -1)
+                            k = grid_k1(j,i);
+                        else
+                            k = kplot;
+                        end
+                        samecell_locations = find((int32(overlaydata_ijk_old(:,1))==i)&(int32(overlaydata_ijk_old(:,2))==j)&(int32(overlaydata_ijk_old(:,3))==k));
+                        samecell_n = size(samecell_locations);
+                        if (samecell_n(1) > 0)
+                            m=m+1;
+                            samecell_mean = mean(overlaydata_ijk_old(samecell_locations,4));
+                            overlaydata_ijk(m,:) = [i j k samecell_mean];
+                            overlaydata(m,1)     = grid_lon_origin + 360.0*(overlaydata_ijk(m,1) - 0.5)/jmax;
+                            overlaydata(m,2)     = 2.0*(overlaydata_ijk(m,2) - 0.5)/jmax - 1.0;
+                            overlaydata(m,3)     = double(laym(j,i));
+                            overlaydata(m,4)     = samecell_mean;
+                            overlaylabel         = [overlaylabel; 'n/a'];
+                        end
                     end
                 end
             end

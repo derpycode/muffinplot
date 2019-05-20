@@ -28,6 +28,9 @@ function [OUTPUT] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 %   PIK [INTEGER] (e.g. 32)
 %   --> the meridional section to be plotted (the 'i' slice)
 %       (in the absence of a mask being specified)
+%   --> a zero will result in a global zonak mean being calculated
+%       but with model-data carried out on the grid as a whole
+%   --> a -1 will result in only surface and benthic surface data
 %   PMASK [STRING] (e.g. 'mask_worjh2_Indian.dat')
 %   --> the filename containing the meridional mask to construct the zonal average
 %   --> the full filename must be give, including any extensions
@@ -236,6 +239,8 @@ function [OUTPUT] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 %             *** VERSION 1.24 ********************************************
 %   19/05/20: another bug fix of STATM -> OUTPUT
 %             *** VERSION 1.25 ********************************************
+%   19/05/20: adjusted data filtering
+%             *** VERSION 1.26 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -247,7 +252,7 @@ function [OUTPUT] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.25;
+par_ver = 1.26;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -984,7 +989,6 @@ for k = 1:kmax,
         for i = 1:imax,
             % create special case of just benthic and surface data
             if (iplot == -1)
-                %%%if ((k ~=kmax))
                 if ((k ~= grid_k1(j,i)) && (k ~=kmax))
                     data(k,j,i) = NaN;
                 end
@@ -1187,7 +1191,8 @@ if ~isempty(overlaydataid)
         disp([' ']);
     end
     % determine equivalent (i,j,k)
-    % NOTE: filter out masked
+    % NOTE: filter out masked area
+    % NOTE: for data lying deeper than the depth of layer 1, k = 1 is set
     overlaydata_ijk(:,:) = zeros(size(overlaydata_raw(:,:)));
     for n = 1:nmax,
         overlaydata_ijk(n,1:2) = calc_find_ij(overlaydata_raw(n,1),overlaydata_raw(n,2),grid_lon_origin,imax,jmax);
@@ -1221,7 +1226,7 @@ if ~isempty(overlaydataid)
     overlaydata_raw(find(overlaydata_raw(:,3)>0.0),3) = -1.0*overlaydata_raw(find(overlaydata_raw(:,3)>0.0),3);
     % BLAH
     overlaylabel(:,:) = overlaylabel_raw(:,:);
-    overlaydata(:,:) = overlaydata_raw(:,:);
+    overlaydata(:,:)  = overlaydata_raw(:,:);
     % grid (and average per cell) data if requested
     % NOTE: data vector length is re-calculated and the value of nmax reset
     if (data_ijk_mean == 'y')
