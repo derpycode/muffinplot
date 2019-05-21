@@ -241,6 +241,8 @@ function [OUTPUT] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 %             *** VERSION 1.25 ********************************************
 %   19/05/20: adjusted data filtering
 %             *** VERSION 1.26 ********************************************
+%   19/05/20: added stats saving under data_save option
+%             *** VERSION 1.27 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -252,7 +254,7 @@ function [OUTPUT] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.26;
+par_ver = 1.27;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -1361,7 +1363,7 @@ end
 % STATM(8,:) = NORMALISED BIAS;
 % STATM(9,:) = R2;
 % STATM(10,:) = M;
-if (data_stats == 'y')
+if ((data_stats == 'y') && (data_save == 'y'))
     if (~isempty(dataid_2) || (~isempty(overlaydataid) && data_only=='n')),
         fid = fopen([par_pathout '/' filename '_STATS', '.', str_date '.dat'], 'wt');
         fprintf(fid, '\n');

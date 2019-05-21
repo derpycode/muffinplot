@@ -47,7 +47,7 @@
 %      data_stats = 'n';      Calculate and plot model-data statistics?
 %      data_fit_n = 1;        Polynomial fit order
 %      data_scalepoints = 'y';Also scale data points
-%      data_save = 'n';       SAVE MODEL DATA?
+%      data_save = 'y';       SAVE MODEL DATA? (including stats)
 %      data_saveall = 'n';    SAVE ALL DATA (in plotted section)?
 %      data_saveallinfo = 'n';SAVE ALL DATA + grid info?
 %      data_minmax = '';      EXTRACT MIN / MAX FROM SEASONAL DATA
@@ -146,7 +146,7 @@ data_fontsz = 8;        % [   8]  LABEL FONT SIZE
 data_stats = 'n';       % [ 'n']  CALCULATE & PLOT STATS?
 data_fit_n = 1;         % [   1]  POLYNOMIAL FIT ORDER
 data_scalepoints = 'y'; % [ 'y']  ALSO SCALE DATA POINTS (same as model)?
-data_save = 'n';        % [ 'n']  SAVE MODEL DATA?
+data_save = 'y';        % [ 'n']  SAVE MODEL DATA?
 data_saveall = 'n';     % [ 'n']  SAVE ALL DATA (in plotted section)?
 data_saveallinfo = 'n'; % [ 'n']  SAVE ALL DATA + grid info?
 data_minmax = '';       % [ '']  EXTRACT MIN / MAX FROM SEASONAL DATA
