@@ -452,7 +452,7 @@ str_function = strrep(str_function,'_','-');
 if (data_ijk_mean == 'y'), data_sitelabel = 'n'; end
 % don't plot the water column inventory if there is data
 if ( ~isempty(overlaydataid) && (kplot == 0) )
-    data_only == 'y';
+    data_only = 'y';
 end
 %
 % *********************************************************************** %
