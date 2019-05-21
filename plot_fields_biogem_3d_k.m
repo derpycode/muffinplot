@@ -450,10 +450,6 @@ str_function = strrep(str_function,'_','-');
 % 
 % there will be no site labels if data is averaged ...
 if (data_ijk_mean == 'y'), data_sitelabel = 'n'; end
-% don't plot the water column inventory if there is data
-if ( ~isempty(overlaydataid) && (kplot == 0) )
-    data_only = 'y';
-end
 %
 % *********************************************************************** %
 
@@ -1653,6 +1649,11 @@ if ~isempty(overlaydataid)
     end
     % redefine model grid location values so as to all appear white
     if (data_only == 'y')
+        zm = zeros(size(zm(:,:)));
+        zm(find(zm(:,:) == 0)) = NaN;
+    end
+    % ditto if water column inventory option plus data
+    if ( ~isempty(overlaydataid) && (kplot == 0) )
         zm = zeros(size(zm(:,:)));
         zm(find(zm(:,:) == 0)) = NaN;
     end
