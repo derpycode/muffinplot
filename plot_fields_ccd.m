@@ -51,6 +51,8 @@ function [out_n,out_ccd] = plot_fields_ccd(PEXPID,PT,PMASK,PMODULE,POPT,PNAME)
 %   18/03/20: addition of some simple opal system diagnostics plotting
 %             (+ minor path and filename fixes)
 %             *** VERSION 1.08 ********************************************
+%   19/05/23: added best fit parameter for plot .ps creation
+%             *** VERSION 1.09 ********************************************
 %
 %   ***********************************************************************
 
@@ -77,7 +79,7 @@ ctrl_SEDGEM_D = false; % use SEDGEM depth (if BIOGEM module selected)?
 % *********************************************************************** %
 %
 % set version!
-par_ver = 1.08;
+par_ver = 1.09;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -1001,7 +1003,7 @@ if strcmp(ctrl_orientation,'vert'),
     %
     filename = [filename_root '_plot_CaCO3vsdepthR'];
     if (plot_format_old == 'y')
-        print('-dpsc2', [filename '.ps']);
+        print('-bestfit', '-dpsc2', [filename '.ps']);
     else
         switch plot_format
             case 'png'
@@ -1074,7 +1076,7 @@ if strcmp(ctrl_orientation,'vert'),
     %
     filename = [filename_root '_plot_satvsdepthR'];
     if (plot_format_old == 'y')
-        print('-dpsc2', [filename '.ps']);
+        print('-bestfit', '-dpsc2', [filename '.ps']);
     else
         switch plot_format
             case 'png'
@@ -1137,7 +1139,7 @@ if strcmp(ctrl_orientation,'vert'),
     %
     filename = [filename_root '_plot_satvspresR'];
     if (plot_format_old == 'y')
-        print('-dpsc2', [filename '.ps']);
+        print('-bestfit', '-dpsc2', [filename '.ps']);
     else
         switch plot_format
             case 'png'
@@ -1213,7 +1215,7 @@ if strcmp(ctrl_orientation,'vert'),
     %
     filename = [filename_root '_plot_CaCO3vsdepthRsummary'];
     if (plot_format_old == 'y')
-        print('-dpsc2', [filename '.ps']);
+        print('-bestfit', '-dpsc2', [filename '.ps']);
     else
         switch plot_format
             case 'png'
@@ -1384,7 +1386,7 @@ else
     %
     filename = [filename_root '_plot_CaCO3vsdepth'];
     if (plot_format_old == 'y')
-        print('-dpsc2', [filename '.ps']);
+        print('-bestfit', '-dpsc2', [filename '.ps']);
     else
         switch plot_format
             case 'png'
