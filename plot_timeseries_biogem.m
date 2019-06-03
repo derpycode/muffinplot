@@ -123,6 +123,8 @@ function [] = plot_timeseries_biogem(PEXP1,PEXP2,PTMIN,PTMAX,PDATA1,PDATA1N,PDAT
 %             *** VERSION 1.14 ********************************************
 %   19/05/08: altered auto-scale failure detection and consequences ...
 %             *** VERSION 1.15 ********************************************
+%   19/06/03: fix to sea-ice auto-scale ...
+%             *** VERSION 1.16 ********************************************
 %
 %   ***********************************************************************
 
@@ -133,7 +135,7 @@ function [] = plot_timeseries_biogem(PEXP1,PEXP2,PTMIN,PTMAX,PDATA1,PDATA1N,PDAT
 % *** initialize ******************************************************** %
 %
 % set version!
-par_ver = 1.15;
+par_ver = 1.16;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -1066,8 +1068,8 @@ if (axis_icemin == axis_icemax),
 end
 % if (axis_icemin == axis_icemax), disp(['ERROR: Failed to autoscale seaice cover ... ']); return; end
 if (axis_icemin == axis_icemax)
-    axis_icemin = (1.0 - sign(axis_icemin)/1000.0)*axis_icemin;
-    axis_icemax = (1.0 + sign(axis_icemax)/1000.0)*axis_icemax;
+    axis_icemin = 0.0;
+    axis_icemax = 100.0;
 end
 % set 2nd axes
 ax2 = axes('Position',get(ax1,'Position'),'Color','none','YAxisLocation','right','YColor','b');
