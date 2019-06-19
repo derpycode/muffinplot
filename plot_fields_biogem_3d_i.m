@@ -243,6 +243,8 @@ function [OUTPUT] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 %             *** VERSION 1.26 ********************************************
 %   19/05/20: added stats saving under data_save option
 %             *** VERSION 1.27 ********************************************
+%   19/06/18: added additional profile data plotting
+%             *** VERSION 1.28 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -254,7 +256,7 @@ function [OUTPUT] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.27;
+par_ver = 1.28;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -1261,6 +1263,17 @@ if ~isempty(overlaydataid)
     end
     % scale overlay data
     overlaydata(:,4) = overlaydata(:,4)/datapoint_scale;
+    % calculate profile
+    overlaydata_ijk_old(:,:) = overlaydata_ijk(:,:);
+    overlaydata_k(:) = NaN(loc_kmax-loc_kmin+1,1);
+    for k = loc_kmin:loc_kmax,
+        samecell_locations = find(int32(overlaydata_ijk_old(:,3))==k);
+        samecell_n = size(samecell_locations);
+        if (samecell_n(1) > 0)
+            samecell_mean = mean(overlaydata_ijk_old(samecell_locations,4));
+            overlaydata_k(k) = samecell_mean;
+        end
+    end   
 end
 % create and print mask
 if ( isempty(dataid_2) && ~isempty(overlaydataid) )
@@ -1332,6 +1345,7 @@ if (~isempty(overlaydataid)),
     for n = 1:nmax,
         %%%data_vector_2(n) = overlaydata_zm(int32(overlaydata_ijk(n,3)),int32(overlaydata_ijk(n,2)));
         data_vector_2(n) = data(int32(overlaydata_ijk(n,3)),int32(overlaydata_ijk(n,2)),int32(overlaydata_ijk(n,1)));
+        data_vector_k(n) = int32(overlaydata_ijk(n,3));
     end
     data_vector_2 = data_vector_2';
     % filter data
@@ -1838,9 +1852,26 @@ if (plot_secondary == 'y'),
         %
         figure
         plot(zl(:),-grid_zt(:));
-        hold on;
-        scatter(zl(:),-grid_zt(:),25,'r');
-        axis([con_min con_max -grid_zt_edges(1) -grid_zt_edges(kmax+1)]);
+        hold on;        
+        if ~isempty(overlaydataid)
+            % plot raw; data,  + corresponding model values
+            scatter(data_vector_1(:),-grid_zt(data_vector_k(:)),10,'ko');
+            scatter(data_vector_2(:),-grid_zt(data_vector_k(:)),10,'r^');
+            %
+            for k = loc_kmin:loc_kmax,
+                    samelayer_locations = find((int32(data_vector_k(:))==k));
+                    samecell_n = size(samelayer_locations);
+                    if (samecell_n(1) > 0)
+                        samelayer_mean = mean(data_vector_1(samelayer_locations));
+                        scatter(samelayer_mean,-grid_zt(k),50,'ko','filled');
+                        samelayer_mean = mean(data_vector_2(samelayer_locations));
+                        scatter(samelayer_mean,-grid_zt(k),50,'r^','filled');                 
+                    end
+            end
+         else
+             scatter(zl(:),-grid_zt(:),25,'r');
+        end
+        axis([con_min con_max -grid_zt_edges(1) -grid_zt_edges(kmax+1)]);        
         xlabel(strrep(dataid_1,'_','-'));
         ylabel('Elevation (m)');
         if ~isempty(plot_title)
