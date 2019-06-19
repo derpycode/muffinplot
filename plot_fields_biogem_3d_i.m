@@ -1851,25 +1851,30 @@ if (plot_secondary == 'y'),
     if ((data_only == 'n') && (plot_profile == 'y')),
         %
         figure
-        plot(zl(:),-grid_zt(:));
         hold on;        
         if ~isempty(overlaydataid)
+            %
+             plot(zl(:),-grid_zt(:),'--');
+             set(h,'LineWidth',2.0);
             % plot raw; data,  + corresponding model values
-            scatter(data_vector_1(:),-grid_zt(data_vector_k(:)),10,'ko');
-            scatter(data_vector_2(:),-grid_zt(data_vector_k(:)),10,'r^');
+            scatter(data_vector_1(:),-grid_zt(data_vector_k(:)),10,'mo');
+            scatter(data_vector_2(:),-grid_zt(data_vector_k(:)),10,'c^');
             %
             for k = loc_kmin:loc_kmax,
                     samelayer_locations = find((int32(data_vector_k(:))==k));
                     samecell_n = size(samelayer_locations);
                     if (samecell_n(1) > 0)
                         samelayer_mean = mean(data_vector_1(samelayer_locations));
-                        scatter(samelayer_mean,-grid_zt(k),50,'ko','filled');
+                        scatter(samelayer_mean,-grid_zt(k),50,'ro','filled');
                         samelayer_mean = mean(data_vector_2(samelayer_locations));
-                        scatter(samelayer_mean,-grid_zt(k),50,'r^','filled');                 
+                        scatter(samelayer_mean,-grid_zt(k),50,'b^','filled');                 
                     end
             end
-         else
-             scatter(zl(:),-grid_zt(:),25,'r');
+        else
+            %
+             plot(zl(:),-grid_zt(:));
+             set(h,'LineWidth',1.0);
+             scatter(zl(:),-grid_zt(:),25,'r');             
         end
         axis([con_min con_max -grid_zt_edges(1) -grid_zt_edges(kmax+1)]);        
         xlabel(strrep(dataid_1,'_','-'));
