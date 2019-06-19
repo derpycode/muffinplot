@@ -1,5 +1,5 @@
-function dum_k = calc_find_k_110131(dum_depth,dum_kmax)
-% calc_find_k_110131
+function dum_k = calc_find_k(dum_depth,dum_kmax)
+% calc_find_k
 %
 %   *******************************************************************   %
 %   *** Calculate k location of a specified depth *********************   %
