@@ -244,6 +244,7 @@ function [OUTPUT] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 %   19/05/20: added stats saving under data_save option
 %             *** VERSION 1.27 ********************************************
 %   19/06/18: added additional profile data plotting
+%             added additional profile data output
 %             *** VERSION 1.28 ********************************************
 %
 % *********************************************************************** %
@@ -305,6 +306,8 @@ zt_min = 0;
 zt_max = 5000;
 % null data value
 par_data_null = 9.9E19;
+%
+par_rEarth = 6371000.0;
 %
 % *** copy passed parameters ******************************************** %
 % 
@@ -524,14 +527,27 @@ varid  = netcdf.inqVarID(ncid_1,'lon_edges');
 grid_lon_edges = netcdf.getVar(ncid_1,varid);
 [lats layb] = meshgrid(grid_lat_edges(1:jmax),-grid_zt_edges(1:kmax));
 [latn layt] = meshgrid(grid_lat_edges(2:jmax+1),-grid_zt_edges(2:kmax+1));
+% create area grid
+% NOTE: based on:
+%       gi_area(:,:) = 2.0*pi*(par_rEarth^2)*(sin((pi/180.0)*gi_latn) - sin((pi/180.0)*gi_lats)).*((gi_lone-gi_lonw)/360.0);
+grid_area = NaN(jmax,imax);
+for i = 1:imax,
+    for j = 1:jmax,
+        if grid_k1(j,i) > kmax
+            grid_area(j,i) = 0.0;
+        else
+            grid_area(j,i) = 2.0*pi*(par_rEarth^2)*(sin((pi/180.0)*grid_lat_edges(j+1)) - sin((pi/180.0)*grid_lat_edges(j))).*((grid_lon_edges(i+1)-grid_lon_edges(i))/360.0);
+        end
+    end
+end
 % create cell volume array; also depth
 % NOTE: assume equal area grid, normaalized area
 % NOTE: multiple by 1.0 becasue ... (?) (to ensure correct format?)
 data_V = zeros(kmax,jmax,imax);
 data_D = zeros(kmax,jmax,imax);
 for k = 1:kmax,
-    data_V(k,:,:) = 1.0*(grid_zt_edges(k) - grid_zt_edges(k+1));
-    data_D(k,:,:) = 1.0*grid_zt(k);
+    data_V(k,:,:) = grid_area(:,:)*(grid_zt_edges(k) - grid_zt_edges(k+1));
+    data_D(k,:,:) = grid_zt(k);
 end
 %
 grid_lon_origin = grid_lon_edges(1);
@@ -1851,32 +1867,38 @@ if (plot_secondary == 'y'),
     if ((data_only == 'n') && (plot_profile == 'y')),
         %
         figure
-        hold on;        
+        hold on;
         if ~isempty(overlaydataid)
             %
-             plot(zl(:),-grid_zt(:),'--');
-             set(h,'LineWidth',2.0);
+            plot(zl(:),-grid_zt(:),'--');
+            set(h,'LineWidth',2.0);
             % plot raw; data,  + corresponding model values
             scatter(data_vector_1(:),-grid_zt(data_vector_k(:)),10,'mo');
             scatter(data_vector_2(:),-grid_zt(data_vector_k(:)),10,'c^');
             %
+            data_vector_12_mean = NaN(kmax,3);
             for k = loc_kmin:loc_kmax,
-                    samelayer_locations = find((int32(data_vector_k(:))==k));
-                    samecell_n = size(samelayer_locations);
-                    if (samecell_n(1) > 0)
-                        samelayer_mean = mean(data_vector_1(samelayer_locations));
-                        scatter(samelayer_mean,-grid_zt(k),50,'ro','filled');
-                        samelayer_mean = mean(data_vector_2(samelayer_locations));
-                        scatter(samelayer_mean,-grid_zt(k),50,'b^','filled');                 
-                    end
+                samelayer_locations = find((int32(data_vector_k(:))==k));
+                samecell_n = size(samelayer_locations);
+                if (samecell_n(1) > 0)
+                    data_vector_12_mean(k,1) = -grid_zt(k);
+                    samelayer_mean = mean(data_vector_1(samelayer_locations));
+                    data_vector_12_mean(k,2) = samelayer_mean;
+                    scatter(samelayer_mean,-grid_zt(k),50,'ro','filled');
+                    samelayer_mean = mean(data_vector_2(samelayer_locations));
+                    data_vector_12_mean(k,3) = samelayer_mean;
+                    scatter(samelayer_mean,-grid_zt(k),50,'b^','filled');
+                else
+                    data_vector_12_mean(k,1) = -grid_zt(k);
+                end
             end
         else
             %
-             plot(zl(:),-grid_zt(:));
-             set(h,'LineWidth',1.0);
-             scatter(zl(:),-grid_zt(:),25,'r');             
+            plot(zl(:),-grid_zt(:));
+            set(h,'LineWidth',1.0);
+            scatter(zl(:),-grid_zt(:),25,'r');
         end
-        axis([con_min con_max -grid_zt_edges(1) -grid_zt_edges(kmax+1)]);        
+        axis([con_min con_max -grid_zt_edges(1) -grid_zt_edges(kmax+1)]);
         xlabel(strrep(dataid_1,'_','-'));
         ylabel('Elevation (m)');
         if ~isempty(plot_title)
@@ -1907,7 +1929,20 @@ if (plot_secondary == 'y'),
     %
     % *** SAVE DATA (profile) ******************************************* %
     %
+    % model mean profile
     if ((data_only == 'n') && (plot_profile == 'y')), fprint_1D2_d([flipud(grid_zt(:)) flipud(zl(:))],[par_pathout '/' filename '.PROFILE.', str_date, '.res']); end
+    % data and modal @ data, mean profile
+    if (plot_profile == 'y')
+        fid = fopen([par_pathout '/' filename '.PROFILE.MODELDATAMEANS.', str_date, '.res'], 'wt');
+        fprintf(fid, '%% Mean data values + mean model values at data locations');
+        fprintf(fid, '\n');
+        fprintf(fid, '%% Format: k, depth (m), data mean, model mean, ocean volumn (m3) represented by that layer');
+        fprintf(fid, '\n');
+        for k = kmax:-1:1
+            fprintf(fid, '%2d %8.3f %8.6e %8.6e %8.6e %s \n', k, -data_vector_12_mean(k,1), data_vector_12_mean(k,2), data_vector_12_mean(k,3), zl_V(k), '%');
+        end
+        fclose(fid);
+    end
     %
     % *** PLOT FIGURE (surface zonal mean) ****************************** %
     %
