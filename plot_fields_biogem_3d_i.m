@@ -246,6 +246,8 @@ function [OUTPUT] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 %   19/06/18: added additional profile data plotting
 %             added additional profile data output
 %             *** VERSION 1.28 ********************************************
+%   19/06/25: fixes for non-standard grid levels
+%             *** VERSION 1.29 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -257,7 +259,7 @@ function [OUTPUT] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.28;
+par_ver = 1.29;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -302,8 +304,8 @@ lat_min = -090;
 lat_max = +090;
 D_min   = 0000;
 D_max   = 5000;
-zt_min = 0;
-zt_max = 5000;
+%%%zt_min = 0;
+%%%zt_max = 5000;
 % null data value
 par_data_null = 9.9E19;
 %
@@ -505,6 +507,9 @@ grid_zt = flipud(grid_zt);
 varid  = netcdf.inqVarID(ncid_1,'zt_edges');
 grid_zt_edges = netcdf.getVar(ncid_1,varid);
 grid_zt_edges = flipud(grid_zt_edges);
+% determine grid limits
+zt_min = min(grid_zt_edges);
+zt_max = max(grid_zt_edges);
 % calculate topography
 for i = 1:imax,
     for j = 1:jmax,
@@ -868,7 +873,8 @@ if ~isempty(plot_opsi)
         [opsigrid_lat opsigrid_zt] = meshgrid(opsigrid_lat_edges(1:jmax+1),-opsigrid_zt_edges(1:zmax+1));
         % (1b) create additional grid details
         loc_cv = zeros(jmax);
-        [loc_sv, loc_s, loc_dz, loc_dza] = get_grid_genie_full(imax,jmax,kmax);
+        %%%[loc_sv, loc_s, loc_dz, loc_dza] = get_grid_genie_full(imax,jmax,kmax);
+        [loc_sv, loc_s, loc_dz, loc_dza] = make_genie_grid(imax,jmax,kmax,zt_max,0.0,plot_equallat,0.0);
         for j = 1:jmax,
             loc_cv(j) = sqrt(1 - loc_sv(j)*loc_sv(j));
         end
@@ -915,26 +921,12 @@ if ~isempty(plot_opsi)
             end
             if (sum(mask(j,:)) == 0), loc_opsi(j+1,:) = NaN; end
         end
-        %
-%         loc_opsi(1,:) = NaN;
-%         loc_opsi(jmax+1,:) = NaN;
-%         loc_opsi(:,1) = NaN;
-%         loc_opsi(:,kmax+1) = NaN;
         % scale streamfunction and re-orientate array
         % goldstein_dsc*goldstein_usc*const_rEarth*1.0E-6
         % 5e3, 0.05, 6.37E+06
-        loc_opsi = (5.0E3*0.05*6.37E+06*1.0E-6)*loc_opsi;
+        % NOTE: use zt_max rather than a fixed 5.0E3 m scale depth value
+        loc_opsi = (zt_max*0.05*6.37E+06*1.0E-6)*loc_opsi;
         data_0=loc_opsi';
-        % MB: original FORTRAN code
-        %     DO j=1,n_j-1
-        %        DO k=1,n_k-1
-        %           loc_ou(j,k) = 0.0
-        %           DO i=1,n_i
-        %              loc_ou(j,k) = loc_ou(j,k) + goldstein_cv(j)*dum_u(2,i,j,k)*goldstein_dphi
-        %           END DO
-        %           loc_opsi(j,k) = loc_opsi(j,k-1) - goldstein_dz(k)*loc_ou(j,k)
-        %        END DO
-        %     END DO
     end
     %
 end
@@ -1098,7 +1090,7 @@ if ~isempty(plot_opsi)
     end
     for z = 1:zmax,
         if isnan (zm(z,1)), opsizm(z,1) = NaN; end
-        if isnan (zm(z,zmax)), opsizm(z,zmax+1) = NaN; end
+        if isnan (zm(z,jmax)), opsizm(z,jmax+1) = NaN; end
         for j = 2:jmax+1,
             if isnan (zm(z,j-1)), opsizm(z,j) = NaN; end
         end
