@@ -1,4 +1,4 @@
-function [] = plot_histc_2d(PDATA1,PBINBNDS1,PDATA2,PBINBNDS2,POPT,PNAME)
+function [] = plot_histc_2d(PDATA1,PBINBNDS1,PSTR1,PDATA2,PBINBNDS2,PSTR2,POPT,PNAME)
 % plot_histc_2d
 %
 %   ***********************************************************************
@@ -9,13 +9,19 @@ function [] = plot_histc_2d(PDATA1,PBINBNDS1,PDATA2,PBINBNDS2,POPT,PNAME)
 %   blah ...
 %
 %   PDATA1 [vector] (e.g., )
-%   --> blah ...
+%   --> vector of data values
 %   PBINBNDS1 [vector] (e.g., [0 1 2 3 4 5 6 7 8 9 10])
-%   --> blah ...
+%   --> vector of data value bin boundaries
+%   PSTR1 [string] (e.g., 'temperature')
+%   --> string for the data label
 %   PDATA2 [vector] [OPTIONAL] (e.g., )
-%   --> blah ...
+%   --> vector of secondary data values
+%       NOTE: there must be one secondary data value for each primary one
+%             e.g. depth
 %   PBINBNDS2 [vector] [OPTIONAL] (e.g., [0 1000 2000 3000 4000 5000 6000])
-%   --> blah ...
+%   --> vector of data value bin boundaries
+%   PSTR2 [string] (e.g., 'depth')
+%   --> string for the secondary data label
 %   POPT [STRING] (e.g., 'plotting_config_2')
 %   --> the string for an alternative plotting parameter set
 %   --> if an empty (i.e., '') value is passed to this parameter
@@ -38,6 +44,10 @@ function [] = plot_histc_2d(PDATA1,PBINBNDS1,PDATA2,PBINBNDS2,POPT,PNAME)
 %             *** VERSION 0.99 ********************************************
 %   17/11/02: adjusted paths ... again again ...
 %             *** VERSION 1.03 ********************************************
+%   19/07/04: added more info text
+%             adjusted scale bar panel size
+%             added direct variable string passing
+%             *** VERSION 1.04 ********************************************
 %
 %   ***********************************************************************
 
@@ -48,7 +58,7 @@ function [] = plot_histc_2d(PDATA1,PBINBNDS1,PDATA2,PBINBNDS2,POPT,PNAME)
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.03;
+par_ver = 1.04;
 % set function name
 str_function = mfilename;
 % load plotting options
@@ -64,6 +74,9 @@ data_2 = PDATA2;
 binbnds_1 = PBINBNDS1;
 binbnds_2 = PBINBNDS2;
 str_filename = PNAME;
+%
+if isempty(plot_dataname_1), plot_dataname_1=PSTR1; end
+if isempty(plot_dataname_2), plot_dataname_2=PSTR2; end
 %
 % *** MISC ************************************************************** %
 %
@@ -193,7 +206,7 @@ clf;
 % define plotting regions
 fh(1) = axes('Position',[0 0 1 1],'Visible','off');
 fh(2) = axes('Position',[0.10 0.10 0.65 0.70]);
-fh(3) = axes('Position',[0.80 0.15 0.10 0.60],'Visible','off');
+fh(3) = axes('Position',[0.80 0.25 0.10 0.50],'Visible','off');
 % define colormap
 if (isempty(binbnds_2)),
     cmap = make_cmap(colorbar_name,nbins_1);
@@ -343,7 +356,7 @@ hold off;
 set(gcf,'CurrentAxes',fh(1));
 if isempty(str_filename), str_filename = ['colorhistogram']; end
 str_filename = [str_filename '.' str_date];
-print('-dpsc2', [str_filename, '.ps']);
+print('-dpsc2', '-fillpage', [str_filename, '.ps']);
 %
 % *********************************************************************** %
 

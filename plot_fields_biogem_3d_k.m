@@ -280,6 +280,8 @@ function [OUTPUT] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 %             *** VERSION 1.26 ********************************************
 %   19/05/20: added stats saving under data_save option
 %             *** VERSION 1.27 ********************************************
+%   19/07/04: added histogram secondary figure plotting
+%             *** VERSION 1.30 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -291,7 +293,7 @@ function [OUTPUT] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.27;
+par_ver = 1.30;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -333,6 +335,8 @@ if ~exist('par_pathexam','var'), par_pathexam = 'EXAMPLES'; end
 % set axes
 lat_min = -090;
 lat_max = +090;
+D_min   = 0000;
+D_max   = 5000;
 lon_min = plot_lon_origin;
 lon_max = lon_min+360;
 lon_offset = 0;
@@ -395,6 +399,11 @@ else
         plot_lon_max = lon_max;
     end
     plot_xy_scaling = ((plot_lat_max - plot_lat_min)/(lat_max - lat_min)) / ((plot_lon_max - plot_lon_min)/(lon_max - lon_min));
+end
+%
+if (plot_D_min == plot_D_max),
+    plot_D_min = D_min;
+    plot_D_max = D_max;
 end
 %
 % *** SET PATHS & DIRECTORIES ******************************************* %
@@ -584,8 +593,10 @@ grid_lon_edges = netcdf.getVar(ncid_1,varid) + lon_offset;
 % calculate cell masses
 % NOTE: assume equal area grid, normaalized area
 data_M = zeros(kmax,jmax,imax);
+data_D = zeros(kmax,jmax,imax);
 for k = 1:kmax,
     data_M(k,:,:) = 1027.649*1.0*(grid_zt_edges(k) - grid_zt_edges(k+1));
+    data_D(k,:,:) = grid_zt(k);
 end
 % Non-uniform lat grid
 if (plot_equallat == 'n'),
@@ -1447,6 +1458,34 @@ if (~isempty(dataid_2))
             %%%print('-depsc2', [filename, '_TargetDiagram.', str_date, '.eps']);
         end
     end
+else
+    % set default vector_1
+    % NOTE: if discrete data is present, this will be overwritten
+    % transform data sets in vectors
+    % NOTE: data_1 is format (k,j,i)
+    if kplot > 0
+        data_vector_1 = reshape(data_1(kplot,:,:),imax*jmax,1);
+        data_vector_D = reshape(data_D(kplot,:,:),imax*jmax,1); 
+    elseif (kplot == 0)
+        data_vector_1 = reshape(data_1(:,:,:),imax*jmax*kmax,1);
+        data_vector_D = reshape(data_D(:,:,:),imax*jmax*kmax,1);
+    elseif (kplot == -1)
+        n=0;
+        for j = 1:jmax,
+            for i = 1:imax,
+                loc_k = grid_k1(j,i);
+                if ((loc_k <= data_kmax) && (loc_k >= data_kmin)),
+                    n = n+1;
+                    data_vector_1(n) = data_1(loc_k,j,i);
+                    data_vector_D(n) = data_D(loc_k,j,i);
+                end
+            end
+        end
+        nmax=n;
+    end
+    % filter data
+    data_vector_1(find(data_vector_1(:) < -1.0E6)) = NaN;
+    data_vector_1(find(data_vector_1(:) > 0.9E36)) = NaN;
 end
 %
 % *** DISCRETE DATA ***************************************************** %
@@ -1456,6 +1495,7 @@ end
 % NOTE: valid only for data on a single depth level
 if (~isempty(overlaydataid) && ((data_only == 'n') || (data_anomoly == 'y')))
     % set overlay data vector
+    data_vector_1 = [];
     data_vector_1 = overlaydata(:,4);
     % populate the gridded dataset vector with values corresponding to
     % the overlay data locations
@@ -2140,6 +2180,20 @@ if (plot_secondary == 'y'),
         loc_y_label = ['depth'];
         fprint_1Dn_d([loc_x_data loc_y_data],[par_pathout '/' filename '.BENTHIC.', str_date, '.res']);
     end
+    %
+    % *** PLOT FIGURE (histogram) *************************************** %
+    %
+    loc_bins1 = [con_min:(con_max-con_min)/con_n:con_max];
+    str_name = [par_pathout '/' filename '.HIST1'];
+    plot_histc_2d(data_vector_1,loc_bins1,strrep(dataid_1,'_','-'),[],[],'','plot_histc_settings_GEO',str_name);
+    str_name = [par_pathout '/' filename '.HIST2'];
+    loc_bins2 = fliplr(grid_zt_edges');
+    loc_bins2(find(loc_bins2 < plot_D_min)) = [];
+    loc_bins2(find(loc_bins2 > plot_D_max)) = [];
+    plot_histc_2d(data_vector_1,loc_bins1,strrep(dataid_1,'_','-'),data_vector_D,loc_bins2,'Depth (m)','plot_histc_settings_GEO',str_name);
+    %
+    % ******************************************************************* %
+    %
 end
 %
 % *********************************************************************** %

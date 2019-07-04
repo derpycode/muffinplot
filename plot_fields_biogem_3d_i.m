@@ -248,6 +248,9 @@ function [OUTPUT] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 %             *** VERSION 1.28 ********************************************
 %   19/06/25: fixes for non-standard grid levels
 %             *** VERSION 1.29 ********************************************
+%   19/07/04: added histogram secondary figure plotting
+%             + minor bug-fix
+%             *** VERSION 1.30 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -259,7 +262,7 @@ function [OUTPUT] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.29;
+par_ver = 1.30;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -304,8 +307,6 @@ lat_min = -090;
 lat_max = +090;
 D_min   = 0000;
 D_max   = 5000;
-%%%zt_min = 0;
-%%%zt_max = 5000;
 % null data value
 par_data_null = 9.9E19;
 %
@@ -1336,6 +1337,21 @@ if (~isempty(dataid_2))
             %%%print('-depsc2', [filename, '_TargetDiagram.', str_date, '.eps']);
         end
     end
+else
+    % set default vector_1
+    % NOTE: if discrete data is present, this will be overwritten
+    % transform data sets in vectors
+    % NOTE: data_1 is format (k,j,i)
+    if ((iplot > 0) && isempty(maskid)),
+        data_vector_1 = reshape(data_1(:,:,iplot),jmax*kmax,1);
+        data_vector_D = reshape(data_D(:,:,iplot),jmax*kmax,1);   
+    else
+        data_vector_1 = reshape(data_1(:,:,:),imax*jmax*kmax,1);
+        data_vector_D = reshape(data_D(:,:,:),imax*jmax*kmax,1);
+    end
+    % filter data
+    data_vector_1(find(data_vector_1(:) < -1.0E6)) = NaN;
+    data_vector_1(find(data_vector_1(:) > 0.9E36)) = NaN;
 end
 %
 % *** DISCRETE DATA ***************************************************** %
@@ -1345,6 +1361,7 @@ end
 % NOTE: valid only for data on a single depth level
 if (~isempty(overlaydataid)),
     % set overlay data vector
+    data_vector_1 = [];
     data_vector_1 = overlaydata(:,4);
     % populate the gridded dataset vector with values corresponding to
     % the overlay data locations
@@ -1797,7 +1814,7 @@ if (plot_main == 'y'),
     %
     set(gcf,'CurrentAxes',fh(1));
     if (plot_format_old == 'y')
-        if (par_mutlab > 2015),
+        if (par_mutlab > 2015)
             print('-dpsc2', '-bestfit', [par_pathout '/' filename '.' str_date '.ps']);
         else
             print('-dpsc2', [par_pathout '/' filename '.' str_date '.ps']);
@@ -1825,7 +1842,7 @@ end
 % *** SECONDARY FIGURES ************************************************* %
 % *********************************************************************** %
 %
-if (plot_secondary == 'y'),
+if (plot_secondary == 'y')
     %
     % *** SET PLOT SCALE ************************************************ %
     %
@@ -1856,7 +1873,7 @@ if (plot_secondary == 'y'),
     %
     % *** PLOT FIGURE (profile) ***************************************** %
     %
-    if ((data_only == 'n') && (plot_profile == 'y')),
+    if ((data_only == 'n') && (plot_profile == 'y'))
         %
         figure
         hold on;
@@ -1890,7 +1907,7 @@ if (plot_secondary == 'y'),
             set(h,'LineWidth',1.0);
             scatter(zl(:),-grid_zt(:),25,'r');
         end
-        axis([con_min con_max -grid_zt_edges(1) -grid_zt_edges(kmax+1)]);
+        axis([con_min con_max -plot_D_max -plot_D_min]);
         xlabel(strrep(dataid_1,'_','-'));
         ylabel('Elevation (m)');
         if ~isempty(plot_title)
@@ -1924,7 +1941,7 @@ if (plot_secondary == 'y'),
     % model mean profile
     if ((data_only == 'n') && (plot_profile == 'y')), fprint_1D2_d([flipud(grid_zt(:)) flipud(zl(:))],[par_pathout '/' filename '.PROFILE.', str_date, '.res']); end
     % data and modal @ data, mean profile
-    if (plot_profile == 'y')
+    if ( (plot_profile == 'y') && ~isempty(overlaydataid) )
         fid = fopen([par_pathout '/' filename '.PROFILE.MODELDATAMEANS.', str_date, '.res'], 'wt');
         fprintf(fid, '%% Mean data values + mean model values at data locations');
         fprintf(fid, '\n');
@@ -1998,15 +2015,14 @@ if (plot_secondary == 'y'),
     %
     % *** PLOT FIGURE (histogram) *************************************** %
     %
-    % figure;
-    % bar_bins = [con_min:(con_max-con_min)/(con_n/contour_mod):con_max];
-    % %%%bar_data = histwcv_bin(data_vector(:),data_vector_V(:),bar_bins);
-    % [histw, vinterval] = histwc(data_vector(:),data_vector_V(:),20);
-    % bar(histw, vinterval);
-    % %%%bar_data = hist(data_vector(:),bar_bins);
-    % %%%bar(bar_bins,bar_data);
-    %
-    % ******************************************************************* %
+    loc_bins1 = [con_min:(con_max-con_min)/con_n:con_max];
+    str_name = [par_pathout '/' filename '.HIST1'];
+    plot_histc_2d(data_vector_1,loc_bins1,strrep(dataid_1,'_','-'),[],[],'','plot_histc_settings_GEO',str_name);
+    str_name = [par_pathout '/' filename '.HIST2'];
+    loc_bins2 = fliplr(grid_zt_edges');
+    loc_bins2(find(loc_bins2 < plot_D_min)) = [];
+    loc_bins2(find(loc_bins2 > plot_D_max)) = [];
+    plot_histc_2d(data_vector_1,loc_bins1,strrep(dataid_1,'_','-'),data_vector_D,loc_bins2,'Depth (m)','plot_histc_settings_GEO',str_name);
     %
     % ******************************************************************* %
     %
