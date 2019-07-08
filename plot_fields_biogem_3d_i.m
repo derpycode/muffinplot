@@ -251,6 +251,8 @@ function [OUTPUT] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 %   19/07/04: added histogram secondary figure plotting
 %             + minor bug-fix
 %             *** VERSION 1.30 ********************************************
+%   19/07/08: extended cross-plotting and histogram functionality
+%             *** VERSION 1.31 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -262,7 +264,7 @@ function [OUTPUT] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.30;
+par_ver = 1.31;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -299,6 +301,7 @@ if ~exist('par_pathexam','var'), par_pathexam = 'EXAMPLES'; end
 % plotting panel options
 if ~exist('plot_profile','var'), plot_profile = 'y'; end % PLOT PROFILE
 if ~exist('plot_zonal','var'),   plot_zonal   = 'y'; end % PLOT ZONAL
+if ~exist('plot_histc_SETTINGS','var'), plot_histc_SETTINGS = 'plot_histc_SETTINGS'; end % histc plotting settings
 %
 % *** initialize parameters ********************************************* %
 % 
@@ -357,6 +360,10 @@ end
 if ((plot_lat_min == plot_lat_max) && (plot_D_min == plot_D_max)),
     plot_global = true;
     plot_xy_scaling = 1.0;
+    plot_lat_min = lat_min;
+    plot_lat_max = lat_max;
+    plot_D_min = D_min;
+    plot_D_max = D_max;
 else
     plot_global = false;
     if (plot_lat_min == plot_lat_max),
@@ -1307,11 +1314,13 @@ if (~isempty(dataid_2))
     % transform data sets in vectors
     % NOTE: data_1 is format (k,j,i)
     if ((iplot > 0) && isempty(maskid)),
-        data_vector_1 = reshape(data_1(:,:,iplot),jmax*kmax,1);
-        data_vector_2 = reshape(data_2(:,:,iplot),jmax*kmax,1);
+        data_vector_1 = reshape(data_1(:,:,iplot),jmax*kmax,1)/data_scale;
+        data_vector_2 = reshape(data_2(:,:,iplot),jmax*kmax,1)/data_scale;
+        data_vector_D = reshape(data_D(:,:,iplot),jmax*kmax,1);   
     else
-        data_vector_1 = reshape(data_1(:,:,:),imax*jmax*kmax,1);
-        data_vector_2 = reshape(data_2(:,:,:),imax*jmax*kmax,1);
+        data_vector_1 = reshape(data_1(:,:,:),imax*jmax*kmax,1)/data_scale;
+        data_vector_2 = reshape(data_2(:,:,:),imax*jmax*kmax,1)/data_scale;
+        data_vector_D = reshape(data_D(:,:,:),imax*jmax*kmax,1);
     end
     % filter data
     data_vector_1(find(data_vector_1(:) < -1.0E6)) = NaN;
@@ -1343,10 +1352,10 @@ else
     % transform data sets in vectors
     % NOTE: data_1 is format (k,j,i)
     if ((iplot > 0) && isempty(maskid)),
-        data_vector_1 = reshape(data_1(:,:,iplot),jmax*kmax,1);
+        data_vector_1 = reshape(data_1(:,:,iplot),jmax*kmax,1)/data_scale;
         data_vector_D = reshape(data_D(:,:,iplot),jmax*kmax,1);   
     else
-        data_vector_1 = reshape(data_1(:,:,:),imax*jmax*kmax,1);
+        data_vector_1 = reshape(data_1(:,:,:),imax*jmax*kmax,1)/data_scale;
         data_vector_D = reshape(data_D(:,:,:),imax*jmax*kmax,1);
     end
     % filter data
@@ -1373,6 +1382,7 @@ if (~isempty(overlaydataid)),
         data_vector_k(n) = int32(overlaydata_ijk(n,3));
     end
     data_vector_2 = data_vector_2';
+    data_vector_2 = data_vector_2/data_scale;
     % filter data
     data_vector_2(find(data_vector_2(:) < -1.0E6)) = NaN;
     data_vector_2(find(data_vector_2(:) > 0.9E36)) = NaN;
@@ -2004,8 +2014,9 @@ if (plot_secondary == 'y')
             loc_y_label = [strrep(dataid_1,'_','-')];
             loc_D_label = ['Depth (m)'];
         end
-        %
-        plot_crossplotc(loc_x_data,loc_y_data,loc_D_data,loc_x_label,loc_y_label,loc_D_label,POPT,[par_pathout '/' filename '.CROSSPLOT']);
+        % plot with and without depth coding
+        plot_crossplotc(loc_x_data,loc_y_data,[],loc_x_label,loc_y_label,'',POPT,[par_pathout '/' filename '.CROSSPLOT']);
+        plot_crossplotc(loc_x_data,loc_y_data,loc_D_data,loc_x_label,loc_y_label,loc_D_label,POPT,[par_pathout '/' filename '.CROSSPLOTD']);
         %
     end
     %
@@ -2015,14 +2026,23 @@ if (plot_secondary == 'y')
     %
     % *** PLOT FIGURE (histogram) *************************************** %
     %
+    % single histogram
     loc_bins1 = [con_min:(con_max-con_min)/con_n:con_max];
     str_name = [par_pathout '/' filename '.HIST1'];
-    plot_histc_2d(data_vector_1,loc_bins1,strrep(dataid_1,'_','-'),[],[],'','plot_histc_SETTINGS',str_name);
+    plot_histc_2d(data_vector_1,loc_bins1,strrep(dataid_1,'_','-'),[],[],'',plot_histc_SETTINGS,str_name);
+    % double histogram
     str_name = [par_pathout '/' filename '.HIST2'];
-    loc_bins2 = fliplr(grid_zt_edges');
-    loc_bins2(find(loc_bins2 < plot_D_min)) = [];
-    loc_bins2(find(loc_bins2 > plot_D_max)) = [];
-    plot_histc_2d(data_vector_1,loc_bins1,strrep(dataid_1,'_','-'),data_vector_D,loc_bins2,'Depth (m)','plot_histc_SETTINGS',str_name);
+    if (~isempty(dataid_2))
+        loc_min = min(data_vector_2);
+        loc_max = max(data_vector_2);
+        loc_bins2 = [loc_min:(loc_max-loc_min)/10:loc_max];
+        plot_histc_2d(data_vector_1,loc_bins1,strrep(dataid_1,'_','-'),data_vector_2,loc_bins2,[strrep(dataid_2,'_','-')],plot_histc_SETTINGS,[str_name 'D']);
+    else
+        loc_bins2 = fliplr(grid_zt_edges');
+        loc_bins2(find(loc_bins2 < plot_D_min)) = [];
+        loc_bins2(find(loc_bins2 > plot_D_max)) = [];
+        plot_histc_2d(data_vector_1,loc_bins1,strrep(dataid_1,'_','-'),data_vector_D,loc_bins2,'Depth (m)',plot_histc_SETTINGS,str_name);
+    end
     %
     % ******************************************************************* %
     %
