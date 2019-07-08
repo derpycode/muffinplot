@@ -284,6 +284,8 @@ function [OUTPUT] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 %             *** VERSION 1.30 ********************************************
 %   19/07/08: extended cross-plotting and histogram functionality
 %             *** VERSION 1.31 ********************************************
+%   19/07/08: additional data output
+%             *** VERSION 1.32 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -295,7 +297,7 @@ function [OUTPUT] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.31;
+par_ver = 1.32;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -2149,6 +2151,10 @@ if (plot_main == 'y'),
                 export_fig([par_pathout '/' filename '.' str_date '.eps'], '-eps', '-nocrop');
         end
     end
+    %
+    % *** SAVE DATA ***************************************************** %
+    %
+    fprint_1Dn_d([data_vector_1 data_vector_D],[par_pathout '/' filename '.kDATA.', str_date, '.res']);
     %
     % ******************************************************************* %
     %
