@@ -1439,6 +1439,10 @@ if (~isempty(dataid_2))
             end
         end
         nmax=n;
+        % transpose vectors
+        data_vector_1 = data_vector_1';
+        data_vector_2 = data_vector_2';
+        data_vector_D = data_vector_D';
     end
     % filter data
     data_vector_1(find(data_vector_1(:) < -1.0E6)) = NaN;
@@ -1488,6 +1492,9 @@ else
             end
         end
         nmax=n;
+        % transpose vectors
+        data_vector_1 = data_vector_1';
+        data_vector_D = data_vector_D';
     end
     % filter data
     data_vector_1(find(data_vector_1(:) < -1.0E6)) = NaN;
@@ -2184,15 +2191,17 @@ if (plot_secondary == 'y'),
     %
     % *** SAVE DATA (cross-plot relationships) ************************** %
     %
-    if ( ~isempty(dataid_2) || (~isempty(overlaydataid) && (data_only == 'n')) ), fprint_1Dn_d([loc_x_data loc_y_data],[par_pathout '/' filename '.CROSSPLOT.', str_date, '.res']); end
+    if ( ~isempty(dataid_2) || (~isempty(overlaydataid) && (data_only == 'n')) )
+        fprint_1Dn_d([loc_x_data loc_y_data loc_D_data],[par_pathout '/' filename '.CROSSPLOT.', str_date, '.res']);
+    end
     %
     % *** SAVE DATA (benthic) ******************************************* %
     %
     if (isempty(dataid_2) && isempty(overlaydataid) && (kplot == -1)),
-        loc_x_data = reshape(zm(:,:),imax*jmax,1);
-        loc_y_data = reshape(topo(:,:),imax*jmax,1);
+        loc_x_data  = data_vector_1;
+        loc_y_data  = data_vector_D;
         loc_x_label = [strrep(dataid_1,'_','-')];
-        loc_y_label = ['depth'];
+        loc_y_label = ['Depth (m)'];
         fprint_1Dn_d([loc_x_data loc_y_data],[par_pathout '/' filename '.BENTHIC.', str_date, '.res']);
     end
     %

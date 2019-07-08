@@ -1993,16 +1993,18 @@ if (plot_secondary == 'y')
     %
     % *** SAVE DATA (surface zonal mean) ******************************** %
     %
-    if ((data_only == 'n') && (plot_zonal == 'y')), fprint_1Dn_d([flipud(grid_lat) rot90(zz(kmax,:),1)],[par_pathout '/' filename '.ZONAL.', str_date, '.res']); end
+    if ((data_only == 'n') && (plot_zonal == 'y'))
+        fprint_1Dn_d([flipud(grid_lat) rot90(zz(kmax,:),1)],[par_pathout '/' filename '.ZONAL.', str_date, '.res']);
+    end
     %
     % *** PLOT FIGURE (cross-plot) ************************************** %
     %
     if ( ~isempty(dataid_2) || ~isempty(overlaydataid) ),
         %
         if ~isempty(dataid_2),
-            loc_x_data = reshape(data_1(loc_kmin:loc_kmax,:,:),1,[]);
-            loc_y_data = reshape(data_2(loc_kmin:loc_kmax,:,:),1,[]);
-            loc_D_data = reshape(data_D(loc_kmin:loc_kmax,:,:),1,[]);
+            loc_x_data = reshape(data_1(loc_kmin:loc_kmax,:,:),[],1);
+            loc_y_data = reshape(data_2(loc_kmin:loc_kmax,:,:),[],1);
+            loc_D_data = reshape(data_D(loc_kmin:loc_kmax,:,:),[],1);
             loc_x_label = [strrep(dataid_1,'_','-')];
             loc_y_label = [strrep(dataid_2,'_','-')];
             loc_D_label = ['Depth (m)'];
@@ -2022,7 +2024,9 @@ if (plot_secondary == 'y')
     %
     % *** SAVE DATA (cross-plot relationships) ************************** %
     %
-    if ( ~isempty(dataid_2) || (~isempty(overlaydataid) && (data_only == 'n')) ), fprint_1Dn_d([loc_x_data' loc_y_data' loc_D_data'],[par_pathout '/' filename '.CROSSPLOT.', str_date, '.res']); end
+    if ( ~isempty(dataid_2) || (~isempty(overlaydataid) && (data_only == 'n')) )
+        fprint_1Dn_d([loc_x_data loc_y_data loc_D_data],[par_pathout '/' filename '.CROSSPLOT.', str_date, '.res']);
+    end
     %
     % *** PLOT FIGURE (histogram) *************************************** %
     %
