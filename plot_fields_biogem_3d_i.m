@@ -2017,12 +2017,12 @@ if (plot_secondary == 'y')
     %
     loc_bins1 = [con_min:(con_max-con_min)/con_n:con_max];
     str_name = [par_pathout '/' filename '.HIST1'];
-    plot_histc_2d(data_vector_1,loc_bins1,strrep(dataid_1,'_','-'),[],[],'','plot_histc_settings_GEO',str_name);
+    plot_histc_2d(data_vector_1,loc_bins1,strrep(dataid_1,'_','-'),[],[],'','plot_histc_SETTINGS',str_name);
     str_name = [par_pathout '/' filename '.HIST2'];
     loc_bins2 = fliplr(grid_zt_edges');
     loc_bins2(find(loc_bins2 < plot_D_min)) = [];
     loc_bins2(find(loc_bins2 > plot_D_max)) = [];
-    plot_histc_2d(data_vector_1,loc_bins1,strrep(dataid_1,'_','-'),data_vector_D,loc_bins2,'Depth (m)','plot_histc_settings_GEO',str_name);
+    plot_histc_2d(data_vector_1,loc_bins1,strrep(dataid_1,'_','-'),data_vector_D,loc_bins2,'Depth (m)','plot_histc_SETTINGS',str_name);
     %
     % ******************************************************************* %
     %
