@@ -255,6 +255,8 @@ function [OUTPUT] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 %             *** VERSION 1.31 ********************************************
 %   19/07/08: additional data output
 %             *** VERSION 1.32 ********************************************
+%   19/07/12: added plotting limit cut-off to scatter plot data
+%             *** VERSION 1.33 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -266,7 +268,7 @@ function [OUTPUT] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.32;
+par_ver = 1.33;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -573,6 +575,13 @@ if ((data_kmin == data_kmax) || (data_kmin > data_kmax) || (data_kmin < 1)),
 else
     loc_kmin = data_kmin;
     loc_kmax = data_kmax;
+end
+% restrict k interval on the basis of plot_D min,max
+if (plot_D_min ~= plot_D_max)
+    loc_k = find(grid_zt > plot_D_min);
+    loc_kmax = max(loc_k);
+    loc_k = find(grid_zt < plot_D_max);
+    loc_kmin = min(loc_k); 
 end
 % test for mask 'type'
 % load mask data or create mask
