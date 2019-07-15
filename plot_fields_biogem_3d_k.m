@@ -286,6 +286,9 @@ function [OUTPUT] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 %             *** VERSION 1.31 ********************************************
 %   19/07/08: additional data output
 %             *** VERSION 1.32 ********************************************
+%   19/07/14: adjusted plotting limit cut-off
+%             + a little clean-up
+%             *** VERSION 1.34 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -297,7 +300,7 @@ function [OUTPUT] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.32;
+par_ver = 1.34;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -545,14 +548,14 @@ elseif (kplot < -1),
     disp(['ERROR: a kplot value of ', num2str(kplot), ' is not value. [VALID OPTIONS:, between 1 and kmax, 0 (water column integral), -1 (benthic)]']);
     return;
 end
-% set restricted k interval
-if ((data_kmin == data_kmax) || (data_kmin > data_kmax) || (data_kmin < 1)),
-    loc_kmin = 1;
-    loc_kmax = kmax;
-else
-    loc_kmin = data_kmin;
-    loc_kmax = data_kmax;
-end
+% % set restricted k interval
+% if ((data_kmin == data_kmax) || (data_kmin > data_kmax) || (data_kmin < 1)),
+%     loc_kmin = 1;
+%     loc_kmax = kmax;
+% else
+%     loc_kmin = data_kmin;
+%     loc_kmax = data_kmax;
+% end
 % calculate topography
 for i = 1:imax,
     for j = 1:jmax,
@@ -614,6 +617,20 @@ if (plot_equallat == 'n'),
 end
 %i=1 longitude grid origin
 grid_lon_origin = grid_lon_edges(1);
+% set restricted k interval
+% NOTE: optionally restrict k interval on the basis of plot_D min,max
+if ((data_kmin == data_kmax) || (data_kmin > data_kmax) || (data_kmin < 1))
+    data_kmin = 1;
+    data_kmax = kmax;
+elseif (plot_D_min ~= plot_D_max)
+    loc_k = find(grid_zt > plot_D_min);
+    data_kmax = max(loc_k);
+    loc_k = find(grid_zt < plot_D_max);
+    data_kmin = min(loc_k); 
+else
+    data_kmin = data_kmin;
+    data_kmax = data_kmax;
+end
 % test for mask 'type'
 % load mask data or create mask
 % NOTE: mask single location coordinate is (i,j)
@@ -644,10 +661,10 @@ end
 % check that the year exists
 varid  = netcdf.inqVarID(ncid_1,'time');
 timeslices = netcdf.getVar(ncid_1,varid);
-[dimname, dimlen] = netcdf.inqDim(ncid_1,varid);
+[~, dimlen] = netcdf.inqDim(ncid_1,varid); % [dimname, dimlen]
 clear time;
 while exist('time','var') == 0
-    for n = 1:dimlen,
+    for n = 1:dimlen
         if double(int32(100*timeslices(n)))/100 == timesliceid_1
             time = timesliceid_1;
             tid = n;
@@ -656,7 +673,7 @@ while exist('time','var') == 0
     if exist('time','var') == 0
         disp('   > WARNING: Year must be one of the following;');
         format long g;
-        double(int32(100*timeslices(:)))/100
+        disp(double(int32(100*timeslices(:)))/100);
         format;
         timesliceid_1 = input('   > Time-slice year: ');
     end
@@ -664,51 +681,51 @@ end
 % check that the variable name exists
 varid = [];
 while isempty(varid)
-    for n = 0:nvars-1,
-        [varname,xtype,dimids,natts] = netcdf.inqVar(ncid_1,n);
+    for n = 0:nvars-1
+        [varname,~,~,~] = netcdf.inqVar(ncid_1,n); % [varname,xtype,dimids,natts]
         if strcmp(varname,dataid_1)
             varid = n;
         end
     end
     if isempty(varid)
         disp('   > WARNING: Variable name must be one of the following;');
-        for n = 0:nvars-1,
-            [varname,xtype,dimids,natts] = netcdf.inqVar(ncid_1,n);
-            varname
+        for n = 0:nvars-1
+            [varname,~,~,~] = netcdf.inqVar(ncid_1,n); % [varname,xtype,dimids,natts]
+            disp(varname);
         end
         dataid = input('   > Variable name: ','s');
     end
 end
 % load data
 % flip array around diagonal to give (j,i) array orientation
-[varname,xtype,dimids,natts] = netcdf.inqVar(ncid_1,varid);
+[~,~,dimids,~] = netcdf.inqVar(ncid_1,varid); % [varname,xtype,dimids,natts]
 netcdfdata = netcdf.getVar(ncid_1,varid);
 if length(dimids) == 4
     rawdata(1:imax,1:jmax,1:kmax) = netcdfdata(1:imax,1:jmax,1:kmax,tid);
-    switch data_minmax,
+    switch data_minmax
         case {'min'}
-            for j = 1:jmax,
-                for i = 1:imax,
-                    for k = 1:kmax,
+            for j = 1:jmax
+                for i = 1:imax
+                    for k = 1:kmax
                         rawdata(i,j,k) = min(netcdfdata(i,j,k,tid:tid+data_nseas-1));
                     end
                 end
             end
         case {'max','minmax'}
-            for j = 1:jmax,
-                for i = 1:imax,
-                    for k = 1:kmax,
+            for j = 1:jmax
+                for i = 1:imax
+                    for k = 1:kmax
                         rawdata(i,j,k) = max(netcdfdata(i,j,k,tid:tid+data_nseas-1));
                     end
                 end
             end
     end
-    for n = 1:kmax,
+    for n = 1:kmax
         data_1(kmax - n + 1,1:jmax,1:imax) = rawdata(1:imax,1:jmax,n)';
     end
 elseif length(dimids) == 3
     rawdata(1:imax,1:jmax,1:kmax) = netcdfata(1:imax,1:jmax,1:kmax);
-    for n = 1:kmax,
+    for n = 1:kmax
         data_1(kmax - n + 1,1:jmax,1:imax) = rawdata(1:imax,1:jmax,n)';
     end
 elseif length(dimids) == 2
@@ -731,13 +748,13 @@ rawdata_1(1:imax,1:jmax,1:kmax) = rawdata(1:imax,1:jmax,1:kmax);
 if ~isempty(exp_2)
     % open netCDF file -- test for 'experiment format' or not
     % NOTE: other format is indicated by '.nc' extension as experiment ID
-    if strcmp(exp_2(end-2:end),'.nc'),
+    if strcmp(exp_2(end-2:end),'.nc')
         ncid_2=netcdf.open(exp_2,'nowrite');
     else
         ncid_2=netcdf.open([par_pathin '/' exp_2 '/biogem/fields_biogem_3d.nc'],'nowrite');
     end
     % read netCDf information
-    [ndims,nvars,ngatts,unlimdimid] = netcdf.inq(ncid_2);
+    [~,nvars,~,~] = netcdf.inq(ncid_2); % [ndims,nvars,ngatts,unlimdimid]
 else
     ncid_2 = ncid_1;
 end
@@ -748,10 +765,10 @@ if timesliceid_2 > 0.0
     % check that the year exists
     varid  = netcdf.inqVarID(ncid_2,'time');
     timeslices = netcdf.getVar(ncid_2,varid);
-    [dimname, dimlen] = netcdf.inqDim(ncid_2,varid);
+    [~, dimlen] = netcdf.inqDim(ncid_2,varid); % [dimname, dimlen]
     clear time;
     while exist('time','var') == 0
-        for n = 1:dimlen,
+        for n = 1:dimlen
             if double(int32(100*timeslices(n)))/100 == timesliceid_2
                 time = timesliceid_2;
                 tid = n;
@@ -760,7 +777,7 @@ if timesliceid_2 > 0.0
         if exist('time','var') == 0
             disp('   > WARNING: Year must be one of the following;');
             format long g;
-            double(int32(100*timeslices(:)))/100
+            disp(double(int32(100*timeslices(:)))/100);
             format;
             timesliceid_2 = input('   > Time-slice year: ');
         end
@@ -773,24 +790,24 @@ if ~isempty(dataid_2)
     % check that the variable name exists
     varid = [];
     while isempty(varid)
-        for n = 0:nvars-1,
-            [varname,xtype,dimids,natts] = netcdf.inqVar(ncid_2,n);
+        for n = 0:nvars-1
+            [varname,~,~,~] = netcdf.inqVar(ncid_2,n); % [varname,xtype,dimids,natts]
             if strcmp(varname,dataid_2)
                 varid = n;
             end
         end
         if isempty(varid)
             disp('   > WARNING: Variable name must be one of the following;');
-            for n = 0:nvars-1,
-                [varname,xtype,dimids,natts] = netcdf.inqVar(ncid_2,n);
-                varname
+            for n = 0:nvars-1
+                [varname,~,~,~] = netcdf.inqVar(ncid_2,n); % [varname,xtype,dimids,natts]
+                disp(varname);
             end
             dataid = input('   > Variable name: ','s');
         end
     end
 else
-    for n = 0:nvars-1,
-        [varname,xtype,dimids,natts] = netcdf.inqVar(ncid_1,n);
+    for n = 0:nvars-1
+        [varname,~,~,~] = netcdf.inqVar(ncid_1,n); % [varname,xtype,dimids,natts]
         if strcmp(varname,dataid_1)
             varid = n;
         end
@@ -803,34 +820,34 @@ end
 %
 if (~isempty(exp_2)) || (timesliceid_2 > 0.0) || (~isempty(dataid_2))
     % load data
-    [varname,xtype,dimids,natts] = netcdf.inqVar(ncid_2,varid);
+    [~,~,dimids,~] = netcdf.inqVar(ncid_2,varid); % [varname,xtype,dimids,natts]
     netcdfdata = netcdf.getVar(ncid_2,varid);
     if length(dimids) == 4
         rawdata(1:imax,1:jmax,1:kmax) = netcdfdata(1:imax,1:jmax,1:kmax,tid);
-        switch data_minmax,
+        switch data_minmax
             case {'min','minmax'}
-                for j = 1:jmax,
-                    for i = 1:imax,
-                        for k = 1:kmax,
+                for j = 1:jmax
+                    for i = 1:imax
+                        for k = 1:kmax
                             rawdata(i,j,k) = min(netcdfdata(i,j,k,tid:tid+data_nseas-1));
                         end
                     end
                 end
             case 'max'
-                for j = 1:jmax,
-                    for i = 1:imax,
-                        for k = 1:kmax,
+                for j = 1:jmax
+                    for i = 1:imax
+                        for k = 1:kmax
                             rawdata(i,j,k) = max(netcdfdata(i,j,k,tid:tid+data_nseas-1));
                         end
                     end
                 end
         end
-        for n = 1:kmax,
+        for n = 1:kmax
             data_2(kmax - n + 1,1:jmax,1:imax) = rawdata(1:imax,1:jmax,n)';
         end
     elseif length(dimids) == 3
         rawdata(1:imax,1:jmax,1:kmax) = netcdfata(1:imax,1:jmax,1:kmax);
-        for n = 1:kmax,
+        for n = 1:kmax
             data_2(kmax - n + 1,1:jmax,1:imax) = rawdata(1:imax,1:jmax,n)';
         end
     elseif length(dimids) == 2
@@ -851,18 +868,18 @@ end
 % *** OPTIONAL (u,v) VELOCITY DATA OPERLAY ****************************** %
 % *********************************************************************** %
 %
-if (data_uv == 'y'),
+if (data_uv == 'y')
     varid  = netcdf.inqVarID(ncid_1,'phys_u');
-    [varname,xtype,dimids,natts] = netcdf.inqVar(ncid_1,varid);
+    [~,~,dimids,~] = netcdf.inqVar(ncid_1,varid); % [varname,xtype,dimids,natts]
     rawdata = netcdf.getVar(ncid_1,varid);
     if length(dimids) == 4
         rawdata(1:imax,1:jmax,1:kmax) = rawdata(1:imax,1:jmax,1:kmax,tid);
-        for n = 1:kmax,
+        for n = 1:kmax
             data_u(kmax - n + 1,1:jmax,1:imax) = rawdata(1:imax,1:jmax,n)';
         end
     elseif length(dimids) == 3
         rawdata(1:imax,1:jmax,1:kmax) = rawdata(1:imax,1:jmax,1:kmax);
-        for n = 1:kmax,
+        for n = 1:kmax
             data_u(kmax - n + 1,1:jmax,1:imax) = rawdata(1:imax,1:jmax,n)';
         end
     elseif length(dimids) == 2
@@ -872,16 +889,16 @@ if (data_uv == 'y'),
         data_u(:,:,:) = NaN;
     end
     varid  = netcdf.inqVarID(ncid_1,'phys_v');
-    [varname,xtype,dimids,natts] = netcdf.inqVar(ncid_1,varid);
+    [~,~,dimids,~] = netcdf.inqVar(ncid_1,varid); % [varname,xtype,dimids,natts]
     rawdata = netcdf.getVar(ncid_1,varid);
     if length(dimids) == 4
         rawdata(1:imax,1:jmax,1:kmax) = rawdata(1:imax,1:jmax,1:kmax,tid);
-        for n = 1:kmax,
+        for n = 1:kmax
             data_v(kmax - n + 1,1:jmax,1:imax) = rawdata(1:imax,1:jmax,n)';
         end
     elseif length(dimids) == 3
         rawdata(1:imax,1:jmax,1:kmax) = rawdata(1:imax,1:jmax,1:kmax);
-        for n = 1:kmax,
+        for n = 1:kmax
             data_v(kmax - n + 1,1:jmax,1:imax) = rawdata(1:imax,1:jmax,n)';
         end
     elseif length(dimids) == 2
@@ -916,12 +933,12 @@ else
         filename = [exp_1, '.', 'y', num2str(timesliceid_1), '.', dataid_1, '.', 'k', num2str(kplot)];
     end
 end
-if ~isempty(overlaydataid),
+if ~isempty(overlaydataid)
     filename = [filename, '_VS_', overlaydataid];
-    if (data_anomoly == 'y'),
+    if (data_anomoly == 'y')
         filename = [filename, '.ANOM'];
     end
-    if (data_only == 'y'),
+    if (data_only == 'y')
         filename = [filename, '.DO'];
     end
 end
@@ -950,7 +967,7 @@ ym = latm;
 %     and then reset the anomoly flag
 % (3) added in any data offset to the values set for the data array
 if (data_anomoly == 'y')
-    if (plot_maxval == 'y'),
+    if (plot_maxval == 'y')
         data = max(data_1,data_2);
         data_anomoly = 'n';
     elseif (plot_minval == 'y')
@@ -965,14 +982,14 @@ end
 data = data + data_offset;
 % filter gridded data
 n = 0;
-if (kplot > 0),
+if (kplot > 0)
     % process single depth layer
     zm(:,:) = data(kplot,:,:);
     z_u(:,:) = data_u(kplot,:,:);
     z_v(:,:) = data_v(kplot,:,:);
     speed = NaN(size(zm));
-    for i = 1:imax,
-        for j = 1:jmax,
+    for i = 1:imax
+        for j = 1:jmax
             if topo(j,i) > layb(j,i)
                 zm(j,i) = NaN;
                 z_u(j,i) = NaN;
@@ -1002,7 +1019,7 @@ if (kplot > 0),
                 end
                 % calculate speed if <data_uv> selected
                 % also: replace data by speed if <data_only> selected
-                if (data_uv == 'y'),
+                if (data_uv == 'y')
                     speed(j,i) = data_scale*(z_u(j,i)^2.0 + z_v(j,i)^2.0)^0.5;
                     if (data_only == 'y'), zm(j,i) = speed(j,i); end
                 end
@@ -1010,7 +1027,7 @@ if (kplot > 0),
             end
         end
     end
-elseif (kplot == 0),
+elseif (kplot == 0)
     % create water column integral
     zm = zeros(jmax,imax);
     zm_M = zeros(jmax,imax);
@@ -1026,8 +1043,8 @@ elseif (kplot == 0),
         speed = NaN(size(zm));
     end
     %
-    for j = 1:jmax,
-        for i = 1:imax,
+    for j = 1:jmax
+        for i = 1:imax
             if topo(j,i) == 0.0
                 zm(j,i) = NaN;
                 z_u(j,i) = NaN;
@@ -1038,30 +1055,30 @@ elseif (kplot == 0),
                         zm(j,i) = NaN;
                     end
                 end
-                for k = data_kmin:data_kmax,
+                for k = data_kmin:data_kmax
                     if ((data(k,j,i) > -1.0E6) && (data(k,j,i) < 0.9E36))
                         zm(j,i) = zm(j,i) + data_M(k,j,i)*data(k,j,i);
                         zm_M(j,i) = zm_M(j,i) + data_M(k,j,i);
                         zm_count(j,i) = zm_count(j,i) + 1;
-                        if (data(k,j,i) > zm_maxval(j,i)),
+                        if (data(k,j,i) > zm_maxval(j,i))
                             zm_maxval(j,i)   = data(k,j,i);
                             zm_maxk(j,i) = k;
                         end
-                        if (data(k,j,i) < zm_minval(j,i)),
+                        if (data(k,j,i) < zm_minval(j,i))
                             zm_minval(j,i) = data(k,j,i);
                             zm_mink(j,i) = k;
                         end
                     end
                 end
-                if (plot_minval == 'y'),
+                if (plot_minval == 'y')
                     % replace zm if requested -- minimum water column value
                     if (zm_minval(j,i) == 0.9E36), zm_minval(j,i) = NaN; end
                     zm(j,i) = zm_minval(j,i);
-                elseif (plot_maxval == 'y'),
+                elseif (plot_maxval == 'y')
                     % replace zm if requested -- maximum water column value
                     if (zm_maxval(j,i) == -1.0E6), zm_maxval(j,i) = NaN; end
                     zm(j,i) = zm_maxval(j,i);
-                elseif (plot_av_conc == 'y'),
+                elseif (plot_av_conc == 'y')
                     % convert to concentration if requested
                     zm(j,i) = zm(j,i)/zm_M(j,i);
                 end
@@ -1087,15 +1104,15 @@ elseif (kplot == 0),
             if ~isnan(zm(j,i)), n = n + 1; end
         end
     end
-elseif (kplot == -1),
+elseif (kplot == -1)
     % benthic layer
     zm = zeros(jmax,imax);
     z_u(:,:) = zeros(jmax,imax);
     z_v(:,:) = zeros(jmax,imax);
-    for j = 1:jmax,
-        for i = 1:imax,
+    for j = 1:jmax
+        for i = 1:imax
             loc_k = grid_k1(j,i);
-            if ((loc_k > data_kmax) || (loc_k < data_kmin)),
+            if ((loc_k > data_kmax) || (loc_k < data_kmin))
                 zm(j,i) = NaN;
             elseif (data(loc_k,j,i) < -1.0E6) || (data(loc_k,j,i) > 1.0E30)
                 zm(j,i) = NaN;
@@ -1483,10 +1500,10 @@ else
         data_vector_D = reshape(data_D(:,:,:),imax*jmax*kmax,1);
     elseif (kplot == -1)
         n=0;
-        for j = 1:jmax,
-            for i = 1:imax,
+        for j = 1:jmax
+            for i = 1:imax
                 loc_k = grid_k1(j,i);
-                if ((loc_k <= data_kmax) && (loc_k >= data_kmin)),
+                if ((loc_k <= data_kmax) && (loc_k >= data_kmin))
                     n = n+1;
                     data_vector_1(n) = data_1(loc_k,j,i)/data_scale;
                     data_vector_D(n) = data_D(loc_k,j,i);
@@ -1796,9 +1813,9 @@ if (plot_main == 'y'),
     % date-stamp plot
     set(gcf,'CurrentAxes',fh(1));
     if (plot_format_old == 'y')
-        text(0.95,0.50,[str_function, ' / ', 'on: ', str_date],'FontName','Arial','FontSize',8,'Rotation',90.0,'HorizontalAlignment','center','VerticalAlignment','top');
+        text(0.95,0.50,[str_function, ' v.', num2str(par_ver), ' / ', 'on: ', str_date],'FontName','Arial','FontSize',8,'Rotation',90.0,'HorizontalAlignment','center','VerticalAlignment','top');
     else
-        text(0.85,0.50,[str_function, ' / ', 'on: ', str_date],'FontName','Arial','FontSize',8,'Rotation',90.0,'HorizontalAlignment','center','VerticalAlignment','top');
+        text(0.85,0.50,[str_function, ' v.', num2str(par_ver), ' / ', 'on: ', str_date],'FontName','Arial','FontSize',8,'Rotation',90.0,'HorizontalAlignment','center','VerticalAlignment','top');
     end
     %
     % *** SET PLOT SCALE **************************************************** %

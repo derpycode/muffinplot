@@ -257,6 +257,9 @@ function [OUTPUT] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 %             *** VERSION 1.32 ********************************************
 %   19/07/12: added plotting limit cut-off to scatter plot data
 %             *** VERSION 1.33 ********************************************
+%   19/07/14: adjusted plotting limit cut-off
+%             + a little clean-up
+%             *** VERSION 1.34 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -268,7 +271,7 @@ function [OUTPUT] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.33;
+par_ver = 1.34;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -361,7 +364,7 @@ end
 % set global flag if no alt plotting scale is set
 % NOTE: catch possibility of one axis being set, but the other @ default
 %       (min and max with indetical values)
-if ((plot_lat_min == plot_lat_max) && (plot_D_min == plot_D_max)),
+if ((plot_lat_min == plot_lat_max) && (plot_D_min == plot_D_max))
     plot_global = true;
     plot_xy_scaling = 1.0;
     plot_lat_min = lat_min;
@@ -370,11 +373,11 @@ if ((plot_lat_min == plot_lat_max) && (plot_D_min == plot_D_max)),
     plot_D_max = D_max;
 else
     plot_global = false;
-    if (plot_lat_min == plot_lat_max),
+    if (plot_lat_min == plot_lat_max)
         plot_lat_min = lat_min;
         plot_lat_max = lat_max;
     end
-    if (plot_D_min == plot_D_max),
+    if (plot_D_min == plot_D_max)
         plot_D_min = D_min;
         plot_D_max = D_max;
     end
@@ -383,7 +386,7 @@ end
 %
 % *** OPTIONAL PLOTTING SCALE ******************************************* %
 %
-if ~isempty(contour_file),
+if ~isempty(contour_file)
     % load data
     contour_data = load(contour_file,'-ascii');
     % adjust if necessary so that contour_data(1) is the lowest value
@@ -405,7 +408,7 @@ str_current_path = pwd;
 str_function_path = which(str_function);
 str_function_path = str_function_path(1:end-length(str_function)-3);
 % check source code directory and add search path
-if ~(exist([str_function_path '/' par_pathlib],'dir') == 7),
+if ~(exist([str_function_path '/' par_pathlib],'dir') == 7)
     disp([' * ERROR: Cannot find source directory']);
     disp([' ']);
     return;
@@ -413,9 +416,9 @@ else
     addpath([str_function_path '/' par_pathlib]);
 end
 % check masks directory and add search path
-if (exist([str_current_path '/' par_pathmask],'dir') == 7),
+if (exist([str_current_path '/' par_pathmask],'dir') == 7)
     addpath([str_current_path '/' par_pathmask]);
-elseif (exist([str_function_path '/' par_pathmask],'dir') == 7),
+elseif (exist([str_function_path '/' par_pathmask],'dir') == 7)
     addpath([str_function_path '/' par_pathmask]);
 else
     disp([' * ERROR: Cannot find MASKS directory -- was it moved ... ?']);
@@ -424,7 +427,7 @@ else
 end
 % set input path
 par_pathin = [str_current_path '/' par_pathin];
-if ~(exist(par_pathin,'dir') == 7),
+if ~(exist(par_pathin,'dir') == 7)
     disp([' * ERROR: Cannot find experiment results directory']);
     disp([' ']);
     return;
@@ -489,7 +492,7 @@ else
     ncid_1=netcdf.open([par_pathin '/' exp_1 '/biogem/fields_biogem_3d.nc'],'nowrite');
 end
 % read netCDf information
-[ndims,nvars,ngatts,unlimdimid] = netcdf.inq(ncid_1);
+[~,nvars,~,~] = netcdf.inq(ncid_1); % [ndims,nvars,ngatts,unlimdimid]
 %
 % *********************************************************************** %
 
@@ -504,13 +507,13 @@ grid_k1 = netcdf.getVar(ncid_1,varid);
 grid_k1 = grid_k1';
 % calculate grid dimensions
 varid  = netcdf.inqDimID(ncid_1,'lat');
-[dimname, dimlen] = netcdf.inqDim(ncid_1,varid);
+[~, dimlen] = netcdf.inqDim(ncid_1,varid); % [dimname, dimlen] 
 jmax = dimlen;
 varid  = netcdf.inqDimID(ncid_1,'lon');
-[dimname, dimlen] = netcdf.inqDim(ncid_1,varid);
+[~, dimlen] = netcdf.inqDim(ncid_1,varid); % [dimname, dimlen] 
 imax = dimlen;
 varid  = netcdf.inqDimID(ncid_1,'zt');
-[dimname, dimlen] = netcdf.inqDim(ncid_1,varid);
+[~, dimlen] = netcdf.inqDim(ncid_1,varid); % [dimname, dimlen] 
 kmax = dimlen;
 % load remaining grid information
 varid  = netcdf.inqVarID(ncid_1,'zt');
@@ -569,19 +572,18 @@ end
 %
 grid_lon_origin = grid_lon_edges(1);
 % set restricted k interval
-if ((data_kmin == data_kmax) || (data_kmin > data_kmax) || (data_kmin < 1)),
-    loc_kmin = 1;
-    loc_kmax = kmax;
-else
-    loc_kmin = data_kmin;
-    loc_kmax = data_kmax;
-end
-% restrict k interval on the basis of plot_D min,max
-if (plot_D_min ~= plot_D_max)
+% NOTE: optionally restrict k interval on the basis of plot_D min,max
+if ((data_kmin == data_kmax) || (data_kmin > data_kmax) || (data_kmin < 1))
+    data_kmin = 1;
+    data_kmax = kmax;
+elseif (plot_D_min ~= plot_D_max)
     loc_k = find(grid_zt > plot_D_min);
-    loc_kmax = max(loc_k);
+    data_kmax = max(loc_k);
     loc_k = find(grid_zt < plot_D_max);
-    loc_kmin = min(loc_k); 
+    data_kmin = min(loc_k); 
+else
+    data_kmin = data_kmin;
+    data_kmax = data_kmax;
 end
 % test for mask 'type'
 % load mask data or create mask
@@ -629,7 +631,7 @@ end
 % check that the year exists
 varid  = netcdf.inqVarID(ncid_1,'time');
 timeslices = netcdf.getVar(ncid_1,varid);
-[dimname, dimlen] = netcdf.inqDim(ncid_1,varid);
+[~, dimlen] = netcdf.inqDim(ncid_1,varid); % [dimname, dimlen]
 clear time;
 while exist('time','var') == 0
     for n = 1:dimlen,
@@ -1231,7 +1233,7 @@ if ~isempty(overlaydataid)
         if ( isnan(data(overlaydata_ijk(n,3),overlaydata_ijk(n,2),overlaydata_ijk(n,1))) ),
             overlaydata_raw(n,4) = NaN;
             overlaydata_ijk(n,4) = NaN;
-        elseif ( (overlaydata_ijk(n,3) < loc_kmin) || (overlaydata_ijk(n,3) > loc_kmax) ),
+        elseif ( (overlaydata_ijk(n,3) < data_kmin) || (overlaydata_ijk(n,3) > data_kmax) ),
             overlaydata_raw(n,4) = NaN;
             overlaydata_ijk(n,4) = NaN;
         else
@@ -1267,8 +1269,8 @@ if ~isempty(overlaydataid)
         overlaylabel(:,:)    = [];
         overlaylabel         = 'n/a';
         m=0;
-        for k = loc_kmin:loc_kmax,
-            for j = 1:jmax,
+        for k = data_kmin:data_kmax
+            for j = 1:jmax
                 if (~isnan(overlaydata_zm(k,j)))
                     samecell_locations = find((int32(overlaydata_ijk_old(:,3))==k)&(int32(overlaydata_ijk_old(:,2))==j));
                     samecell_n = size(samecell_locations);
@@ -1292,8 +1294,8 @@ if ~isempty(overlaydataid)
     overlaydata(:,4) = overlaydata(:,4)/datapoint_scale;
     % calculate profile
     overlaydata_ijk_old(:,:) = overlaydata_ijk(:,:);
-    overlaydata_k(:) = NaN(loc_kmax-loc_kmin+1,1);
-    for k = loc_kmin:loc_kmax,
+    overlaydata_k(:) = NaN(data_kmax-data_kmin+1,1);
+    for k = data_kmin:data_kmax
         samecell_locations = find(int32(overlaydata_ijk_old(:,3))==k);
         samecell_n = size(samecell_locations);
         if (samecell_n(1) > 0)
@@ -1548,7 +1550,7 @@ if (plot_main == 'y'),
     colormap(cmap);
     % date-stamp plot
     set(gcf,'CurrentAxes',fh(1));
-    text(0.95,0.50,[str_function, ' / ', 'on: ', str_date],'FontName','Arial','FontSize',8,'Rotation',90.0,'HorizontalAlignment','center','VerticalAlignment','top');
+    text(0.95,0.50,[str_function, ' v.', num2str(par_ver), ' / ', 'on: ', str_date],'FontName','Arial','FontSize',8,'Rotation',90.0,'HorizontalAlignment','center','VerticalAlignment','top');
     %
     % *** SET PLOT SCALE ************************************************ %
     %
@@ -1911,7 +1913,7 @@ if (plot_secondary == 'y')
             scatter(data_vector_2(:),-grid_zt(data_vector_k(:)),10,'c^');
             %
             data_vector_12_mean = NaN(kmax,3);
-            for k = loc_kmin:loc_kmax,
+            for k = data_kmin:data_kmax
                 samelayer_locations = find((int32(data_vector_k(:))==k));
                 samecell_n = size(samelayer_locations);
                 if (samecell_n(1) > 0)
@@ -2014,12 +2016,12 @@ if (plot_secondary == 'y')
     %
     % *** PLOT FIGURE (cross-plot) ************************************** %
     %
-    if ( ~isempty(dataid_2) || ~isempty(overlaydataid) ),
+    if ( ~isempty(dataid_2) || ~isempty(overlaydataid) )
         %
-        if ~isempty(dataid_2),
-            loc_x_data = reshape(data_1(loc_kmin:loc_kmax,:,:),[],1);
-            loc_y_data = reshape(data_2(loc_kmin:loc_kmax,:,:),[],1);
-            loc_D_data = reshape(data_D(loc_kmin:loc_kmax,:,:),[],1);
+        if ~isempty(dataid_2)
+            loc_x_data = reshape(data_1(data_kmin:data_kmax,:,:),[],1);
+            loc_y_data = reshape(data_2(data_kmin:data_kmax,:,:),[],1);
+            loc_D_data = reshape(data_D(data_kmin:data_kmax,:,:),[],1);
             loc_x_label = [strrep(dataid_1,'_','-')];
             loc_y_label = [strrep(dataid_2,'_','-')];
             loc_D_label = ['Depth (m)'];
