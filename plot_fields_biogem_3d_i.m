@@ -1492,7 +1492,7 @@ if (data_save == 'y')
         fclose(fid);
     else
         fid = fopen([par_pathout '/' filename '_MODELPOINTS', '.', str_date '.dat'], 'wt');
-        fprintf(fid, '%% Model value at mask locations');
+        fprintf(fid, '%% Model value at plotted locations');
         fprintf(fid, '\n');
         fprintf(fid, '%% Format: i, j, k, model lon, model lat, model depth, model value');
         fprintf(fid, '\n');
