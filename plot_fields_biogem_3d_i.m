@@ -260,6 +260,9 @@ function [OUTPUT] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 %   19/07/14: adjusted plotting limit cut-off
 %             + a little clean-up
 %             *** VERSION 1.34 ********************************************
+%   19/07/16: added selected model data saving with
+%             data_save = 'y' (only) set
+%             *** VERSION 1.35 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -271,7 +274,7 @@ function [OUTPUT] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.34;
+par_ver = 1.35;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -1017,9 +1020,9 @@ n = 0;
 %
 % *** PROCESS MAIN DATASET ********************************************** %
 %
-for k = 1:kmax,
-    for j = 1:jmax,
-        for i = 1:imax,
+for k = 1:kmax
+    for j = 1:jmax
+        for i = 1:imax
             % create special case of just benthic and surface data
             if (iplot == -1)
                 if ((k ~= grid_k1(j,i)) && (k ~=kmax))
@@ -1085,8 +1088,8 @@ nmax = n;
 % copy zm before it gets transformed ...
 overlaydata_zm(:,:) = zm(:,:);
 % set topography uniform in i-direction and equal to deepest point found
-for j = 1:jmax,
-    for i = 2:imax,
+for j = 1:jmax
+    for i = 2:imax
         if (topo(j,i) < topo(j,i-1))
             topo(j,1:i-1) = topo(j,i);
         else
@@ -1450,12 +1453,12 @@ end
 % *** SAVE EQUIVALENT MODEL DATA **************************************** %
 %
 % save model data at the data locations
-if (data_save == 'y'),
+if (data_save == 'y')
     if (~isempty(overlaydataid) && (data_only == 'n'))
         fid = fopen([par_pathout '/' filename '_MODELDATAPOINTS', '.', str_date '.dat'], 'wt');
         fprintf(fid, '%% Model value at data locations');
         fprintf(fid, '\n');
-        if (data_ijk == 'y'),
+        if (data_ijk == 'y')
             fprintf(fid, '%% Format: i, j, model lon, model lat, model depth, model value, data value, data label');
         elseif (data_ijk_mean == 'y')
             fprintf(fid, '%% Format: i, j, model lon, model lat, model depth, model value, re-gridded data value, (no data label)');
@@ -1463,7 +1466,7 @@ if (data_save == 'y'),
             fprintf(fid, '%% Format: i, j, data lon, data lat, data depth, model value, data value, data label');
         end
         fprintf(fid, '\n');
-        for n = 1:nmax,
+        for n = 1:nmax
             loc_i = int16(overlaydata_ijk(n,1));
             loc_j = int16(overlaydata_ijk(n,2));
             loc_k = int16(overlaydata_ijk(n,3));
@@ -1476,11 +1479,28 @@ if (data_save == 'y'),
         fprintf(fid, '\n');
         fprintf(fid, '%% Format: i, j, k, model lon, model lat, model depth, model value');
         fprintf(fid, '\n');
-        for k = 1:kmax,
-            for j = 1:jmax,
+        for k = 1:kmax
+            for j = 1:jmax
                 loc_k = k;
                 loc_j = j;
-                loc_lat = ym(k,j);
+                loc_lat = xm(k,j);
+                loc_depth = laym(k,j);
+                loc_value = zm(k,j);
+                fprintf(fid, '%2d %2d %8.3f %8.3f %8.6e %s \n', loc_j, loc_k, loc_lat, -loc_depth, loc_value, '%');
+            end
+        end
+        fclose(fid);
+    else
+        fid = fopen([par_pathout '/' filename '_MODELPOINTS', '.', str_date '.dat'], 'wt');
+        fprintf(fid, '%% Model value at mask locations');
+        fprintf(fid, '\n');
+        fprintf(fid, '%% Format: i, j, k, model lon, model lat, model depth, model value');
+        fprintf(fid, '\n');
+        for k = data_kmin:data_kmax
+            for j = 1:jmax
+                loc_k = k;
+                loc_j = j;
+                loc_lat = xm(k,j);
                 loc_depth = laym(k,j);
                 loc_value = zm(k,j);
                 fprintf(fid, '%2d %2d %8.3f %8.3f %8.6e %s \n', loc_j, loc_k, loc_lat, -loc_depth, loc_value, '%');
