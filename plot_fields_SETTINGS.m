@@ -185,6 +185,6 @@ plot_lat_min = 0;       % [   0]  OPTIONAL MIN PLOTTING LIMIT (LAT)
 plot_lat_max = 0;       % [   0]  OPTIONAL MAX PLOTTING LIMIT (LAT)
 plot_D_min = 0;         % [   0]  OPTIONAL MIN PLOTTING LIMIT (DEPTH, m)
 plot_D_max = 0;         % [   0]  OPTIONAL MAX PLOTTING LIMIT (DEPTH, m)
-plot_histc_SETTINGS = ''% [  ''] histc PLOTTING SETTINGS FILENAMWE
+plot_histc_SETTINGS='';% [  ''] histc PLOTTING SETTINGS FILENAMWE
 %
 % *********************************************************************** %
