@@ -211,6 +211,9 @@ function [OUTPUT] = plot_fields_sedgem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,PM
 %             *** VERSION 1.23 ********************************************
 %   19/03/31: removed generation of empty STATM array
 %             *** VERSION 1.24 ********************************************
+%   19/08/28: in reading data files, accounted for headers (specified by %)
+%             in counting total number of (data) lines
+%             *** VERSION 1.36 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -222,7 +225,7 @@ function [OUTPUT] = plot_fields_sedgem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,PM
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.24;
+par_ver = 1.36;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -677,7 +680,7 @@ if ~isempty(overlaydataid)
     overlaydatafile = [overlaydataid];
     % determine number if lines
     fid = fopen(overlaydatafile,'r');
-    loc_C = textscan(fid,'%s','delimiter','\n');
+    loc_C = textscan(fid,'%s','CommentStyle','%','delimiter','\n');
     fclose(fid);
     n_rows = length(loc_C{1,1});
     % determine number of tab-, comma-, OR space-seperated columns

@@ -221,6 +221,9 @@ function [grid_lat,zz] = plot_fields_biogem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,P
 %             *** VERSION 1.22 ********************************************
 %   19/03/31: removed generation of empty STATM array
 %             *** VERSION 1.24 ********************************************
+%   19/08/28: in reading data files, accounted for headers (specified by %)
+%             in counting total number of (data) lines
+%             *** VERSION 1.36 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -232,7 +235,7 @@ function [grid_lat,zz] = plot_fields_biogem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,P
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.24;
+par_ver = 1.36;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -906,7 +909,7 @@ if ~isempty(overlaydataid)
     overlaydatafile = [overlaydataid];
     % determine number of lines
     fid = fopen(overlaydatafile,'r');
-    loc_C = textscan(fid,'%s','delimiter','\n');
+    loc_C = textscan(fid,'%s','CommentStyle','%','delimiter','\n');
     fclose(fid);
     n_rows = length(loc_C{1,1});
     % determine number of tab-, comma-, OR space-seperated columns
@@ -929,7 +932,20 @@ if ~isempty(overlaydataid)
     fclose(fid);
     % load overlay datafile
     fid = fopen(overlaydatafile);
-    if (n_columns == 4),
+    if (n_columns == 3),
+        % lon, lat, value, LABEL
+        % NOTE: add fake data (0.0)
+        if flag_csv
+            C = textscan(fid, '%f %f %s', 'CommentStyle', '%', 'EmptyValue', NaN, 'Delimiter', ',');             
+        else
+            C = textscan(fid, '%f %f %s', 'CommentStyle', '%', 'EmptyValue', NaN);            
+        end
+        overlaydata_raw = cell2mat(C(1:2));
+        overlaydata_raw(:,3) = 0.0;
+        CC = C(3);
+        overlaylabel_raw = char(CC{1}(:));
+        data_shapecol = 'n';
+    elseif (n_columns == 4),
         % lon, lat, value, LABEL
         if flag_csv
             C = textscan(fid, '%f %f %f %s', 'CommentStyle', '%', 'EmptyValue', NaN, 'Delimiter', ',');             

@@ -263,6 +263,9 @@ function [OUTPUT] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 %   19/07/16: added selected model data saving with
 %             data_save = 'y' (only) set
 %             *** VERSION 1.35 ********************************************
+%   19/08/28: in reading data files, accounted for headers (specified by %)
+%             in counting total number of (data) lines
+%             *** VERSION 1.36 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -274,7 +277,7 @@ function [OUTPUT] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.35;
+par_ver = 1.36;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -1139,7 +1142,7 @@ if ~isempty(overlaydataid)
     overlaydatafile = [overlaydataid];
     % determine number if lines
     fid = fopen(overlaydatafile,'r');
-    loc_C = textscan(fid,'%s','delimiter','\n');
+    loc_C = textscan(fid,'%s','CommentStyle','%','delimiter','\n');
     fclose(fid);
     n_rows = length(loc_C{1,1});
     % determine number of tab-, comma-, OR space-seperated columns
