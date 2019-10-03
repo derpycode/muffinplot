@@ -125,6 +125,8 @@ function [] = plot_timeseries_biogem(PEXP1,PEXP2,PTMIN,PTMAX,PDATA1,PDATA1N,PDAT
 %             *** VERSION 1.15 ********************************************
 %   19/06/03: fix to sea-ice auto-scale ...
 %             *** VERSION 1.16 ********************************************
+%   19/10/03: fix to change in default plotting behavior of barfunction (?)
+%             *** VERSION 1.17 ********************************************
 %
 %   ***********************************************************************
 
@@ -135,7 +137,7 @@ function [] = plot_timeseries_biogem(PEXP1,PEXP2,PTMIN,PTMAX,PDATA1,PDATA1N,PDAT
 % *** initialize ******************************************************** %
 %
 % set version!
-par_ver = 1.16;
+par_ver = 1.17;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -1137,7 +1139,7 @@ elseif(opt_invanalysis)
     if (axis_data1_min >= axis_data1_max), disp(['ERROR: Failed to autoscale data1 ... ']); return; end
     % create plot on first y-axis
     if (opt_rebinned),
-        hl1 = bar(binctrs_FCO2(:),bindata_FCO2_dF(:),1.0,'FaceColor','none');
+        hl1 = bar(binctrs_FCO2(:),bindata_FCO2_dF(:),1.0,'EdgeColor','k','FaceColor','none');        
     else
         hl1 = bar(data_FCO2_t(:),data_FCO2_dF(:),1.0,'hist');
     end
@@ -1217,7 +1219,7 @@ elseif(opt_invanalysis)
     if (axis_data2_min >= axis_data2_max), disp(['ERROR: Failed to autoscale data2 ... ']); return; end
     % create plot on first y-axis
     if (opt_rebinned),
-        hl1 = bar(binctrs_FCO2(:),bindata_FCO2_sum(:),1.0,'FaceColor','none');
+        hl1 = bar(binctrs_FCO2(:),bindata_FCO2_sum(:),1.0,'EdgeColor','k','FaceColor','none');
     else
         hl1 = bar(data_FCO2_t(:),data_FCO2_sum(:),1.0,'hist');
     end
@@ -1307,7 +1309,7 @@ elseif(opt_invanalysis)
     if (axis_data3_min >= axis_data3_max), disp(['ERROR: Failed to autoscale data3 ... ']); return; end
     % create plot on first y-axis
     if (opt_rebinned),
-        hl1 = bar(binctrs_FCO2(:),bindata_FCO2_13C(:),1.0,'FaceColor','none');
+        hl1 = bar(binctrs_FCO2(:),bindata_FCO2_13C(:),1.0,'EdgeColor','k','FaceColor','none');
     else
         hl1 = bar(data_FCO2_t(:),data_FCO2_13C(:),1.0,'hist');
     end
