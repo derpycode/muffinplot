@@ -266,6 +266,8 @@ function [OUTPUT] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 %   19/08/28: in reading data files, accounted for headers (specified by %)
 %             in counting total number of (data) lines
 %             *** VERSION 1.36 ********************************************
+%   19/10/03: bug-fix of recent changes ...
+%             *** VERSION 1.37 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -277,7 +279,7 @@ function [OUTPUT] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.36;
+par_ver = 1.37;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -1367,7 +1369,7 @@ if (~isempty(dataid_2))
     end
 else
     % set default vector_1
-    % NOTE: if discrete data is present, this will be overwritten
+    % NOTE: if discrete data is present, this will be replaced
     % transform data sets in vectors
     % NOTE: data_1 is format (k,j,i)
     if ((iplot > 0) && isempty(maskid)),
@@ -1377,6 +1379,9 @@ else
         data_vector_1 = reshape(data_1(:,:,:),imax*jmax*kmax,1)/data_scale;
         data_vector_D = reshape(data_D(:,:,:),imax*jmax*kmax,1);
     end
+    % (don't) transpose vectors
+%     data_vector_1 = data_vector_1;
+%     data_vector_D = data_vector_D;
     % filter data
     data_vector_1(find(data_vector_1(:) < -1.0E6)) = NaN;
     data_vector_1(find(data_vector_1(:) > 0.9E36)) = NaN;
@@ -1395,13 +1400,19 @@ if (~isempty(overlaydataid)),
     % the overlay data locations
     % NOTE: !!! overlaydata_zm is (k,j) !!!
     % NOTE: re-orientate data_vector_2 to match data_vector_1
+    data_vector_2 = [];
+    data_vector_D = [];
+    data_vector_k = [];
     for n = 1:nmax,
         %%%data_vector_2(n) = overlaydata_zm(int32(overlaydata_ijk(n,3)),int32(overlaydata_ijk(n,2)));
         data_vector_2(n) = data(int32(overlaydata_ijk(n,3)),int32(overlaydata_ijk(n,2)),int32(overlaydata_ijk(n,1)));
+        data_vector_D(n) = data_D(int32(overlaydata_ijk(n,3)),int32(overlaydata_ijk(n,2)),int32(overlaydata_ijk(n,1)));
         data_vector_k(n) = int32(overlaydata_ijk(n,3));
     end
     data_vector_2 = data_vector_2';
     data_vector_2 = data_vector_2/data_scale;
+    data_vector_D = data_vector_D';
+    data_vector_k = data_vector_k';
     % filter data
     data_vector_2(find(data_vector_2(:) < -1.0E6)) = NaN;
     data_vector_2(find(data_vector_2(:) > 0.9E36)) = NaN;

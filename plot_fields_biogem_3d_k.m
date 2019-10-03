@@ -295,6 +295,8 @@ function [OUTPUT] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 %   19/08/28: in reading data files, accounted for headers (specified by %)
 %             in counting total number of (data) lines
 %             *** VERSION 1.36 ********************************************
+%   19/10/03: bug-fix of recent changes ...
+%             *** VERSION 1.37 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -306,7 +308,7 @@ function [OUTPUT] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.36;
+par_ver = 1.37;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -1495,7 +1497,7 @@ if (~isempty(dataid_2))
     end
 else
     % set default vector_1
-    % NOTE: if discrete data is present, this will be overwritten
+    % NOTE: if discrete data is present, this will be replaced
     % transform data sets in vectors
     % NOTE: data_1 is format (k,j,i)
     if kplot > 0
@@ -1516,7 +1518,7 @@ else
                 end
             end
         end
-        nmax=n;
+        %%%nmax=n;
         % transpose vectors
         data_vector_1 = data_vector_1';
         data_vector_D = data_vector_D';
@@ -1540,6 +1542,7 @@ if (~isempty(overlaydataid) && ((data_only == 'n') || (data_anomoly == 'y')))
     % NOTE: !!! data is (k,j,i) !!! (=> swap i and j)
     % NOTE: re-orientate data_vector_2 to match data_vector_1
     data_vector_2 = [];
+    data_vector_D = [];
     for n = 1:nmax,
         if kplot > 0,
             data_vector_2(n) = data(kplot,int32(overlaydata_ijk(n,2)),int32(overlaydata_ijk(n,1)));
@@ -1549,17 +1552,18 @@ if (~isempty(overlaydataid) && ((data_only == 'n') || (data_anomoly == 'y')))
             data_vector_D(n) = data_D(int32(overlaydata_ijk(n,3)),int32(overlaydata_ijk(n,2)),int32(overlaydata_ijk(n,1)));
         elseif (kplot == -1)
             %%%loc_k = grid_k1(int32(overlaydata_ijk(n,2)),int32(overlaydata_ijk(n,1)));
-            loc_k = overlaydata_ijk(n,3);        
+            loc_k = overlaydata_ijk(n,3);
             data_vector_2(n) = data(loc_k,int32(overlaydata_ijk(n,2)),int32(overlaydata_ijk(n,1)));
             data_vector_D(n) = data_D(loc_k,int32(overlaydata_ijk(n,2)),int32(overlaydata_ijk(n,1)));
         end
     end
     data_vector_2 = data_vector_2';
     data_vector_2 = data_vector_2/data_scale;
+    data_vector_D = data_vector_D';
     % filter data
     data_vector_2(find(data_vector_2(:) < -1.0E6)) = NaN;
     data_vector_2(find(data_vector_2(:) > 0.9E36)) = NaN;
-    if (data_stats == 'y')
+    if ((data_stats == 'y') && (data_only == 'n'))
         % calculate stats
         STATM = calc_allstats(data_vector_1,data_vector_2);
         if (plot_secondary=='y')

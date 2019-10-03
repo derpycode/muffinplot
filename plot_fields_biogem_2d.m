@@ -224,6 +224,8 @@ function [grid_lat,zz] = plot_fields_biogem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,P
 %   19/08/28: in reading data files, accounted for headers (specified by %)
 %             in counting total number of (data) lines
 %             *** VERSION 1.36 ********************************************
+%   19/10/03: [minor]
+%             *** VERSION 1.37 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -235,7 +237,7 @@ function [grid_lat,zz] = plot_fields_biogem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,P
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.36;
+par_ver = 1.37;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -874,6 +876,8 @@ end
 data = data_1 - data_2;
 data = data - data_offset;
 zm = data;
+% copy zm before it gets transformed ...
+overlaydata_zm(:,:) = zm(:,:);
 %
 % *** CREATE ZONAL AVERAGE ********************************************** %
 %
@@ -1472,7 +1476,7 @@ if (plot_main == 'y'),
     % draw filled rectangles
     for i = 1:imax,
         for j = 1:jmax,
-            if ((topo(j,i) > layb(j,i)) && (plot_landvalues == 'n'))
+            if (topo(j,i) > layb(j,i))
                 h = patch([lonw(j,i) lonw(j,i) lone(j,i) lone(j,i)],[lats(j,i) latn(j,i) latn(j,i) lats(j,i)],color_g);
                 set(h,'EdgeColor',color_g);
             else
