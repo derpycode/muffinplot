@@ -226,6 +226,8 @@ function [grid_lat,zz] = plot_fields_biogem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,P
 %             *** VERSION 1.36 ********************************************
 %   19/10/03: [minor]
 %             *** VERSION 1.37 ********************************************
+%   19/10/03: revised data format checking
+%             *** VERSION 1.38 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -237,7 +239,7 @@ function [grid_lat,zz] = plot_fields_biogem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,P
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.37;
+par_ver = 1.38;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -916,22 +918,28 @@ if ~isempty(overlaydataid)
     loc_C = textscan(fid,'%s','CommentStyle','%','delimiter','\n');
     fclose(fid);
     n_rows = length(loc_C{1,1});
+    % set flag for a comma-seperated data file
     % determine number of tab-, comma-, OR space-seperated columns
     % NOTE: no mix of seperators allowed ...
     fid = fopen(overlaydatafile,'r');
     loc_line = fgets(fid);
-    delimiter = char(9); % tab
-    n_columns = numel(strfind(loc_line,delimiter)) + 1;
-    delimiter = char(32); % space
-    n_columns = max(n_columns,numel(strfind(loc_line,delimiter)) + 1);
-    delimiter = char(44); % comma
-    n_columns = max(n_columns,numel(strfind(loc_line,delimiter)) + 1);
-    % set flag for comma-seperated file
-    delimiter = char(44); % comma
-    if (numel(strfind(loc_line,delimiter)) > 0),
+    if (numel(strfind(loc_line,char(44))) > 0),
+       % comma
+       n_columns = numel(strfind(loc_line,char(44))) + 1;
        flag_csv = true;
-    else
+    elseif (numel(strfind(loc_line,char(9))) > 0),
+       % tab
        flag_csv = false;
+       n_columns = numel(strfind(loc_line,char(9))) + 1;
+    elseif (numel(strfind(loc_line,char(32))) > 0),
+       % space
+       flag_csv = false;
+       n_columns = numel(strfind(loc_line,char(32))) + 1;
+    else
+        disp([' * ERROR: Cannot determine data file format']);
+        disp(['   format must be: tab-, comma-, OR space-separated columns']);
+        disp([' ']);
+        return;
     end
     fclose(fid);
     % load overlay datafile
