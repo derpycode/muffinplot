@@ -270,6 +270,10 @@ function [OUTPUT] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 %             *** VERSION 1.37 ********************************************
 %   19/10/03: revised data format checking
 %             *** VERSION 1.38 ********************************************
+%   19/10/15: removed k min,max data parameters from input file
+%             as in practice, they were always re-calculated & over-written
+%             *** VERSION 1.39 ********************************************
+%
 %
 % *********************************************************************** %
 %%
@@ -281,7 +285,7 @@ function [OUTPUT] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.38;
+par_ver = 1.39;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -581,20 +585,11 @@ for k = 1:kmax,
 end
 %
 grid_lon_origin = grid_lon_edges(1);
-% set restricted k interval
-% NOTE: optionally restrict k interval on the basis of plot_D min,max
-if ((data_kmin == data_kmax) || (data_kmin > data_kmax) || (data_kmin < 1))
-    data_kmin = 1;
-    data_kmax = kmax;
-elseif (plot_D_min ~= plot_D_max)
-    loc_k = find(grid_zt > plot_D_min);
-    data_kmax = max(loc_k);
-    loc_k = find(grid_zt < plot_D_max);
-    data_kmin = min(loc_k); 
-else
-    data_kmin = data_kmin;
-    data_kmax = data_kmax;
-end
+% set data limts in k space (based on plotting depth limits)
+loc_k = find(grid_zt > plot_D_min);
+data_kmax = max(loc_k);
+loc_k = find(grid_zt < plot_D_max);
+data_kmin = min(loc_k);
 % test for mask 'type'
 % load mask data or create mask
 % NOTE: mask single location coordinate is (i,j)

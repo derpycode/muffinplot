@@ -59,8 +59,6 @@
 %      plot_landvalues='n';   Plot values over land (for 2D data)? 
 %      plot_mask_netcdf = ''; Set internal netCDF mask name
 %   DATA PROCESSING (AVERAGING/WATER COLUMN INTEGRAL CONTROL)
-%      data_kmin = 1;         the minimum k value for data processing
-%      data_kmax = 1;         the maximum k value for data processing
 %      plot_av_conc = 'n';    Plot the average as a concentration?
 %                             (the default is for a water column inventory)
 %      plot_minval = 'n';     plot the minimum val in the column interval?
@@ -102,6 +100,8 @@
 %      plot_D_max = 0;        Optional depth plotting limts -- max
 %                             The above plotting limits are enacted  
 %                             *only* when min limit /= max limit
+%                             Plotting dpeth also determines
+%                             (k value) data processing limits
 %      plot_histc_SETTINGS='' m-filename for plot_histc settings
 %                             internal default is 'plot_histc_SETTINGS'
 %
@@ -128,8 +128,6 @@ contour_hltval2 = 0.0;  % [ 0.0]  2nd HIGHLIGHT CONTOUR VALUE
 contour_file = '';      % [  '']  OPTIONAL EXTERNAL PLOTTING SCALE
 colorbar_name='parula'; % ['parula'] COLORBAR COLOR SCALE NAME
 colorbar_inv = 'n';     % [ 'n']  INVERT COLORBAR
-data_kmin = 1;          % [   1]  min k for data processing
-data_kmax = 16;         % [   1]  max k for data processing
 data_log10 = 'n';       % [ 'n']  PLOT LOG10 OF THE DATA
 data_offset = 0.0;      % [ 0.0]  APPLIED DATA OFFSET (to model)
 data_ijk = 'n';         % [ 'n']  DATA AS (i,j,(k)) VS. (lon,lat,depth)?
