@@ -561,14 +561,11 @@ elseif (kplot < -1),
     disp(['ERROR: a kplot value of ', num2str(kplot), ' is not value. [VALID OPTIONS:, between 1 and kmax, 0 (water column integral), -1 (benthic)]']);
     return;
 end
-% % set restricted k interval
-% if ((data_kmin == data_kmax) || (data_kmin > data_kmax) || (data_kmin < 1)),
-%     loc_kmin = 1;
-%     loc_kmax = kmax;
-% else
-%     loc_kmin = data_kmin;
-%     loc_kmax = data_kmax;
-% end
+% set data limts in k space (based on plotting depth limits)
+loc_k = find(grid_zt > plot_D_min);
+data_kmax = max(loc_k);
+loc_k = find(grid_zt < plot_D_max);
+data_kmin = min(loc_k);
 % calculate topography
 for i = 1:imax,
     for j = 1:jmax,
@@ -630,11 +627,6 @@ if (plot_equallat == 'n'),
 end
 %i=1 longitude grid origin
 grid_lon_origin = grid_lon_edges(1);
-% set data limts in k space (based on plotting depth limits)
-loc_k = find(grid_zt > plot_D_min);
-data_kmax = max(loc_k);
-loc_k = find(grid_zt < plot_D_max);
-data_kmin = min(loc_k);
 % test for mask 'type'
 % load mask data or create mask
 % NOTE: mask single location coordinate is (i,j)

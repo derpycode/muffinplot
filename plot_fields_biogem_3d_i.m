@@ -539,6 +539,11 @@ grid_zt_edges = flipud(grid_zt_edges);
 % determine grid limits
 zt_min = min(grid_zt_edges);
 zt_max = max(grid_zt_edges);
+% set data limts in k space (based on plotting depth limits)
+loc_k = find(grid_zt > plot_D_min);
+data_kmax = max(loc_k);
+loc_k = find(grid_zt < plot_D_max);
+data_kmin = min(loc_k);
 % calculate topography
 for i = 1:imax,
     for j = 1:jmax,
@@ -585,11 +590,6 @@ for k = 1:kmax,
 end
 %
 grid_lon_origin = grid_lon_edges(1);
-% set data limts in k space (based on plotting depth limits)
-loc_k = find(grid_zt > plot_D_min);
-data_kmax = max(loc_k);
-loc_k = find(grid_zt < plot_D_max);
-data_kmin = min(loc_k);
 % test for mask 'type'
 % load mask data or create mask
 % NOTE: mask single location coordinate is (i,j)
