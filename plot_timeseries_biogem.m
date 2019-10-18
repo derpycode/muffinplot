@@ -127,6 +127,8 @@ function [] = plot_timeseries_biogem(PEXP1,PEXP2,PTMIN,PTMAX,PDATA1,PDATA1N,PDAT
 %             *** VERSION 1.16 ********************************************
 %   19/10/03: fix to change in default plotting behavior of barfunction (?)
 %             *** VERSION 1.17 ********************************************
+%   19/10/18: added work-around for plotting runs with no carbon cycle
+%             *** VERSION 1.18 ********************************************
 %
 %   ***********************************************************************
 
@@ -137,7 +139,7 @@ function [] = plot_timeseries_biogem(PEXP1,PEXP2,PTMIN,PTMAX,PDATA1,PDATA1N,PDAT
 % *** initialize ******************************************************** %
 %
 % set version!
-par_ver = 1.17;
+par_ver = 1.18;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -281,17 +283,27 @@ if (exist(data_dir, 'dir') == 0)
     end
     return;
 end
+% load basic data
+data_Tatm     = load([par_pathin '/' expid1 '/biogem/biogem_series_atm_temp.res'],'ascii');
+data_seaice   = load([par_pathin '/' expid1 '/biogem/biogem_series_misc_seaice.res'],'ascii');
+% test for an CO2-enabled experiment
+data_file = [par_pathin '/' expid1 '/biogem/biogem_series_atm_pCO2.res'];
+if (exist(data_file, 'file') ~= 2)
+    disp(['WARNING: The experiment needs to be CO2-enabled in order to fully use this plotting function.']);
+    data_pCO2(:,1)   = data_Tatm(:,1);
+    data_pCO2(:,2:3) = rand(length(data_Tatm(:,1)),2);
+else
+    data_pCO2 = load([par_pathin '/' expid1 '/biogem/biogem_series_atm_pCO2.res'],'ascii');
+end
 % test for an isotope-enabled experiment
 data_file = [par_pathin '/' expid1 '/biogem/biogem_series_atm_pCO2_13C.res'];
 if (exist(data_file, 'file') ~= 2)
-    disp(['ERROR: The experiment needs to be 13C-enabled in order to use this plotting function.']);
-    return;
+    disp(['WARNING: The experiment needs to be 13C-enabled in order to fully use this plotting function.']);
+    data_pCO2_13C(:,1)   = data_Tatm(:,1);
+    data_pCO2_13C(:,2:3) = rand(length(data_Tatm(:,1)),2);
+else
+    data_pCO2_13C = load([par_pathin '/' expid1 '/biogem/biogem_series_atm_pCO2_13C.res'],'ascii');
 end
-% load basic data
-data_pCO2     = load([par_pathin '/' expid1 '/biogem/biogem_series_atm_pCO2.res'],'ascii');
-data_pCO2_13C = load([par_pathin '/' expid1 '/biogem/biogem_series_atm_pCO2_13C.res'],'ascii');
-data_Tatm     = load([par_pathin '/' expid1 '/biogem/biogem_series_atm_temp.res'],'ascii');
-data_seaice   = load([par_pathin '/' expid1 '/biogem/biogem_series_misc_seaice.res'],'ascii');
 % set time units
 switch plot_tunits
     case 'kyr'
