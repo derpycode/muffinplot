@@ -302,6 +302,9 @@ function [OUTPUT] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 %   19/10/15: removed k min,max data parameters from input file
 %             as in practice, they were always re-calculated & over-written
 %             *** VERSION 1.39 ********************************************
+%   20/01/03: added backwards compatability for pre-
+%             contour_hlt2 and contour_hltval2 parameters
+%             *** VERSION 1.40 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -313,7 +316,7 @@ function [OUTPUT] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.39;
+par_ver = 1.40;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -342,6 +345,9 @@ if ~exist('data_minmax','var'),      data_minmax  = ''; end
 if ~exist('data_nseas','var'),       data_nseas   = 0; end
 % model-data
 if ~exist('data_seafloor','var'),    data_seafloor = 'n'; end
+% plotting
+if ~exist('contour_hlt2','var'),     contour_hlt2 = contour_hlt; end
+if ~exist('contour_hltval2','var'),  contour_hltval2 = contour_hltval; end
 % paths
 if ~exist('par_pathin','var'),   par_pathin   = 'cgenie_output'; end
 if ~exist('par_pathlib','var'),  par_pathlib  = 'source'; end
