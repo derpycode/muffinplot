@@ -228,6 +228,8 @@ function [grid_lat,zz] = plot_fields_biogem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,P
 %             *** VERSION 1.37 ********************************************
 %   19/10/03: revised data format checking
 %             *** VERSION 1.38 ********************************************
+%   20/01/07: minor adjustment to data point plotting
+%             *** VERSION 1.41 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -239,7 +241,7 @@ function [grid_lat,zz] = plot_fields_biogem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,P
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.38;
+par_ver = 1.41;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -397,8 +399,6 @@ str_function = strrep(str_function,'_','-');
 % 
 % there will be no site labels if data is averaged ...
 if (data_ijk_mean == 'y'), data_sitelabel = 'n'; end
-%
-if (data_siteonly == 'y'), data_only = 'y'; end
 %
 % *********************************************************************** %
 
@@ -1646,7 +1646,11 @@ if (plot_main == 'y'),
             for n = 1:nmax,
                 overlaydata_shape(n) = 'o';
                 overlaydata_ecol(n) = data_sitecolor;
-                overlaydata_fcol(n) = data_sitecolor;
+                if ( (data_only == 'y') && (data_siteonly == 'y') )
+                    overlaydata_fcol(n) = data_sitecolor;
+                else
+                    overlaydata_fcol(n) = '-';                    
+                end
             end
         end
         % plot overlay data

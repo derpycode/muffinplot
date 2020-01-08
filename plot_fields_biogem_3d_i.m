@@ -273,7 +273,8 @@ function [OUTPUT] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 %   19/10/15: removed k min,max data parameters from input file
 %             as in practice, they were always re-calculated & over-written
 %             *** VERSION 1.39 ********************************************
-%
+%   20/01/07: minor adjustment to data point plotting
+%             *** VERSION 1.41 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -285,7 +286,7 @@ function [OUTPUT] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.39;
+par_ver = 1.41;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -1795,7 +1796,11 @@ if (plot_main == 'y'),
             for n = 1:nmax,
                 overlaydata_shape(n) = 'o';
                 overlaydata_ecol(n) = data_sitecolor;
-                overlaydata_fcol(n) = data_sitecolor;
+                if ( (data_only == 'y') && (data_siteonly == 'y') )
+                    overlaydata_fcol(n) = data_sitecolor;
+                else
+                    overlaydata_fcol(n) = '-';                    
+                end
             end
         end
         % plot overlay data
