@@ -307,6 +307,9 @@ function [OUTPUT] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 %             *** VERSION 1.40 ********************************************
 %   20/01/07: minor adjustment to data point plotting
 %             *** VERSION 1.41 ********************************************
+%   20/01/10: added flexibility6 to have mixed (i,j)+depth location data
+%             disabled old/redundant(???) data saving
+%             *** VERSION 1.42 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -318,7 +321,7 @@ function [OUTPUT] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.41;
+par_ver = 1.42;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -1349,6 +1352,18 @@ if ~isempty(overlaydataid)
                 end
             end
         end
+        % allow ocean depth to be used, in a mixed i,j+depth format
+        for n = 1:nmax
+            if (overlaydata_raw(n,3) > kmax)
+                if (kplot > 0)
+                    overlaydata_raw(n,3) = kplot;
+                elseif (kplot == -1)
+                    overlaydata_raw(n,3) = grid_k1(overlaydata_raw(n,2),overlaydata_raw(n,1));
+                else
+                    overlaydata_raw(n,3) = 0;
+                end                
+            end
+        end
         % convert (i,j) overlay data to (lon,lat)
         % NOTE: save (i,j,k) data first
         overlaydata_ijk(:,:) = overlaydata_raw(:,:);
@@ -2214,7 +2229,9 @@ if (plot_main == 'y'),
     %
     % *** SAVE DATA ***************************************************** %
     %
-    fprint_1Dn_d([data_vector_1 data_vector_D],[par_pathout '/' filename '.kDATA.', str_date, '.res']);
+    % NOTE: it has become unclear what this is 'for' ... 
+    %       (particularly given the newer and extensive model/data saving)
+    %%%fprint_1Dn_d([data_vector_1 data_vector_D],[par_pathout '/' filename '.kDATA.', str_date, '.res']);
     %
     % ******************************************************************* %
     %
