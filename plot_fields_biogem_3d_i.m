@@ -274,6 +274,7 @@ function [OUTPUT] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 %             as in practice, they were always re-calculated & over-written
 %             *** VERSION 1.39 ********************************************
 %   20/01/07: minor adjustment to data point plotting
+%             + BUG fix
 %             *** VERSION 1.41 ********************************************
 %
 % *********************************************************************** %
@@ -1168,7 +1169,7 @@ if ~isempty(overlaydataid)
         disp([' ']);
         return;
     end
-    fclose(fid);    fclose(fid);
+    fclose(fid);
     % load overlay data
     fid = fopen(overlaydatafile);
     if (n_columns == 5),
