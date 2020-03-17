@@ -310,7 +310,7 @@ function [OUTPUT] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 %   20/01/10: added flexibility to have mixed (i,j)+depth location data
 %             disabled old/redundant(???) data saving
 %             *** VERSION 1.42 ********************************************
-%   20/03/10: added new data input column format (no label)
+%   20/03/10: added new data input column format (no label) 
 %             *** VERSION 1.43 ********************************************
 %
 % *********************************************************************** %
