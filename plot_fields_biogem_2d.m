@@ -230,6 +230,8 @@ function [grid_lat,zz] = plot_fields_biogem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,P
 %             *** VERSION 1.38 ********************************************
 %   20/01/07: minor adjustment to data point plotting
 %             *** VERSION 1.41 ********************************************
+%   20/03/20: added data scaling parameter backwards-compatability
+%             *** VERSION 1.42 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -241,7 +243,7 @@ function [grid_lat,zz] = plot_fields_biogem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,P
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.41;
+par_ver = 1.42;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -258,6 +260,8 @@ par_mutlab = str2num(str_mutlab);
 %
 % *** backwards compatability ******************************************* %
 % 
+% data point scaling
+if ~exist('data_scalepoints','var'), data_scalepoints = 'n'; end
 % PSI plotting
 if ~exist('plot_psi','var'), plot_psi = 'n'; end
 % data saving
