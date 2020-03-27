@@ -232,6 +232,8 @@ function [grid_lat,zz] = plot_fields_biogem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,P
 %             *** VERSION 1.41 ********************************************
 %   20/03/20: added data scaling parameter backwards-compatability
 %             *** VERSION 1.42 ********************************************
+%   20/03/24: fixed error in 8-column data format
+%             *** VERSION 1.43 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -243,7 +245,7 @@ function [grid_lat,zz] = plot_fields_biogem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,P
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.42;
+par_ver = 1.43;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -948,7 +950,7 @@ if ~isempty(overlaydataid)
     fclose(fid);
     % load overlay datafile
     fid = fopen(overlaydatafile);
-    if (n_columns == 3),
+    if (n_columns == 3)
         % lon, lat, value, LABEL
         % NOTE: add fake data (0.0)
         if flag_csv
@@ -961,7 +963,7 @@ if ~isempty(overlaydataid)
         CC = C(3);
         overlaylabel_raw = char(CC{1}(:));
         data_shapecol = 'n';
-    elseif (n_columns == 4),
+    elseif (n_columns == 4)
         % lon, lat, value, LABEL
         if flag_csv
             C = textscan(fid, '%f %f %f %s', 'CommentStyle', '%', 'EmptyValue', NaN, 'Delimiter', ',');             
@@ -972,7 +974,7 @@ if ~isempty(overlaydataid)
         CC = C(4);
         overlaylabel_raw = char(CC{1}(:));
         data_shapecol = 'n';
-    elseif (n_columns == 5),
+    elseif (n_columns == 5)
         % lon, lat, depth, value, LABEL
         if flag_csv
             C = textscan(fid, '%f %f %f %f %s', 'CommentStyle', '%', 'EmptyValue', NaN, 'Delimiter', ',');             
@@ -984,7 +986,7 @@ if ~isempty(overlaydataid)
         CC = C(5);
         overlaylabel_raw = char(CC{1}(:));
         data_shapecol = 'n';
-    elseif (n_columns == 7),
+    elseif (n_columns == 7)
         % lon, lat, value, LABEL, SHAPE, EDGE COLOR, FILL COLOR
         if flag_csv
             C = textscan(fid, '%f %f %f %s %s %s %s', 'CommentStyle', '%', 'EmptyValue', NaN, 'Delimiter', ',');             
@@ -1001,12 +1003,12 @@ if ~isempty(overlaydataid)
         CC = C(7);
         overlaydata_fcol = char(CC{1}(:));
         data_shapecol = 'y';
-    elseif (n_columns == 8),
+    elseif (n_columns == 8)
         % lon, lat, depth, value, LABEL, SHAPE, EDGE COLOR, FILL COLOR
         if flag_csv
-            C = textscan(fid, '%f %f %f %s %s %s %s', 'CommentStyle', '%', 'EmptyValue', NaN, 'Delimiter', ',');             
+            C = textscan(fid, '%f %f %f %f %s %s %s %s', 'CommentStyle', '%', 'EmptyValue', NaN, 'Delimiter', ',');             
         else
-            C = textscan(fid, '%f %f %f %s %s %s %s', 'CommentStyle', '%', 'EmptyValue', NaN);            
+            C = textscan(fid, '%f %f %f %f %s %s %s %s', 'CommentStyle', '%', 'EmptyValue', NaN);            
         end
         overlaydata_raw = cell2mat(C(1:4));
         overlaydata_raw(:,3) = [];
