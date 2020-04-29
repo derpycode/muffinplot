@@ -18,6 +18,8 @@ plot_fields_biogem_3d_k(DUM_EXP,'','ocn_temp','',DUM_T,-1,16,'',1.0,0.0,30.0,30,
 plot_fields_biogem_3d_i(DUM_EXP,'','ocn_temp','',DUM_T,-1,0,'',1.0,0.0,30.0,30,'','plot_fields_settings_OPSI',[DUM_EXP '.OPSI']);
 % OPSI (+ temp)
 plot_fields_biogem_3d_i(DUM_EXP,'','ocn_temp','',DUM_T,-1,0,'',1.0,0.0,30.0,30,'','plot_fields_settings_OPSI_temp',[DUM_EXP '.OPSI_temp']);
+% numerical age (benthic)
+plot_fields_biogem_3d_k(DUM_EXP,'','ocn_colr','',DUM_T,-1,-1,'',1.0,0.0,2000.0,40,'','plot_fields_settings_age',[DUM_EXP '.age']);
 %
 % *********************************************************************** %
 
