@@ -312,6 +312,8 @@ function [OUTPUT] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 %             *** VERSION 1.42 ********************************************
 %   20/03/10: added new data input column format (no label) 
 %             *** VERSION 1.43 ********************************************
+%   20/06/11: adjusted when netCDF anomoly fields are saved 
+%             *** VERSION 1.44 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -323,7 +325,7 @@ function [OUTPUT] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.43;
+par_ver = 1.44;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -2333,7 +2335,7 @@ end
 %
 % *** create netCDF file ************************************************ %
 %
-if (isempty(overlaydataid) && ~isempty(exp_2) && (plot_main == 'n') && (plot_secondary == 'n'))
+if (isempty(overlaydataid) && ~isempty(exp_2) && (data_save == 'y') && (plot_secondary == 'y'))
     % recreate anomoly
     rawdata_1(find(rawdata_1 > 1.0E30)) = NaN;
     rawdata_2(find(rawdata_2 > 1.0E30)) = NaN;
