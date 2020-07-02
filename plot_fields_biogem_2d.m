@@ -951,7 +951,7 @@ if ~isempty(overlaydataid)
     % load overlay datafile
     fid = fopen(overlaydatafile);
     if (n_columns == 3)
-        % lon, lat, value, LABEL
+        % lon, lat, LABEL
         % NOTE: add fake data (0.0)
         if flag_csv
             C = textscan(fid, '%f %f %s', 'CommentStyle', '%', 'EmptyValue', NaN, 'Delimiter', ',');             
