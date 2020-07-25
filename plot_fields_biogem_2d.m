@@ -1,4 +1,4 @@
-function [grid_lat,zz] = plot_fields_biogem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,PMASK,PCSCALE,PCMIN,PCMAX,PCN,PDATA,POPT,PNAME)
+function [OUTPUT] = plot_fields_biogem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,PMASK,PCSCALE,PCMIN,PCMAX,PCN,PDATA,POPT,PNAME)
 % plot_fields_biogem_2d
 %
 %   *******************************************************************   %
@@ -234,6 +234,8 @@ function [grid_lat,zz] = plot_fields_biogem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,P
 %             *** VERSION 1.42 ********************************************
 %   20/03/24: fixed error in 8-column data format
 %             *** VERSION 1.43 ********************************************
+%   20/07/25: added stats output to align with other plotting functions
+%             *** VERSION 1.44 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -245,7 +247,7 @@ function [grid_lat,zz] = plot_fields_biogem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,P
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.43;
+par_ver = 1.45;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -1923,6 +1925,51 @@ if (plot_secondary == 'y'),
     %
     if ( ~isempty(dataid_2) || (~isempty(overlaydataid) && (data_only == 'n')) ), fprint_1Dn_d([loc_x_data' loc_y_data'],[par_pathout '/' filename '.CROSSPLOT.', str_date, '.res']); end
     %
+end
+%
+% *********************************************************************** %
+
+% *********************************************************************** %
+% *** FUNCTION RETURN *************************************************** %
+% *********************************************************************** %
+%
+% NOTE: 
+%       STATM(1,2) = MEAN;
+%       STATM(2,2) = STD;
+%       STATM(3,2) = RMSD;
+%       STATM(4,2) = CORRELATIONS;
+%       STATM(5,2) = N;
+%       STATM(6,2) = TOTAL RMSD;
+%       STATM(7,2) = STANDARD DEVIATION NORMALISED RMSD;
+%       STATM(8,2) = NORMALISED BIAS;
+%       STATM(9,2) = R2;
+%       STATM(10,2) = M;
+%
+if (data_output_old == 'y') 
+    if exist('STATM')
+        OUTPUT = STATM;
+    else
+        OUTPUT = [grid_lat,zz];        
+    end
+else
+    output.data_min   = min(min(zm));
+    output.data_max   = max(max(zm));
+    %
+    if exist('STATM')
+        output.statm = STATM;
+        output.statm_mean     = STATM(1,2);
+        output.statm_std      = STATM(2,2);
+        output.statm_rmsd     = STATM(3,2);
+        output.statm_corr     = STATM(4,2);
+        output.statm_n        = STATM(5,2);
+        output.statm_tot_rmsd = STATM(6,2);
+        output.statm_sdn_rmsd = STATM(7,2);
+        output.statm_bias     = STATM(8,2);
+        output.statm_r2       = STATM(9,2);
+        output.statm_m        = STATM(10,2);
+    end
+    % set returned data
+    OUTPUT = output;
 end
 %
 % *********************************************************************** %
