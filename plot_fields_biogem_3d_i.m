@@ -276,6 +276,8 @@ function [OUTPUT] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 %   20/01/07: minor adjustment to data point plotting
 %             + BUG fix
 %             *** VERSION 1.41 ********************************************
+%   20/07/30: minor bug fix in array copy operation
+%             *** VERSION 1.42 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -287,7 +289,7 @@ function [OUTPUT] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.41;
+par_ver = 1.42;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -1302,11 +1304,12 @@ if ~isempty(overlaydataid)
         end
         overlaylabel(end,:) = [];
         nmax=m;
+    else
+        overlaydata_ijk_old = overlaydata_ijk(:,:);
     end
     % scale overlay data
     overlaydata(:,4) = overlaydata(:,4)/datapoint_scale;
     % calculate profile
-    overlaydata_ijk_old(:,:) = overlaydata_ijk(:,:);
     overlaydata_k(:) = NaN(data_kmax-data_kmin+1,1);
     for k = data_kmin:data_kmax
         samecell_locations = find(int32(overlaydata_ijk_old(:,3))==k);
