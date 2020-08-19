@@ -314,6 +314,8 @@ function [OUTPUT] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 %             *** VERSION 1.43 ********************************************
 %   20/06/11: adjusted when netCDF anomoly fields are saved 
 %             *** VERSION 1.44 ********************************************
+%   20/08/18: (various)
+%             *** VERSION 1.45 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -325,7 +327,7 @@ function [OUTPUT] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.44;
+par_ver = 1.45;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -961,6 +963,17 @@ if (~isempty(altfilename)), filename = altfilename; end
 % *** FILTER & PROCESS RAW DATA ***************************************** %
 % *********************************************************************** %
 %
+% apply mask to 3D data
+if (~isempty(maskid))
+    for i = 1:imax
+        for j = 1:jmax
+            if (mask(j,i) == 0)
+                data_1(:,j,i) = NaN;
+                if (data_anomoly == 'y'), data_2(:,j,i) = NaN; end
+            end
+        end
+    end
+end
 % set ocean grid value to give white when plotted
 if strcmp(dataid_1,'grid_mask')
     data_1 = NaN;
@@ -1386,6 +1399,7 @@ if ~isempty(overlaydataid)
         overlaydata_raw(:,2) = 180.0*asin(2.0*(overlaydata_raw(:,2) - 0.5)/jmax - 1.0)/pi;
     end
     % remove data in land cells
+    % this also applies the mask!
     if (data_land == 'n')
         for n = 1:nmax,
             if (isnan(overlaydata_zm(int32(overlaydata_ijk(n,2)),int32(overlaydata_ijk(n,1)))))
@@ -1407,6 +1421,7 @@ if ~isempty(overlaydataid)
     if (plot_equallat == 'n'), overlaydata(:,2) = sin(pi*overlaydata_raw(:,2)/180.0); end
     % grid (and average per cell) data if requested
     % NOTE: data vector length is re-calculated and the value of nmax reset
+    % NOTE: overlaydata_zm includes any mask!
     if (data_ijk_mean == 'y')
         overlaydata_ijk_old(:,:) = overlaydata_ijk(:,:);
         overlaydata_ijk(:,:) = [];
@@ -1855,7 +1870,7 @@ end
 % *** PLOT MAIN FIGURE ************************************************** %
 % *********************************************************************** %
 %
-if (plot_main == 'y'),
+if (plot_main == 'y')
     %
     % *** CONFIGURE AND CREATE PLOTTING WINDOW ****************************** %
     %
@@ -2129,7 +2144,8 @@ if (plot_main == 'y'),
     %
     % *** OVERLAY DATA ****************************************************** %
     %
-    if ~isempty(overlaydataid)
+    % NOTE: do nto plot data for 'water column integral'
+    if (~isempty(overlaydataid) && (kplot ~= 0))
         % set uniform marker shape and color
         if (data_shapecol == 'n'),
             for n = 1:nmax,

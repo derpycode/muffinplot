@@ -278,6 +278,8 @@ function [OUTPUT] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 %             *** VERSION 1.41 ********************************************
 %   20/07/30: minor bug fix in array copy operation
 %             *** VERSION 1.42 ********************************************
+%   20/08/18: (various)
+%             *** VERSION 1.43 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -289,7 +291,7 @@ function [OUTPUT] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.42;
+par_ver = 1.43;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -316,6 +318,8 @@ if ~exist('data_output_old','var'),  data_output_old = 'y'; end % return STATM
 % extracting min / max / range from seasonal data
 if ~exist('data_minmax','var'),  data_minmax  = ''; end
 if ~exist('data_nseas','var'),   data_nseas   = 0; end
+% model-data
+if ~exist('data_seafloor','var'),    data_seafloor = 'n'; end
 % paths
 if ~exist('par_pathin','var'),   par_pathin   = 'cgenie_output'; end
 if ~exist('par_pathlib','var'),  par_pathlib  = 'source'; end
@@ -1174,7 +1178,17 @@ if ~isempty(overlaydataid)
     fclose(fid);
     % load overlay data
     fid = fopen(overlaydatafile);
-    if (n_columns == 5),
+    if (n_columns == 4),
+        % lon, lat, depth, value, LABEL
+        if flag_csv
+            C = textscan(fid, '%f %f %f %f', 'CommentStyle', '%', 'EmptyValue', NaN, 'Delimiter', ',');             
+        else
+            C = textscan(fid, '%f %f %f %f', 'CommentStyle', '%', 'EmptyValue', NaN);            
+        end
+        overlaydata_raw = cell2mat(C(1:4));
+        overlaylabel_raw = (blanks(length(overlaydata_raw(:,1))))';
+        data_shapecol = 'n';
+    elseif (n_columns == 5),
         % lon, lat, depth, value, LABEL
         if flag_csv
             C = textscan(fid, '%f %f %f %f %s', 'CommentStyle', '%', 'EmptyValue', NaN, 'Delimiter', ',');             
@@ -1239,8 +1253,10 @@ if ~isempty(overlaydataid)
         disp([' ']);
     end
     % determine equivalent (i,j,k)
-    % NOTE: filter out masked area
+    % NOTE: filter out masked area embodied in array <data>
+    %       (this also includes bathymetry)
     % NOTE: for data lying deeper than the depth of layer 1, k = 1 is set
+    % NOTE: format: data(k,j,i)
     overlaydata_ijk(:,:) = zeros(size(overlaydata_raw(:,:)));
     for n = 1:nmax,
         overlaydata_ijk(n,1:2) = calc_find_ij(overlaydata_raw(n,1),overlaydata_raw(n,2),grid_lon_origin,imax,jmax);
@@ -1252,7 +1268,7 @@ if ~isempty(overlaydataid)
             overlaydata_raw(n,4) = NaN;
             overlaydata_ijk(n,4) = NaN;
         else
-            overlaydata_ijk(n,4)   = overlaydata_raw(n,4);
+            overlaydata_ijk(n,4) = overlaydata_raw(n,4);
         end
     end
     % remove data in land cells
@@ -1264,6 +1280,7 @@ if ~isempty(overlaydataid)
             end
         end
     end
+    % remove filtered data
     overlaylabel_raw(isnan(overlaydata_raw(:,4)),:) = [];
     overlaydata_raw(isnan(overlaydata_raw(:,4)),:)  = [];
     overlaydata_ijk(isnan(overlaydata_ijk(:,4)),:)  = [];
@@ -1275,10 +1292,11 @@ if ~isempty(overlaydataid)
     % BLAH
     overlaylabel(:,:) = overlaylabel_raw(:,:);
     overlaydata(:,:)  = overlaydata_raw(:,:);
+    % copy data
+    overlaydata_ijk_old(:,:) = overlaydata_ijk(:,:);
     % grid (and average per cell) data if requested
     % NOTE: data vector length is re-calculated and the value of nmax reset
     if (data_ijk_mean == 'y')
-        overlaydata_ijk_old(:,:) = overlaydata_ijk(:,:);
         overlaydata_ijk(:,:) = [];
         overlaydata(:,:)     = [];
         overlaylabel(:,:)    = [];
@@ -1292,7 +1310,8 @@ if ~isempty(overlaydataid)
                     if (samecell_n(1) > 0)
                         m=m+1;
                         samecell_mean = mean(overlaydata_ijk_old(samecell_locations,4));
-                        overlaydata_ijk(m,:) = [overlaydata_ijk_old(m,1) j k samecell_mean];
+                        overlaydata_ijk(m,:) = [NaN j k samecell_mean];
+                        %%%overlaydata_ijk(m,:) = [overlaydata_ijk_old(m,1) j k samecell_mean];
                         overlaydata(m,1)     = grid_lon_origin + 360.0*(overlaydata_ijk(m,1) - 0.5)/imax;
                         overlaydata(m,2)     = 180.0*asin(2.0*(overlaydata_ijk(m,2) - 0.5)/jmax - 1.0)/pi;
                         overlaydata(m,3)     = double(laym(k,j));
@@ -1304,8 +1323,6 @@ if ~isempty(overlaydataid)
         end
         overlaylabel(end,:) = [];
         nmax=m;
-    else
-        overlaydata_ijk_old = overlaydata_ijk(:,:);
     end
     % scale overlay data
     overlaydata(:,4) = overlaydata(:,4)/datapoint_scale;
@@ -1321,10 +1338,14 @@ if ~isempty(overlaydataid)
     end   
 end
 % create and print mask
-if ( isempty(dataid_2) && ~isempty(overlaydataid) )
+if ( isempty(dataid_2) && ~isempty(overlaydataid))
     loc_mask = zeros(jmax,imax);
-    for n = 1:nmax,
-        loc_mask(overlaydata_ijk(n,2),overlaydata_ijk(n,1)) = 1.0;
+    if (data_ijk_mean == 'y')
+        loc_mask = mask;
+    else
+       for n = 1:nmax,
+           loc_mask(overlaydata_ijk(n,2),overlaydata_ijk(n,1)) = 1.0;
+       end
     end
     fprint_2D(loc_mask,[par_pathout '/' filename '.DATAMASK.' str_date '.dat'],'%4.1f','%4.1f',false,false);
 end
@@ -1408,14 +1429,16 @@ if (~isempty(overlaydataid)),
     % the overlay data locations
     % NOTE: !!! overlaydata_zm is (k,j) !!!
     % NOTE: re-orientate data_vector_2 to match data_vector_1
+    % NOTE: format: data(k,j,i)
     data_vector_2 = [];
     data_vector_D = [];
     data_vector_k = [];
     for n = 1:nmax,
-        %%%data_vector_2(n) = overlaydata_zm(int32(overlaydata_ijk(n,3)),int32(overlaydata_ijk(n,2)));
-        data_vector_2(n) = data(int32(overlaydata_ijk(n,3)),int32(overlaydata_ijk(n,2)),int32(overlaydata_ijk(n,1)));
-        data_vector_D(n) = data_D(int32(overlaydata_ijk(n,3)),int32(overlaydata_ijk(n,2)),int32(overlaydata_ijk(n,1)));
+        %data_vector_2(n) = data(int32(overlaydata_ijk(n,3)),int32(overlaydata_ijk(n,2)),int32(overlaydata_ijk(n,1)));
+        %data_vector_D(n) = data_D(int32(overlaydata_ijk(n,3)),int32(overlaydata_ijk(n,2)),int32(overlaydata_ijk(n,1)));
+        data_vector_2(n) = overlaydata_zm(int32(overlaydata_ijk(n,3)),int32(overlaydata_ijk(n,2)));
         data_vector_k(n) = int32(overlaydata_ijk(n,3));
+        data_vector_D(n) = -grid_zt(int32(overlaydata_ijk(n,3)));
     end
     data_vector_2 = data_vector_2';
     data_vector_2 = data_vector_2/data_scale;
@@ -1946,6 +1969,10 @@ if (plot_secondary == 'y')
     %
     % *** PLOT FIGURE (profile) ***************************************** %
     %
+    % NOTE: dashed line (zl(:)) is the proifle of ALL model data,
+    %       not just model cell that have corresponding data
+    %      (i.e. it will not necessarily go through the blue triangles
+    %       depending on obserevd data coverage)
     if ((data_only == 'n') && (plot_profile == 'y'))
         %
         figure
