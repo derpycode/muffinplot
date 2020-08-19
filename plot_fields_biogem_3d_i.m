@@ -280,6 +280,8 @@ function [OUTPUT] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 %             *** VERSION 1.42 ********************************************
 %   20/08/18: (various)
 %             *** VERSION 1.43 ********************************************
+%   20/08/18: bug-fix of recent changes ... :o)
+%             *** VERSION 1.44 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -291,7 +293,7 @@ function [OUTPUT] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.43;
+par_ver = 1.44;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -1430,18 +1432,18 @@ if (~isempty(overlaydataid)),
     % NOTE: !!! overlaydata_zm is (k,j) !!!
     % NOTE: re-orientate data_vector_2 to match data_vector_1
     % NOTE: format: data(k,j,i)
+    % NOTE: <overlaydata_zm> (copied form <zm>) already has scaling applied
     data_vector_2 = [];
     data_vector_D = [];
     data_vector_k = [];
     for n = 1:nmax,
-        %data_vector_2(n) = data(int32(overlaydata_ijk(n,3)),int32(overlaydata_ijk(n,2)),int32(overlaydata_ijk(n,1)));
+        %data_vector_2(n) = data(int32(overlaydata_ijk(n,3)),int32(overlaydata_ijk(n,2)),int32(overlaydata_ijk(n,1)))/data_scale;
         %data_vector_D(n) = data_D(int32(overlaydata_ijk(n,3)),int32(overlaydata_ijk(n,2)),int32(overlaydata_ijk(n,1)));
         data_vector_2(n) = overlaydata_zm(int32(overlaydata_ijk(n,3)),int32(overlaydata_ijk(n,2)));
         data_vector_k(n) = int32(overlaydata_ijk(n,3));
         data_vector_D(n) = -grid_zt(int32(overlaydata_ijk(n,3)));
     end
     data_vector_2 = data_vector_2';
-    data_vector_2 = data_vector_2/data_scale;
     data_vector_D = data_vector_D';
     data_vector_k = data_vector_k';
     % filter data
