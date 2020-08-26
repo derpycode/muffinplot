@@ -236,6 +236,10 @@ function [OUTPUT] = plot_fields_biogem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,PM
 %             *** VERSION 1.43 ********************************************
 %   20/07/25: added stats output to align with other plotting functions
 %             *** VERSION 1.44 ********************************************
+%   20/08/19: enabled parameter: contour_dashneg
+%             *** VERSION 1.45 ********************************************
+%   20/08/26: (various) + align version numbers!
+%             *** VERSION 1.46 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -247,7 +251,7 @@ function [OUTPUT] = plot_fields_biogem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,PM
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.45;
+par_ver = 1.46;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -858,13 +862,18 @@ for i = 1:imax,
             topo(j,i) = +1.0;
             layb(j,i) = -1.0;
         else
-            if data_log10 == 'y'
-                if ((data_1(j,i) > 0.0) && (data_2(j,i) > 0.0))
+            % NOTE: check for exp2 existing 
+            %       (so <data_2> does not become NaN, contaminate <data>)
+            if (data_log10 == 'y')
+                if (data_1(j,i) > 0.0)
                     data_1(j,i) = log10(data_1(j,i))/data_scale;
-                    data_2(j,i) = log10(data_2(j,i))/data_scale;
                 else
                     data_1(j,i) = NaN;
-                    data_2(j,i) = NaN;
+                end
+                if (data_2(j,i) > 0.0)
+                    data_2(j,i) = log10(data_2(j,i))/data_scale;
+                else
+                    if (~isempty(exp_2)), data_2(j,i) = NaN; end
                 end
             else
                 data_1(j,i) = data_1(j,i)/data_scale;
@@ -872,7 +881,7 @@ for i = 1:imax,
             end
             topo(j,i) = -1.0;
             layb(j,i) = +1.0;
-            if contour_noneg == 'y'
+            if (contour_noneg == 'y')
                 if ((data_1(j,i) - data_2(j,i) - data_offset) < 0.0)
                     data_1(j,i) = 0.0;
                     data_2(j,i) = 0.0;
@@ -883,7 +892,7 @@ for i = 1:imax,
         end
     end
 end
-data = data_1 - data_2;
+data = data_1 - data_2; 
 data = data - data_offset;
 zm = data;
 % copy zm before it gets transformed ...
@@ -1516,10 +1525,18 @@ if (plot_main == 'y'),
     if (contour_plot == 'y') && (data_only == 'n'),
         if ((con_min < 0.0) && (con_max > 0.0)),
             v = [con_min:(con_max-con_min)/(con_n/contour_mod):0.0];
-            [C,h] = contour(xm_ex,sin(pi*ym_ex/180.0),zm_ex,v,'k-.');
+            if (contour_dashneg == 'n')
+                [C,h] = contour(xm_ex,sin(pi*ym_ex/180.0),zm_ex,v,'k-'); 
+            else
+                [C,h] = contour(xm_ex,sin(pi*ym_ex/180.0),zm_ex,v,'k-.');
+            end
             set(h,'LineWidth',0.25);
             v = [con_min:(con_max-con_min)/(con_n/contour_mod_label):0.0];
-            [C,h] = contour(xm_ex,sin(pi*ym_ex/180.0),zm_ex,v,'k-.');
+            if (contour_dashneg == 'n')
+                [C,h] = contour(xm_ex,sin(pi*ym_ex/180.0),zm_ex,v,'k-');
+            else
+                [C,h] = contour(xm_ex,sin(pi*ym_ex/180.0),zm_ex,v,'k-.');
+            end
             set(h,'LineWidth',0.50);
             if contour_label == 'y', clabel(C,h); end
             v = [0.0:(con_max-con_min)/(con_n/contour_mod):con_max];
@@ -1531,10 +1548,18 @@ if (plot_main == 'y'),
             if contour_label == 'y', clabel(C,h); end
         elseif (con_min < 0.0),
             v = [con_min:(con_max-con_min)/(con_n/contour_mod):con_max];
-            [C,h] = contour(xm_ex,sin(pi*ym_ex/180.0),zm_ex,v,'k-.');
+            if (contour_dashneg == 'n')
+                [C,h] = contour(xm_ex,sin(pi*ym_ex/180.0),zm_ex,v,'k-.');
+            else
+                [C,h] = contour(xm_ex,sin(pi*ym_ex/180.0),zm_ex,v,'k-');
+            end
             set(h,'LineWidth',0.25);
             v = [con_min:(con_max-con_min)/(con_n/contour_mod_label):con_max];
-            [C,h] = contour(xm_ex,sin(pi*ym_ex/180.0),zm_ex,v,'k-.');
+            if (contour_dashneg == 'n')
+                [C,h] = contour(xm_ex,sin(pi*ym_ex/180.0),zm_ex,v,'k-');
+            else
+                [C,h] = contour(xm_ex,sin(pi*ym_ex/180.0),zm_ex,v,'k-.');                
+            end
             set(h,'LineWidth',0.50);
             if contour_label == 'y', clabel(C,h); end
         else

@@ -316,6 +316,8 @@ function [OUTPUT] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 %             *** VERSION 1.44 ********************************************
 %   20/08/18: (various)
 %             *** VERSION 1.45 ********************************************
+%   20/08/26: (various) + align version numbers!
+%             *** VERSION 1.46 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -327,7 +329,7 @@ function [OUTPUT] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.45;
+par_ver = 1.46;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -1314,7 +1316,7 @@ if ~isempty(overlaydataid)
             overlaylabel_raw(wronglayer_locations,:) = [];
             nmax = nmax-wronglayer_n(1);
         elseif (kplot == 0)
-            % delete data lines with depth levels not equal to loc_k1
+            % delete data lines with depth level less than loc_k1
             % UNLESS the data_seafloor option is set:
             %        => move too-deep data to local bottom level
             n = 1;

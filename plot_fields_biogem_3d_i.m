@@ -282,6 +282,8 @@ function [OUTPUT] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 %             *** VERSION 1.43 ********************************************
 %   20/08/18: bug-fix of recent changes ... :o)
 %             *** VERSION 1.44 ********************************************
+%   20/08/26: align version numbers!
+%             *** VERSION 1.46 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -293,7 +295,7 @@ function [OUTPUT] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.44;
+par_ver = 1.46;
 % set function name
 str_function = mfilename;
 % close open windows
