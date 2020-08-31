@@ -284,6 +284,8 @@ function [OUTPUT] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 %             *** VERSION 1.44 ********************************************
 %   20/08/26: align version numbers!
 %             *** VERSION 1.46 ********************************************
+%   20/08/30: (minor? ... cannot remember ... keep version number ...)
+%             *** VERSION 1.46 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -1351,7 +1353,7 @@ if ( isempty(dataid_2) && ~isempty(overlaydataid))
            loc_mask(overlaydata_ijk(n,2),overlaydata_ijk(n,1)) = 1.0;
        end
     end
-    fprint_2D(loc_mask,[par_pathout '/' filename '.DATAMASK.' str_date '.dat'],'%4.1f','%4.1f',false,false);
+    if (data_save == 'y'), fprint_2D(loc_mask,[par_pathout '/' filename '.DATAMASK.' str_date '.dat'],'%4.1f','%4.1f',false,false); end
 end
 %
 % *********************************************************************** %
