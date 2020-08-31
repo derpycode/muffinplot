@@ -49,6 +49,8 @@ function [] = plot_crossplotc(PVECX,PVECY,PVECZ,PSTRX,PSTRY,PSTRZ,POPT,PNAME)
 %   16/03/01: set n equal to x-vector rather than z (that might be empty)
 %   17/06/22: catch min/max color values equal
 %   18/04/26: fix for silly fussy case sensitive default settings filename
+%   20/08/30: added ordering by depth, such that in scatter, 
+%             deepest points (assumed to be fewest) end up on top
 %
 %   ***********************************************************************
 
@@ -109,6 +111,22 @@ loc_zmax = min(loc_z);
 if ((loc_xmin == loc_xmax) || (loc_ymin == loc_ymax))
     disp(['ERROR: Cannot scale x or y axes (no range in data values). Cross-plot cannot be plotted.']);
     return;
+end
+% convert to column vectors if necessary
+% REMEMBER: (rows,columns) :o)
+sz = size(data_x);
+if (sz(2) > sz(1)) data_x = data_x'; end
+sz = size(data_y);
+if (sz(2) > sz(1)) data_y = data_y'; end
+% sort rows by z
+if ~isempty(data_z)
+    sz = size(data_z);
+    if (sz(2) > sz(1)) data_z = data_z'; end
+    xyz = [data_x data_y data_z];
+    xyz = sortrows(xyz,3);
+    data_x = xyz(:,1);
+    data_y = xyz(:,2);
+    data_z = xyz(:,3);    
 end
 %
 % *********************************************************************** %
