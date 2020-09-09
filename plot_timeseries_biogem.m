@@ -16,6 +16,7 @@ function [] = plot_timeseries_biogem(PEXP1,PEXP2,PTMIN,PTMAX,PDATA1,PDATA1N,PDAT
 %   --> the (first) experiment name
 %   PEXP2 [STRING] [OPTIONAL] (e.g. 'enhanced_export')
 %   --> the name of a 2nd, optional experiment
+%      (anomoly calculated as qst experiment minus 2nd)
 %   --> leave PEXP2 blank, i.e., '', for no second experiment
 %   PTMIN [REAL] (e.g. 0.0)
 %   --> minimum plotted time
@@ -333,7 +334,7 @@ if ~isempty(data1_name)
         % NOTE: interpolate 2nd dataset onto grid of 1st dataset if
         %       they are of different lengths (assuming this reflects different time points)
         if ~isempty(expid2)
-            loc_data1_file = [data_path '/' expid2 '/biogem/biogem_series_' data1_name '.res'];
+            loc_data1_file = [par_pathin '/' expid2 '/biogem/biogem_series_' data1_name '.res'];
             if (exist(loc_data1_file, 'file') == 2)
                 loc_data1 = load(loc_data1_file,'ascii');
                 if (length(loc_data1(:,1)) ~= length(data1(:,1))),
@@ -349,7 +350,9 @@ if ~isempty(data1_name)
                     loc_data = interp1(loc_data1(:,1),loc_data1(:,2:end),data1(:,1),'cubic');
                     loc_data1 = [data1(:,1), loc_data];
                 end
-                data1(:,2:end) = loc_data1(:,2:end) - data1(:,2:end);
+                % create anomoly
+                % NOTE: EXP1 - EXP2
+                data1(:,2:end) = data1(:,2:end) - loc_data1(:,2:end);
             else
                 disp(['ERROR: BIOGEM time-series file ', loc_data1_file, ' does not exist.']);
                 return;
@@ -406,9 +409,10 @@ if ~isempty(data2_name)
             disp(['ERROR: You must chose a column number between 2 and ' n ' in BIOGEM time-series file: ', data2_file]);
             return;
         end
-        % if 2nd experiment => load file and create anomoly
+        % if 2nd experiment => load file, interpolate, and create anomoly
         if ~isempty(expid2)
-            loc_data2_file = [data_path '/' expid2 '/biogem/biogem_series_' data2_name '.res'];
+            % load file
+            loc_data2_file = [par_pathin '/' expid2 '/biogem/biogem_series_' data2_name '.res'];
             if (exist(loc_data2_file, 'file') == 2)
                 loc_data2 = load(loc_data2_file,'ascii');
                 if (length(loc_data2(:,1)) ~= length(data2(:,1))),
@@ -424,7 +428,9 @@ if ~isempty(data2_name)
                     loc_data = interp1(loc_data2(:,1),loc_data2(:,2:end),data2(:,1),'cubic');
                     loc_data2 = [data2(:,1), loc_data];
                 end
-                data2(:,2:end) = loc_data2(:,2:end) - data2(:,2:end);
+                % create anomoly
+                % NOTE: EXP1 - EXP2
+                data2(:,2:end) = data2(:,2:end) - loc_data2(:,2:end);
             else
                 disp(['ERROR: BIOGEM time-series file ', loc_data2_file, ' does not exist.']);
                 return;
@@ -483,7 +489,7 @@ if ~isempty(data3_name)
         end
         % if 2nd experiment => load file and create anomoly
         if ~isempty(expid2)
-            loc_data3_file = [data_path '/' expid2 '/biogem/biogem_series_' data3_name '.res'];
+            loc_data3_file = [par_pathin '/' expid2 '/biogem/biogem_series_' data3_name '.res'];
             if (exist(loc_data3_file, 'file') == 2)
                 loc_data3 = load(loc_data3_file,'ascii');
                 if (length(loc_data3(:,1)) ~= length(data3(:,1))),
@@ -499,7 +505,9 @@ if ~isempty(data3_name)
                     loc_data = interp1(loc_data3(:,1),loc_data3(:,2:end),data3(:,1),'cubic');
                     loc_data3 = [data3(:,1), loc_data];
                 end
-                data3(:,2:end) = loc_data3(:,2:end) - data3(:,2:end);
+                % create anomoly
+                % NOTE: EXP1 - EXP2
+                data3(:,2:end) = data3(:,2:end) - loc_data3(:,2:end);
             else
                 disp(['ERROR: BIOGEM time-series file ', loc_data3_file, ' does not exist.']);
                 return;

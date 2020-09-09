@@ -51,6 +51,7 @@ function [] = plot_crossplotc(PVECX,PVECY,PVECZ,PSTRX,PSTRY,PSTRZ,POPT,PNAME)
 %   18/04/26: fix for silly fussy case sensitive default settings filename
 %   20/08/30: added ordering by depth, such that in scatter, 
 %             deepest points (assumed to be fewest) end up on top
+%   20/09/04: filtered out 'anom' color scale
 %
 %   ***********************************************************************
 
@@ -69,6 +70,14 @@ str_filename = PNAME;
 % load plotting options
 if isempty(POPT), POPT='plot_fields_SETTINGS'; end
 eval(POPT);
+% alter colorbar
+switch colorbar_name
+    case {'anom'}
+        % replace 'anom' becasue it creates white points ...
+        colorbar_name='parula';
+    otherwise
+        %
+end
 %
 % *** misc (local) parameters ******************************************* %
 %

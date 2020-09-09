@@ -286,6 +286,8 @@ function [OUTPUT] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 %             *** VERSION 1.46 ********************************************
 %   20/08/30: (minor? ... cannot remember ... keep version number ...)
 %             *** VERSION 1.46 ********************************************
+%   20/09/04: aligned backwards compatability across functions
+%             *** VERSION 1.48 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -297,7 +299,7 @@ function [OUTPUT] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.46;
+par_ver = 1.48;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -322,10 +324,14 @@ if ~exist('data_saveall','var'),     data_saveall = 'n'; end
 if ~exist('data_saveallinfo','var'), data_saveallinfo = 'n'; end
 if ~exist('data_output_old','var'),  data_output_old = 'y'; end % return STATM
 % extracting min / max / range from seasonal data
-if ~exist('data_minmax','var'),  data_minmax  = ''; end
-if ~exist('data_nseas','var'),   data_nseas   = 0; end
+if ~exist('data_minmax','var'),      data_minmax  = ''; end
+if ~exist('data_nseas','var'),       data_nseas   = 0; end
 % model-data
 if ~exist('data_seafloor','var'),    data_seafloor = 'n'; end
+% plotting
+if ~exist('contour_hlt2','var'),     contour_hlt2 = contour_hlt; end
+if ~exist('contour_hltval2','var'),  contour_hltval2 = contour_hltval; end
+if ~exist('plot_psi','var'),         plot_psi = 'n'; end
 % paths
 if ~exist('par_pathin','var'),   par_pathin   = 'cgenie_output'; end
 if ~exist('par_pathlib','var'),  par_pathlib  = 'source'; end

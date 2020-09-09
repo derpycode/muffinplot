@@ -240,6 +240,13 @@ function [OUTPUT] = plot_fields_biogem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,PM
 %             *** VERSION 1.45 ********************************************
 %   20/08/26: (various) + align version numbers!
 %             *** VERSION 1.46 ********************************************
+%   20/09/04: changed 3-column format from:
+%             lon, lat, label -> lon, lat, data
+%             aligned data stats calculation with sedgem_2d
+%             tested for zero SD in data
+%             *** VERSION 1.47 ********************************************
+%   20/09/04: aligned backwards compatability across functions
+%             *** VERSION 1.48 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -251,7 +258,7 @@ function [OUTPUT] = plot_fields_biogem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,PM
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.46;
+par_ver = 1.48;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -270,15 +277,20 @@ par_mutlab = str2num(str_mutlab);
 % 
 % data point scaling
 if ~exist('data_scalepoints','var'), data_scalepoints = 'n'; end
-% PSI plotting
-if ~exist('plot_psi','var'), plot_psi = 'n'; end
 % data saving
 if ~exist('data_save','var'),        data_save = 'y'; end % save (mode) data?
 if ~exist('data_saveall','var'),     data_saveall = 'n'; end
 if ~exist('data_saveallinfo','var'), data_saveallinfo = 'n'; end
+if ~exist('data_output_old','var'),  data_output_old = 'y'; end % return STATM
 % extracting min / max / range from seasonal data
-if ~exist('data_minmax','var'),  data_minmax  = ''; end
-if ~exist('data_nseas','var'),   data_nseas   = 0; end
+if ~exist('data_minmax','var'),      data_minmax  = ''; end
+if ~exist('data_nseas','var'),       data_nseas   = 0; end
+% model-data
+if ~exist('data_seafloor','var'),    data_seafloor = 'n'; end
+% plotting
+if ~exist('contour_hlt2','var'),     contour_hlt2 = contour_hlt; end
+if ~exist('contour_hltval2','var'),  contour_hltval2 = contour_hltval; end
+if ~exist('plot_psi','var'),         plot_psi = 'n'; end
 % paths
 if ~exist('par_pathin','var'),   par_pathin   = 'cgenie_output'; end
 if ~exist('par_pathlib','var'),  par_pathlib  = 'source'; end
@@ -286,6 +298,10 @@ if ~exist('par_pathout','var'),  par_pathout  = 'PLOTS'; end
 if ~exist('par_pathdata','var'), par_pathdata = 'DATA'; end
 if ~exist('par_pathmask','var'), par_pathmask = 'MASKS'; end
 if ~exist('par_pathexam','var'), par_pathexam = 'EXAMPLES'; end
+% plotting panel options
+if ~exist('plot_profile','var'), plot_profile = 'y'; end % PLOT PROFILE
+if ~exist('plot_zonal','var'),   plot_zonal   = 'y'; end % PLOT ZONAL
+if ~exist('plot_histc_SETTINGS','var'), plot_histc_SETTINGS = 'plot_histc_SETTINGS'; end % histc plotting settings
 %
 % *** initialize parameters ********************************************* %
 % 
@@ -962,17 +978,15 @@ if ~isempty(overlaydataid)
     % load overlay datafile
     fid = fopen(overlaydatafile);
     if (n_columns == 3)
-        % lon, lat, LABEL
+        % lon, lat, value
         % NOTE: add fake data (0.0)
         if flag_csv
-            C = textscan(fid, '%f %f %s', 'CommentStyle', '%', 'EmptyValue', NaN, 'Delimiter', ',');             
+            C = textscan(fid, '%f %f %f', 'CommentStyle', '%', 'EmptyValue', NaN, 'Delimiter', ',');             
         else
-            C = textscan(fid, '%f %f %s', 'CommentStyle', '%', 'EmptyValue', NaN);            
+            C = textscan(fid, '%f %f %f', 'CommentStyle', '%', 'EmptyValue', NaN);            
         end
-        overlaydata_raw = cell2mat(C(1:2));
-        overlaydata_raw(:,3) = 0.0;
-        CC = C(3);
-        overlaylabel_raw = char(CC{1}(:));
+        overlaydata_raw = cell2mat(C(1:3));
+        overlaylabel_raw = (blanks(length(overlaydata_raw(:,1))))';
         data_shapecol = 'n';
     elseif (n_columns == 4)
         % lon, lat, value, LABEL
@@ -1197,7 +1211,11 @@ if ~isempty(dataid_2)
             %%%print('-depsc2', [filename, '_TargetDiagram.', str_date, '.eps']);
         end
     end
-elseif ~isempty(overlaydataid)
+end
+%
+% *********************************************************************** %
+%
+if (~isempty(overlaydataid) && ((data_only == 'n') || (data_anomoly == 'y')))
     %
     % *** DISCRETE DATA ************************************************* %
     %
@@ -1219,8 +1237,11 @@ elseif ~isempty(overlaydataid)
         STATM = calc_allstats(data_vector_1,data_vector_2);
         if (plot_secondary=='y')
             % plot Taylor diagram
-            taylordiag_vargout = plot_taylordiag(STATM(2,1:2),STATM(3,1:2),STATM(4,1:2));
-            print('-depsc2', [par_pathout '/' filename, '_TaylorDiagram.', str_date, '.eps']);
+            % NOTE: only if there is a non-zero data SD
+            if (STATM(2,2) > 0.0)
+                taylordiag_vargout = plot_taylordiag(STATM(2,1:2),STATM(3,1:2),STATM(4,1:2));
+                print('-depsc2', [par_pathout '/' filename, '_TaylorDiagram.', str_date, '.eps']);
+            end
             %%%% plot Target diagram
             %%%targetdiag_vargout = plot_target(STATM(7,1:2),STATM(8,1:2),'r',1.0,[],[]);
             %%%print('-depsc2', [filename, '_TargetDiagram.', str_date, '.eps']);
@@ -1240,7 +1261,7 @@ end
 % STATM(8,:) = NORMALISED BIAS;
 % STATM(9,:) = R2;
 % STATM(10,:) = M;
-if (data_stats == 'y')
+if ((data_stats == 'y') && (data_save == 'y'))
     if (~isempty(dataid_2) || (~isempty(overlaydataid) && ((data_only == 'n') || (data_anomoly == 'y'))))
         fid = fopen([par_pathout '/' filename '_STATS', '.', str_date '.dat'], 'wt');
         fprintf(fid, '\n');
