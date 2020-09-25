@@ -320,6 +320,8 @@ function [OUTPUT] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 %             *** VERSION 1.46 ********************************************
 %   20/09/04: aligned backwards compatability across functions
 %             *** VERSION 1.48 ********************************************
+%   20/09/25: adjusted data saving
+%             *** VERSION 1.49 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -331,7 +333,7 @@ function [OUTPUT] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.48;
+par_ver = 1.49;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -2282,13 +2284,13 @@ end
 % *** SECONDARY FIGURES ************************************************* %
 % *********************************************************************** %
 %
-if (plot_secondary == 'y'),
+if (plot_secondary == 'y')
     %
     % *** PLOT FIGURE (cross-plot) ************************************** %
     %
     % NOTE: data_vector_1 == DATA  (or model field 1)
     % NOTE: data_vector_2 == MODEL (or model field 2)
-    if ( ~isempty(dataid_2) || ~isempty(overlaydataid) ),
+    if (~isempty(dataid_2) || ~isempty(overlaydataid))
         %
         if ~isempty(dataid_2),
             loc_x_data = data_vector_1;
@@ -2313,13 +2315,13 @@ if (plot_secondary == 'y'),
     %
     % *** SAVE DATA (cross-plot relationships) ************************** %
     %
-    if ( ~isempty(dataid_2) || (~isempty(overlaydataid) && (data_only == 'n')) )
+    if ((data_save == 'y') && (~isempty(dataid_2) || (~isempty(overlaydataid) && (data_only == 'n'))) )
         fprint_1Dn_d([loc_x_data loc_y_data loc_D_data],[par_pathout '/' filename '.CROSSPLOT.', str_date, '.res']);
     end
     %
     % *** SAVE DATA (benthic) ******************************************* %
     %
-    if (isempty(dataid_2) && isempty(overlaydataid) && (kplot == -1)),
+    if ((data_save == 'y') && isempty(dataid_2) && isempty(overlaydataid) && (kplot == -1))
         loc_x_data  = data_vector_1;
         loc_y_data  = data_vector_D;
         loc_x_label = [strrep(dataid_1,'_','-')];
@@ -2359,7 +2361,7 @@ end
 %
 % *** create netCDF file ************************************************ %
 %
-if (isempty(overlaydataid) && ~isempty(exp_2) && (data_save == 'y') && (plot_secondary == 'y'))
+if ((data_save == 'y') && isempty(overlaydataid) && ~isempty(exp_2) && (plot_secondary == 'y'))
     % recreate anomoly
     rawdata_1(find(rawdata_1 > 1.0E30)) = NaN;
     rawdata_2(find(rawdata_2 > 1.0E30)) = NaN;

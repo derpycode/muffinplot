@@ -247,6 +247,8 @@ function [OUTPUT] = plot_fields_biogem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,PM
 %             *** VERSION 1.47 ********************************************
 %   20/09/04: aligned backwards compatability across functions
 %             *** VERSION 1.48 ********************************************
+%   20/09/25: adjusted data saving
+%             *** VERSION 1.49 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -258,7 +260,7 @@ function [OUTPUT] = plot_fields_biogem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,PM
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.48;
+par_ver = 1.49;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -1857,7 +1859,7 @@ end
 % *** SECONDARY FIGURES ************************************************* %
 % *********************************************************************** %
 %
-if (plot_secondary == 'y'),
+if (plot_secondary == 'y')
     %
     % *** SET PLOT SCALE ************************************************ %
     %
@@ -1888,7 +1890,7 @@ if (plot_secondary == 'y'),
     %
     % *** PLOT FIGURE (surface zonal mean) ****************************** %
     %
-    if ((data_only == 'n') && (plot_equallat == 'y')),
+    if ((data_only == 'n') && (plot_equallat == 'y'))
         %
         figure
         plot(grid_lat,zz(:));
@@ -1916,7 +1918,7 @@ if (plot_secondary == 'y'),
     %
     % *** PLOT FIGURE (surface zonal mean) ALT ************************** %
     %
-    if ((data_only == 'n') && (plot_equallat == 'n')),
+    if ((data_only == 'n') && (plot_equallat == 'n'))
         %
         figure
         plot(sin(pi*grid_lat/180.0),zz(:));
@@ -1945,13 +1947,15 @@ if (plot_secondary == 'y'),
     %
     % *** SAVE DATA (surface zonal mean) ******************************** %
     %
-    fprint_1Dn_d([flipud(grid_lat) flipud(zz(:))],[par_pathout '/' filename '.ZONAL.', str_date, '.res'])
+    if (data_save == 'y')
+        fprint_1Dn_d([flipud(grid_lat) flipud(zz(:))],[par_pathout '/' filename '.ZONAL.', str_date, '.res'])
+    end
     %
     % *** PLOT FIGURE (cross-plot) ************************************** %
     %
-    if ( ~isempty(dataid_2) || ~isempty(overlaydataid) ),
+    if ( ~isempty(dataid_2) || ~isempty(overlaydataid) )
         %
-        if ~isempty(dataid_2),
+        if ~isempty(dataid_2)
             loc_x_data = reshape(data_1(:,:),1,[]);
             loc_y_data = reshape(data_2(:,:),1,[]);
             loc_x_label = [strrep(dataid_1,'_','-')];
@@ -1969,7 +1973,9 @@ if (plot_secondary == 'y'),
     %
     % *** SAVE DATA (cross-plot relationships) ************************** %
     %
-    if ( ~isempty(dataid_2) || (~isempty(overlaydataid) && (data_only == 'n')) ), fprint_1Dn_d([loc_x_data' loc_y_data'],[par_pathout '/' filename '.CROSSPLOT.', str_date, '.res']); end
+    if ((data_save == 'y') && (~isempty(dataid_2) || (~isempty(overlaydataid) && (data_only == 'n'))) )
+       fprint_1Dn_d([loc_x_data' loc_y_data'],[par_pathout '/' filename '.CROSSPLOT.', str_date, '.res']); 
+    end
     %
 end
 %
@@ -2026,7 +2032,7 @@ end
 %
 % close netCDF files
 netcdf.close(ncid_1);
-if ~isempty(exp_2),
+if ~isempty(exp_2)
     netcdf.close(ncid_2);
 end
 %

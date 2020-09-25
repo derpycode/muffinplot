@@ -288,6 +288,8 @@ function [OUTPUT] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 %             *** VERSION 1.46 ********************************************
 %   20/09/04: aligned backwards compatability across functions
 %             *** VERSION 1.48 ********************************************
+%   20/09/25: adjusted data saving
+%             *** VERSION 1.49 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -299,7 +301,7 @@ function [OUTPUT] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.48;
+par_ver = 1.49;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -1938,7 +1940,9 @@ if (plot_main == 'y'),
     %
     % *** SAVE DATA ***************************************************** %
     %
-    fprint_1Dn_d([data_vector_1 data_vector_D],[par_pathout '/' filename '.iDATA.', str_date, '.res']);
+    if (data_save == 'y')
+        fprint_1Dn_d([data_vector_1 data_vector_D],[par_pathout '/' filename '.iDATA.', str_date, '.res']);
+    end
     %
     % ******************************************************************* %
     %
@@ -2051,9 +2055,11 @@ if (plot_secondary == 'y')
     % *** SAVE DATA (profile) ******************************************* %
     %
     % model mean profile
-    if ((data_only == 'n') && (plot_profile == 'y')), fprint_1D2_d([flipud(grid_zt(:)) flipud(zl(:))],[par_pathout '/' filename '.PROFILE.', str_date, '.res']); end
+    if ((data_save == 'y') && (data_only == 'n') && (plot_profile == 'y'))
+        fprint_1D2_d([flipud(grid_zt(:)) flipud(zl(:))],[par_pathout '/' filename '.PROFILE.', str_date, '.res']); 
+    end
     % data and modal @ data, mean profile
-    if ( (plot_profile == 'y') && ~isempty(overlaydataid) )
+    if ((data_save == 'y') && (plot_profile == 'y') && ~isempty(overlaydataid) )
         fid = fopen([par_pathout '/' filename '.PROFILE.MODELDATAMEANS.', str_date, '.res'], 'wt');
         fprintf(fid, '%% Mean data values + mean model values at data locations');
         fprintf(fid, '\n');
@@ -2095,7 +2101,7 @@ if (plot_secondary == 'y')
     %
     % *** SAVE DATA (surface zonal mean) ******************************** %
     %
-    if ((data_only == 'n') && (plot_zonal == 'y'))
+    if ((data_save == 'y') && (data_only == 'n') && (plot_zonal == 'y'))
         fprint_1Dn_d([flipud(grid_lat) rot90(zz(kmax,:),1)],[par_pathout '/' filename '.ZONAL.', str_date, '.res']);
     end
     %
@@ -2126,7 +2132,7 @@ if (plot_secondary == 'y')
     %
     % *** SAVE DATA (cross-plot relationships) ************************** %
     %
-    if ( ~isempty(dataid_2) || (~isempty(overlaydataid) && (data_only == 'n')) )
+    if ((data_save == 'y') && (~isempty(dataid_2) || (~isempty(overlaydataid) && (data_only == 'n'))) )
         fprint_1Dn_d([loc_x_data loc_y_data loc_D_data],[par_pathout '/' filename '.CROSSPLOT.', str_date, '.res']);
     end
     %
