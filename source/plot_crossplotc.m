@@ -197,16 +197,26 @@ end
 %
 % *** ADD REGRESSION **************************************************** %
 %
-if (data_stats=='y'),
-    % add regression line & calc R2
-    [p,S] = polyfit(loc_x,loc_y,data_fit_n);
+% NOTE: loc_x == data (or first model variable)
+%       loc_y == model
+if (data_stats=='y')
+    % add regression line & calc R2 
+    loc_n     = length(loc_x);
+    loc_xmean = mean(loc_x);
     loc_ymean = mean(loc_y);
+    % regression
+    [p,S] = polyfit(loc_x,loc_y,data_fit_n);
     loc_yf = polyval(p,loc_x);
-    loc_SStot = sum((loc_y - loc_ymean).^2);
-    loc_SSres = sum ((loc_y - loc_yf).^2);
+    % R2 -- vs. best fit
+    %%%loc_SStot = sum((loc_y - loc_ymean).^2);
+    %%%loc_SSres = sum ((loc_y - loc_yf).^2);
+    %%%loc_R2 = 1 - loc_SSres/loc_SStot;
+    % R2 -- 1:1
+    loc_SStot = sum((loc_x - loc_xmean).^2);
+    loc_SSres = sum ((loc_x - loc_y).^2);
     loc_R2 = 1 - loc_SSres/loc_SStot;
-    loc_n = length(loc_x);
-    if (data_fit_n > 1),
+    % add best fit line, stats
+    if (data_fit_n > 1)
         loc_x = [loc_xmin:(loc_xmax-loc_xmin)/10:loc_xmax];
         loc_y = p(3)+p(2)*loc_x+p(1)*loc_x.^2;
         plot(loc_x,loc_y,'Color','k','LineWidth',1.0);
