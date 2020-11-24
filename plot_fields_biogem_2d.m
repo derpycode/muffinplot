@@ -249,6 +249,8 @@ function [OUTPUT] = plot_fields_biogem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,PM
 %             *** VERSION 1.48 ********************************************
 %   20/09/25: adjusted data saving
 %             *** VERSION 1.49 ********************************************
+%   20/11/24: ensured stats are always saved, if calculated
+%             *** VERSION 1.50 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -260,7 +262,7 @@ function [OUTPUT] = plot_fields_biogem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,PM
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.49;
+par_ver = 1.50;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -1263,7 +1265,7 @@ end
 % STATM(8,:) = NORMALISED BIAS;
 % STATM(9,:) = R2;
 % STATM(10,:) = M;
-if ((data_stats == 'y') && (data_save == 'y'))
+if (data_stats == 'y')
     if (~isempty(dataid_2) || (~isempty(overlaydataid) && ((data_only == 'n') || (data_anomoly == 'y'))))
         fid = fopen([par_pathout '/' filename '_STATS', '.', str_date '.dat'], 'wt');
         fprintf(fid, '\n');
