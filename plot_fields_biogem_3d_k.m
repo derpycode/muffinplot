@@ -328,6 +328,8 @@ function [OUTPUT] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 %             Otherwise, the stats are returned by the function and
 %             can be captured and saved from there.
 %             *** VERSION 1.50 ********************************************
+%   20/12/29: replaced data file load and primary processing code
+%             *** VERSION 1.51 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -339,7 +341,7 @@ function [OUTPUT] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.50;
+par_ver = 1.51;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -1192,90 +1194,62 @@ overlaydata_zm(:,:) = zm(:,:);
 % *********************************************************************** %
 %
 if ~isempty(overlaydataid)
-    % set filename
-    overlaydatafile = [overlaydataid];
-    % determine number of lines
-    fid = fopen(overlaydatafile,'r');
-    loc_C = textscan(fid,'%s','CommentStyle','%','delimiter','\n');
-    fclose(fid);
-    n_rows = length(loc_C{1,1});
-    % set flag for a comma-seperated data file
-    % determine number of tab-, comma-, OR space-seperated columns
-    % NOTE: no mix of seperators allowed ...
-    fid = fopen(overlaydatafile,'r');
-    loc_line = fgets(fid);
-    if (numel(strfind(loc_line,char(44))) > 0),
-       % comma
-       n_columns = numel(strfind(loc_line,char(44))) + 1;
-       flag_csv = true;
-    elseif (numel(strfind(loc_line,char(9))) > 0),
-       % tab
-       flag_csv = false;
-       n_columns = numel(strfind(loc_line,char(9))) + 1;
-    elseif (numel(strfind(loc_line,char(32))) > 0),
-       % space
-       flag_csv = false;
-       n_columns = numel(strfind(loc_line,char(32))) + 1;
-    else
-        disp([' * ERROR: Cannot determine data file format']);
-        disp(['   format must be: tab-, comma-, OR space-separated columns']);
-        disp([' ']);
-        return;
+    % read data(!)
+    [file_data] = fun_read_file(overlaydataid);
+    % extract data cell array, and vector format
+    cdata    = file_data.cdata;
+    v_format = file_data.vformat;
+    % determine number of rows and columns
+    n_rows    = length(cdata);
+    n_columns = length(v_format);
+    % parse call array data
+    flag_format = false;
+    switch n_columns
+        case 4
+            if (sum(v_format(1:4)) == 0)
+                % lon, lat, depth, value
+                overlaydata_raw  = cell2mat(cdata(:,1:4));
+                % create dummay (blank space) labels
+                overlaylabel_raw = (blanks(n_rows))';
+                data_shapecol    = 'n';
+                % flag for a valid format
+                flag_format      = true;
+            end
+        case 5
+            if ((sum(v_format(1:4)) == 0) && (v_format(5) == 1))
+                % lon, lat, depth, value, LABEL
+                overlaydata_raw  = cell2mat(cdata(:,1:4));
+                overlaylabel_raw = char(cdata(:,5));
+                data_shapecol    = 'n';
+                % flag for a valid format
+                flag_format      = true;
+            end
+        case 8
+            if ((sum(v_format(1:4)) == 0) && sum(v_format(5:8)) == 4)
+                % lon, lat, depth, value, LABEL, SHAPE, EDGE COLOR, FILL COLOR
+                overlaydata_raw   = cell2mat(cdata(:,1:4));
+                overlaylabel_raw  = char(cdata(:,5));
+                overlaydata_shape = char(cdata(:,6));
+                overlaydata_ecol  = char(cdata(:,7));
+                overlaydata_fcol  = char(cdata(:,8));
+                data_shapecol     = 'y';
+                % flag for a valid format
+                flag_format       = true;
+            end
+        otherwise
+            % (caught by the default of ~flag_format)
     end
-    fclose(fid);
-    % load overlay datafile
-    fid = fopen(overlaydatafile);
-    if (n_columns == 4)
-        % lon, lat, depth, value
-        % NOTE: create dummay (blank space) labels
-        if flag_csv
-            C = textscan(fid, '%f %f %f %f', 'CommentStyle', '%', 'EmptyValue', NaN, 'Delimiter', ',');             
-        else
-            C = textscan(fid, '%f %f %f %f', 'CommentStyle', '%', 'EmptyValue', NaN);            
-        end
-        overlaydata_raw = cell2mat(C(1:4));
-        overlaylabel_raw = (blanks(length(overlaydata_raw(:,1))))';
-        data_shapecol = 'n';
-    elseif (n_columns == 5)
-        % lon, lat, depth, value, LABEL
-        if flag_csv
-            C = textscan(fid, '%f %f %f %f %s', 'CommentStyle', '%', 'EmptyValue', NaN, 'Delimiter', ',');             
-        else
-            C = textscan(fid, '%f %f %f %f %s', 'CommentStyle', '%', 'EmptyValue', NaN);            
-        end
-        overlaydata_raw = cell2mat(C(1:4));
-        CC = C(5);
-        overlaylabel_raw = char(CC{1}(:));
-        data_shapecol = 'n';
-    elseif (n_columns == 8)
-        % lon, lat, depth, value, LABEL, SHAPE, EDGE COLOR, FILL COLOR
-        if flag_csv
-            C = textscan(fid, '%f %f %f %f %s %s %s %s', 'CommentStyle', '%', 'EmptyValue', NaN, 'Delimiter', ',');             
-        else
-            C = textscan(fid, '%f %f %f %f %s %s %s %s', 'CommentStyle', '%', 'EmptyValue', NaN);            
-        end
-        overlaydata_raw = cell2mat(C(1:4));
-        CC = C(5);
-        overlaylabel_raw = char(CC{1}(:));
-        CC = C(6);
-        overlaydata_shape = char(CC{1}(:));
-        CC = C(7);
-        overlaydata_ecol = char(CC{1}(:));
-        CC = C(8);
-        overlaydata_fcol = char(CC{1}(:));
-        data_shapecol = 'y';
-    else
+    if (~flag_format)
         disp([' ']);
         disp([' * ERROR: Data format not recognized:']);
         disp(['   Number of data columns found == ' num2str(n_columns)']);
-        disp(['   Columns must be space, comma, OR tab seperated (and not a mixture).']);
+        disp(['   Columns must be: comma/tab/space-separated.']);
         disp([' ']);
         fclose(fid);
         return;
     end
-    fclose(fid);
     % filter label
-    for n = 1:n_rows,
+    for n = 1:n_rows
         overlaylabel_raw(n,:) = strrep(overlaylabel_raw(n,:),'_',' ');
     end
     % determine data size
