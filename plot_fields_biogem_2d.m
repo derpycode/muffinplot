@@ -257,6 +257,8 @@ function [OUTPUT] = plot_fields_biogem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,PM
 %             *** VERSION 1.50 ********************************************
 %   20/12/29: replaced data file load and primary processing code
 %             *** VERSION 1.51 ********************************************
+%   20/12/30: added checks on discrete data (for stats, cross-plotting)
+%             *** VERSION 1.52 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -268,7 +270,7 @@ function [OUTPUT] = plot_fields_biogem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,PM
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.51;
+par_ver = 1.52;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -1201,6 +1203,8 @@ if (~isempty(overlaydataid) && ((data_only == 'n') || (data_anomoly == 'y')))
     %
     % set overlay data vector
     data_vector_1 = overlaydata(:,3);
+    % disable stats if necessary
+    if ( (length(data_vector_1) < 2) || (range(data_vector_1) == 0.0) ), data_stats = 'n'; end
     % populate the gridded dataset vector with values corresponding to
     % the overlay data locations
     % NOTE: !!! data is (j,i) !!! (=> swap i and j)
@@ -1944,8 +1948,11 @@ if (plot_secondary == 'y')
             loc_x_label = [strrep(overlaydataid,'_','-')];
             loc_y_label = [strrep(dataid_1,'_','-')];
         end
-        %
-        plot_crossplotc(loc_x_data,loc_y_data,[],loc_x_label,loc_y_label,'',POPT,[par_pathout '/' filename '.CROSSPLOT']);
+        % plot without depth coding
+        % NOTE: test for insufficient data for scaling the plot
+        if (range(loc_x_data) > 0.0)
+            plot_crossplotc(loc_x_data,loc_y_data,[],loc_x_label,loc_y_label,'',POPT,[par_pathout '/' filename '.CROSSPLOT']);
+        end
         %
     end
     %

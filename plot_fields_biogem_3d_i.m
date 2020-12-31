@@ -298,6 +298,9 @@ function [OUTPUT] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 %             *** VERSION 1.50 ********************************************
 %   20/12/29: replaced data file load and primary processing code
 %             *** VERSION 1.51 ********************************************
+%   20/12/30: added checks on discrete data (for stats, cross-plotting)
+%             revised/corrected equivalent model points/values
+%             *** VERSION 1.52 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -309,7 +312,7 @@ function [OUTPUT] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.51;
+par_ver = 1.52;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -1252,14 +1255,24 @@ if ~isempty(overlaydataid)
     %       (this also includes bathymetry)
     % NOTE: for data lying deeper than the depth of layer 1, k = 1 is set
     % NOTE: format: data(k,j,i)
+    % NOTE: format: mask(j,i)
     overlaydata_ijk(:,:) = zeros(size(overlaydata_raw(:,:)));
-    for n = 1:nmax,
+    for n = 1:nmax
         overlaydata_ijk(n,1:2) = calc_find_ij(overlaydata_raw(n,1),overlaydata_raw(n,2),grid_lon_origin,imax,jmax);
         overlaydata_ijk(n,3)   = calc_find_k(overlaydata_raw(n,3),kmax);
-        if ( isnan(data(overlaydata_ijk(n,3),overlaydata_ijk(n,2),overlaydata_ijk(n,1))) ),
-            overlaydata_raw(n,4) = NaN;
-            overlaydata_ijk(n,4) = NaN;
-        elseif ( (overlaydata_ijk(n,3) < data_kmin) || (overlaydata_ijk(n,3) > data_kmax) ),
+        if ( isnan(data(overlaydata_ijk(n,3),overlaydata_ijk(n,2),overlaydata_ijk(n,1))) )
+            % delete data lines with depth level less than loc_k1
+            % UNLESS the data_seafloor option is set:
+            %        => move too-deep data to local bottom level
+            %        (AND the grid point is within the mask)
+            if ( (grid_k1(overlaydata_ijk(n,2),overlaydata_ijk(n,1)) <= kmax) && (data_seafloor == 'y') && mask(overlaydata_ijk(n,2),overlaydata_ijk(n,1)) )
+                overlaydata_ijk(n,3) = grid_k1(overlaydata_ijk(n,2),overlaydata_ijk(n,1)); 
+                overlaydata_ijk(n,4) = overlaydata_raw(n,4);               
+            else
+                overlaydata_raw(n,4) = NaN;
+                overlaydata_ijk(n,4) = NaN;
+            end
+        elseif ( (overlaydata_ijk(n,3) < data_kmin) || (overlaydata_ijk(n,3) > data_kmax) )
             overlaydata_raw(n,4) = NaN;
             overlaydata_ijk(n,4) = NaN;
         else
@@ -1268,7 +1281,7 @@ if ~isempty(overlaydataid)
     end
     % remove data in land cells
     if (data_land == 'n')
-        for n = 1:nmax,
+        for n = 1:nmax
             if (isnan(overlaydata_zm(overlaydata_ijk(n,3),overlaydata_ijk(n,2))))
                 overlaydata_raw(n,4) = NaN;
                 overlaydata_ijk(n,4) = NaN;
@@ -1416,25 +1429,30 @@ end
 % NOTE: no scale transformation has been appplied
 %       to either gridded or % overlay data
 % NOTE: valid only for data on a single depth level
-if (~isempty(overlaydataid)),
+if (~isempty(overlaydataid))
     % set overlay data vector
     data_vector_1 = [];
     data_vector_1 = overlaydata(:,4);
+    % disable stats if necessary
+    if ( (length(data_vector_1) < 2) || (range(data_vector_1) == 0.0) ), data_stats = 'n'; end
     % populate the gridded dataset vector with values corresponding to
     % the overlay data locations
     % NOTE: !!! overlaydata_zm is (k,j) !!!
+    % NOTE: <overlaydata_zm> (copied form <zm>) already has scaling applied
+    % NOTE: overlaydata_zm values are already potentially averaged, 
+    %       hence use data (as per original code)
+    %       (why the changce ... ???)
     % NOTE: re-orientate data_vector_2 to match data_vector_1
     % NOTE: format: data(k,j,i)
-    % NOTE: <overlaydata_zm> (copied form <zm>) already has scaling applied
     data_vector_2 = [];
     data_vector_D = [];
     data_vector_k = [];
-    for n = 1:nmax,
-        %data_vector_2(n) = data(int32(overlaydata_ijk(n,3)),int32(overlaydata_ijk(n,2)),int32(overlaydata_ijk(n,1)))/data_scale;
-        %data_vector_D(n) = data_D(int32(overlaydata_ijk(n,3)),int32(overlaydata_ijk(n,2)),int32(overlaydata_ijk(n,1)));
-        data_vector_2(n) = overlaydata_zm(int32(overlaydata_ijk(n,3)),int32(overlaydata_ijk(n,2)));
+    for n = 1:nmax
+        data_vector_2(n) = data(int32(overlaydata_ijk(n,3)),int32(overlaydata_ijk(n,2)),int32(overlaydata_ijk(n,1)))/data_scale;
+        data_vector_D(n) = data_D(int32(overlaydata_ijk(n,3)),int32(overlaydata_ijk(n,2)),int32(overlaydata_ijk(n,1)));
         data_vector_k(n) = int32(overlaydata_ijk(n,3));
-        data_vector_D(n) = -grid_zt(int32(overlaydata_ijk(n,3)));
+        %data_vector_2(n) = overlaydata_zm(int32(overlaydata_ijk(n,3)),int32(overlaydata_ijk(n,2)));
+        %data_vector_D(n) = -grid_zt(int32(overlaydata_ijk(n,3)));
     end
     data_vector_2 = data_vector_2';
     data_vector_D = data_vector_D';
@@ -1443,7 +1461,7 @@ if (~isempty(overlaydataid)),
     data_vector_2(find(data_vector_2(:) < -1.0E6)) = NaN;
     data_vector_2(find(data_vector_2(:) > 0.9E36)) = NaN;
     % calculate stats
-    if (data_stats=='y'),
+    if ( (data_stats == 'y') && (data_only == 'n') )
         STATM = calc_allstats(data_vector_1,data_vector_2);
         if (plot_secondary=='y')
             % plot Taylor diagram
@@ -1498,19 +1516,45 @@ if (data_save == 'y')
         fid = fopen([par_pathout '/' filename '_MODELDATAPOINTS', '.', str_date '.dat'], 'wt');
         fprintf(fid, '%% Model value at data locations');
         fprintf(fid, '\n');
+        % print header
         if (data_ijk == 'y')
-            fprintf(fid, '%% Format: i, j, model lon, model lat, model depth, model value, data value, data label');
+            fprintf(fid, '%% Format: i, j, k // model lon, model lat, model depth, model value // [data location is (i,j,k)], data value, (data label)');
         elseif (data_ijk_mean == 'y')
-            fprintf(fid, '%% Format: i, j, model lon, model lat, model depth, model value, re-gridded data value, (no data label)');
+            fprintf(fid, '%% Format: i, j, k // model lon, model lat, model depth, model value // [re-gridded data location same as model], re-gridded data value');
         else
-            fprintf(fid, '%% Format: i, j, data lon, data lat, data depth, model value, data value, data label');
+            fprintf(fid, '%% Format: i, j, k // model lon, model lat, model depth, model value // data lon, data lat, data depth, data value, (data label)');
         end
         fprintf(fid, '\n');
+        % loop through all data points
         for n = 1:nmax
+            % set local values
+            % NOTE: data_vector_1 == overlaydata(:,4);
+            % NOTE: overlaydata(n,2) is already corrected for plot_equallat
+            % NOTE: overlaydata(:,3) is negative (for plotting purposes)
             loc_i = int16(overlaydata_ijk(n,1));
             loc_j = int16(overlaydata_ijk(n,2));
             loc_k = int16(overlaydata_ijk(n,3));
-            fprintf(fid, '%d %d %d %8.3f %8.3f %8.3f %8.6e %8.6e %s \n', loc_i, loc_j, loc_k, overlaydata(n,1), overlaydata(n,2), -overlaydata(n,3), data_vector_2(n), data_vector_1(n), overlaylabel(n,:));
+            loc_lon_model = grid_lon_origin + 360.0*(overlaydata_ijk(n,1) - 0.5)/imax;
+            loc_lon_data  = overlaydata(n,1);
+            if (plot_equallat == 'y')
+                loc_lat_model = 180.0*((overlaydata_ijk(n,2) - 0.5)/jmax - 0.5);
+            else
+                loc_lat_model = 180.0*asin(2.0*(overlaydata_ijk(n,2) - 0.5)/jmax - 1.0)/pi;
+            end
+            loc_lat_data    = overlaydata(n,2);
+            loc_depth_model = data_vector_D(n);
+            loc_depth_data  = -overlaydata(n,3);
+            loc_value_model = data_vector_2(n);
+            loc_value_data  = overlaydata(n,4);
+            loc_label       = overlaylabel(n,:);
+            % print data
+            if (data_ijk == 'y')
+                fprintf(fid, '%d %d %d %8.3f %8.3f %8.3f %8.6e %8.6e %s \n', loc_i, loc_j, loc_k, loc_lon_model, loc_lat_model, loc_depth_model, loc_value_model, loc_value_data, loc_label);
+            elseif (data_ijk_mean == 'y')
+                fprintf(fid, '%d %d %d %8.3f %8.3f %8.3f %8.6e %8.6e \n',    loc_i, loc_j, loc_k, loc_lon_model, loc_lat_model, loc_depth_model, loc_value_model, loc_value_data);
+            else
+                fprintf(fid, '%d %d %d %8.3f %8.3f %8.3f %8.6e %8.3f %8.3f %8.3f %8.6e %s \n', loc_i, loc_j, loc_k, loc_lon_model, loc_lat_model, loc_depth_model, loc_value_model, loc_lon_data, loc_lat_data, loc_depth_data, loc_value_data, loc_label);
+            end
         end
         fclose(fid);
     elseif (data_saveall == 'y')
@@ -2106,8 +2150,11 @@ if (plot_secondary == 'y')
             loc_D_label = ['Depth (m)'];
         end
         % plot with and without depth coding
-        plot_crossplotc(loc_x_data,loc_y_data,[],loc_x_label,loc_y_label,'',POPT,[par_pathout '/' filename '.CROSSPLOT']);
-        plot_crossplotc(loc_x_data,loc_y_data,loc_D_data,loc_x_label,loc_y_label,loc_D_label,POPT,[par_pathout '/' filename '.CROSSPLOTD']);
+        % NOTE: test for insufficient data for scaling the plot
+        if (range(loc_x_data) > 0.0)
+            plot_crossplotc(loc_x_data,loc_y_data,[],loc_x_label,loc_y_label,'',POPT,[par_pathout '/' filename '.CROSSPLOT']);
+            plot_crossplotc(loc_x_data,loc_y_data,loc_D_data,loc_x_label,loc_y_label,loc_D_label,POPT,[par_pathout '/' filename '.CROSSPLOTD']);
+        end
         %
     end
     %
