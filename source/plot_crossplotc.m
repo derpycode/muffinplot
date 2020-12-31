@@ -52,6 +52,7 @@ function [] = plot_crossplotc(PVECX,PVECY,PVECZ,PSTRX,PSTRY,PSTRZ,POPT,PNAME)
 %   20/08/30: added ordering by depth, such that in scatter, 
 %             deepest points (assumed to be fewest) end up on top
 %   20/09/04: filtered out 'anom' color scale
+%   20/12/30: disable stats if data cannot support the calculation
 %
 %   ***********************************************************************
 
@@ -197,6 +198,9 @@ end
 %
 % *** ADD REGRESSION **************************************************** %
 %
+% check for invalid input data for stats
+if ( (length(loc_x) < 2) || (range(loc_x) == 0.0) ), data_stats = 'n'; end
+% add stats to plot
 % NOTE: loc_x == data (or first model variable)
 %       loc_y == model
 if (data_stats=='y')
