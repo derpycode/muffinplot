@@ -1594,6 +1594,10 @@ if (~isempty(overlaydataid) && ((data_only == 'n') || (data_anomoly == 'y')))
     % the overlay data locations
     % NOTE: !!! data is (k,j,i) !!! (=> swap i and j)
     % NOTE: re-orientate data_vector_2 to match data_vector_1
+    % REMINDER:
+    %   --> a zero will result in a water column integral being plotted
+    %       but with model-data carried out on the grid as a whole
+    %   --> a -1 will result in the benthic surface being plotted
     data_vector_2 = [];
     data_vector_D = [];
     for n = 1:nmax,
@@ -1604,7 +1608,6 @@ if (~isempty(overlaydataid) && ((data_only == 'n') || (data_anomoly == 'y')))
             data_vector_2(n) = data(int32(overlaydata_ijk(n,3)),int32(overlaydata_ijk(n,2)),int32(overlaydata_ijk(n,1)));
             data_vector_D(n) = data_D(int32(overlaydata_ijk(n,3)),int32(overlaydata_ijk(n,2)),int32(overlaydata_ijk(n,1)));
         elseif (kplot == -1)
-            %%%loc_k = grid_k1(int32(overlaydata_ijk(n,2)),int32(overlaydata_ijk(n,1)));
             loc_k = overlaydata_ijk(n,3);
             data_vector_2(n) = data(loc_k,int32(overlaydata_ijk(n,2)),int32(overlaydata_ijk(n,1)));
             data_vector_D(n) = data_D(loc_k,int32(overlaydata_ijk(n,2)),int32(overlaydata_ijk(n,1)));
