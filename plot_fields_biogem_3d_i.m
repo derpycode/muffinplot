@@ -301,6 +301,8 @@ function [OUTPUT] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 %   20/12/30: added checks on discrete data (for stats, cross-plotting)
 %             revised/corrected equivalent model points/values
 %             *** VERSION 1.52 ********************************************
+%   21/01/04: fix to vectorization of model values for mean vs. raw data
+%             *** VERSION 1.53 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -312,7 +314,7 @@ function [OUTPUT] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.52;
+par_ver = 1.53;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -1448,11 +1450,15 @@ if (~isempty(overlaydataid))
     data_vector_D = [];
     data_vector_k = [];
     for n = 1:nmax
-        data_vector_2(n) = data(int32(overlaydata_ijk(n,3)),int32(overlaydata_ijk(n,2)),int32(overlaydata_ijk(n,1)))/data_scale;
-        data_vector_D(n) = data_D(int32(overlaydata_ijk(n,3)),int32(overlaydata_ijk(n,2)),int32(overlaydata_ijk(n,1)));
-        data_vector_k(n) = int32(overlaydata_ijk(n,3));
-        %data_vector_2(n) = overlaydata_zm(int32(overlaydata_ijk(n,3)),int32(overlaydata_ijk(n,2)));
-        %data_vector_D(n) = -grid_zt(int32(overlaydata_ijk(n,3)));
+        if (data_ijk_mean == 'y')
+            data_vector_2(n) = overlaydata_zm(int32(overlaydata_ijk(n,3)),int32(overlaydata_ijk(n,2)));
+            data_vector_D(n) = -grid_zt(int32(overlaydata_ijk(n,3)));
+            data_vector_k(n) = int32(overlaydata_ijk(n,3));
+        else
+            data_vector_2(n) = data(int32(overlaydata_ijk(n,3)),int32(overlaydata_ijk(n,2)),int32(overlaydata_ijk(n,1)))/data_scale;
+            data_vector_D(n) = data_D(int32(overlaydata_ijk(n,3)),int32(overlaydata_ijk(n,2)),int32(overlaydata_ijk(n,1)));
+            data_vector_k(n) = int32(overlaydata_ijk(n,3));
+        end
     end
     data_vector_2 = data_vector_2';
     data_vector_D = data_vector_D';
