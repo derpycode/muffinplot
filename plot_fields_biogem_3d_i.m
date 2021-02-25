@@ -303,6 +303,8 @@ function [OUTPUT] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 %             *** VERSION 1.52 ********************************************
 %   21/01/04: fix to vectorization of model values for mean vs. raw data
 %             *** VERSION 1.53 ********************************************
+%   21/02/25: switched model1 vs. model2 order in cross-plot
+%             added ASCII data-dump of model1 and model2 3D data
 %
 % *********************************************************************** %
 %%
@@ -1134,6 +1136,45 @@ for j = 1:jmax
         end
     end
 end
+% save data!!!
+if (data_saveall == 'y')
+    % data 1
+    fid = fopen([par_pathout '/' filename '_DATA1POINTS.', dataid_1, '.dat'], 'wt');
+    fprintf(fid, '%% Model data field #1 values at mask locations');
+    fprintf(fid, '\n');
+    fprintf(fid, '%% Format: grid lon, grid lat, grid depth, model data field #1 value');
+    fprintf(fid, '\n');
+    % loop through all data points
+    for k = 1:kmax
+        for j = 1:jmax
+            for i = 1:imax
+                if (~isnan(data_1(k,j,i)))
+                    fprintf(fid, '%8.3f %8.3f %8.3f %8.6e %s \n', grid_lon(i), grid_lat(j), grid_zt(k), data_1(k,j,i), '%');
+                end
+            end
+        end
+    end
+    fclose(fid);
+    % data 2
+    if (~isempty(dataid_2))
+    fid = fopen([par_pathout '/' filename '_DATA2POINTS.', dataid_2, '.dat'], 'wt');
+        fprintf(fid, '%% Model data field !2 values at mask locations');
+        fprintf(fid, '\n');
+        fprintf(fid, '%% Format: grid lon, grid lat, grid depth, model data field #2 value');
+        fprintf(fid, '\n');
+        % loop through all data points
+        for k = 1:kmax
+            for j = 1:jmax
+                for i = 1:imax
+                    if (~isnan(data_2(k,j,i)))
+                        fprintf(fid, '%8.3f %8.3f %8.3f %8.6e %s \n', grid_lon(i), grid_lat(j), grid_zt(k), data_2(k,j,i), '%');
+                    end
+                end
+            end
+        end
+        fclose(fid);
+    end
+end
 %
 % *** PROCESS OVERTURNING STREAMFUNCTION (IF SELECTED) ****************** %
 %
@@ -1431,6 +1472,7 @@ end
 % NOTE: no scale transformation has been appplied
 %       to either gridded or % overlay data
 % NOTE: valid only for data on a single depth level
+% NOTE: data_vector_2 == model, data_vector_1 == data
 if (~isempty(overlaydataid))
     % set overlay data vector
     data_vector_1 = [];
@@ -1617,7 +1659,8 @@ end
 % *********************************************************************** %
 %
 if ~isempty(overlaydataid)
-    % calculate molde-data anomoly
+    % calculate model-data anomoly
+    % NOTE: data_vector_2 == model, data_vector_1 == data
     if (data_anomoly == 'y')
         overlaydata(:,4) = data_vector_2(:) - data_vector_1(:);
     end
@@ -2025,10 +2068,14 @@ if (plot_secondary == 'y')
         figure
         hold on;
         if ~isempty(overlaydataid)
-            %
-            plot(zl(:),-grid_zt(:),'--');
+            % plot mean model profile (blue dashed line)
+            plot(zl(:),-grid_zt(:),'b--');
             set(h,'LineWidth',2.0);
-            % plot raw; data,  + corresponding model values
+            % plot data + corresponding model values
+            % NOTE: for overlay data:
+            %       data_vector_2 == model, data_vector_1 == data
+            %       for 2 netCDF datasets:
+            %       data_vector_2 == data2, data_vector_1 == data1
             scatter(data_vector_1(:),-grid_zt(data_vector_k(:)),10,'mo');
             scatter(data_vector_2(:),-grid_zt(data_vector_k(:)),10,'c^');
             %
@@ -2138,14 +2185,19 @@ if (plot_secondary == 'y')
     %
     % *** PLOT FIGURE (cross-plot) ************************************** %
     %
+    % NOTE: data_vector_1 == DATA  (or model field 1)
+    % NOTE: data_vector_2 == MODEL (or model field 2)
+    %       => swap data2 and data1 so model (data1) is on y-axis
+    %          as per for overlay data
+    %          (assuming data2 are regridded observations)
     if ( ~isempty(dataid_2) || ~isempty(overlaydataid) )
         %
         if ~isempty(dataid_2)
-            loc_x_data = reshape(data_1(data_kmin:data_kmax,:,:),[],1);
-            loc_y_data = reshape(data_2(data_kmin:data_kmax,:,:),[],1);
+            loc_x_data = reshape(data_2(data_kmin:data_kmax,:,:),[],1);
+            loc_y_data = reshape(data_1(data_kmin:data_kmax,:,:),[],1);
             loc_D_data = reshape(data_D(data_kmin:data_kmax,:,:),[],1);
-            loc_x_label = [strrep(dataid_1,'_','-')];
-            loc_y_label = [strrep(dataid_2,'_','-')];
+            loc_x_label = [strrep(dataid_2,'_','-')];
+            loc_y_label = [strrep(dataid_1,'_','-')];
             loc_D_label = ['Depth (m)'];
         elseif ~isempty(overlaydataid)
             loc_x_data = data_vector_1;

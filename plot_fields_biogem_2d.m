@@ -258,7 +258,8 @@ function [OUTPUT] = plot_fields_biogem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,PM
 %   20/12/29: replaced data file load and primary processing code
 %             *** VERSION 1.51 ********************************************
 %   20/12/30: added checks on discrete data (for stats, cross-plotting)
-%             *** VERSION 1.52 ********************************************
+%             *** VERSION 1.53 ********************************************
+%   21/02/25: switched model1 vs. model2 order in cross-plot
 %
 % *********************************************************************** %
 %%
@@ -270,7 +271,7 @@ function [OUTPUT] = plot_fields_biogem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,PM
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.52;
+par_ver = 1.53;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -1935,13 +1936,18 @@ if (plot_secondary == 'y')
     %
     % *** PLOT FIGURE (cross-plot) ************************************** %
     %
+    % NOTE: data_vector_1 == DATA  (or model field 1)
+    % NOTE: data_vector_2 == MODEL (or model field 2)
+    %       => swap data2 and data1 so model (data1) is on y-axis
+    %          as per for overlay data
+    %          (assuming data2 are regridded observations)
     if ( ~isempty(dataid_2) || ~isempty(overlaydataid) )
         %
         if ~isempty(dataid_2)
-            loc_x_data = reshape(data_1(:,:),1,[]);
-            loc_y_data = reshape(data_2(:,:),1,[]);
-            loc_x_label = [strrep(dataid_1,'_','-')];
-            loc_y_label = [strrep(dataid_2,'_','-')];
+            loc_x_data = reshape(data_2(:,:),1,[]);
+            loc_y_data = reshape(data_1(:,:),1,[]);
+            loc_x_label = [strrep(dataid_2,'_','-')];
+            loc_y_label = [strrep(dataid_1,'_','-')];
         elseif ~isempty(overlaydataid)
             loc_x_data = data_vector_1;
             loc_y_data = data_vector_2;
