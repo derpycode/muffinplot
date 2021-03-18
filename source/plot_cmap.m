@@ -11,7 +11,7 @@ function [] = plot_cmap(PNCOL,POPT)
 %   and takes 2 arguments:
 %
 %   PNCOL [INTEGER]
-%   --> number of colors to plot
+%   --> number of colors graduations to plot (in a given color map)
 %   POPT [STRING]
 %   --> the string for an alternative plotting parameter set
 %   --> if an empty (i.e., '') value is passed to this parameter
@@ -28,6 +28,8 @@ function [] = plot_cmap(PNCOL,POPT)
 %   15/02/11: CREATED
 %   15/02/12: completed initial working version
 %   17/05/15: added addiitonal scales
+%   21/03/18: added additional scales
+%             removed old alternative plotting library option
 %
 %   ***********************************************************************
 
@@ -53,15 +55,9 @@ str_date = [datestr(date,11), datestr(date,5), datestr(date,7)];
 % set function name
 str_function = 'plot-cmap';
 % load plotting options
-if isempty(POPT), POPT='plot_fields_settings'; end
+if isempty(POPT), POPT='plot_fields_SETTINGS'; end
 eval(POPT);
 if ~isempty(plot_format), plot_format_old='n'; end
-% plotting paths
-addpath(library_path1);
-if (~plot_format_old),
-    addpath(library_path2);
-    addpath(library_path3);
-end
 % create dummy data
 data = [0:1:10];
 % define color scale name list
@@ -82,7 +78,11 @@ str_cmap = setfield(str_cmap, {13}, 'cname', ['CubicYF']);
 str_cmap = setfield(str_cmap, {14}, 'cname', ['jet']);
 str_cmap = setfield(str_cmap, {15}, 'cname', ['red']);
 str_cmap = setfield(str_cmap, {16}, 'cname', ['blue']);
-n_cmap = 16;
+str_cmap = setfield(str_cmap, {17}, 'cname', ['magma']);
+str_cmap = setfield(str_cmap, {18}, 'cname', ['inferno']);
+str_cmap = setfield(str_cmap, {19}, 'cname', ['plasma']);
+str_cmap = setfield(str_cmap, {20}, 'cname', ['viridis']);
+n_cmap = 20;
 %
 % *********************************************************************** %
 
@@ -157,20 +157,7 @@ end
 set(gcf,'CurrentAxes',fh(1));
 str_filename = ['colorscales'];
 str_filename = [str_filename '.' str_date];
-if (plot_format_old)
-    print('-dpsc2', [str_filename, '.ps']);
-else
-    switch plot_format
-        case 'png'
-            export_fig([str_filename '.png'], '-png', '-r150', '-nocrop');
-        case 'pngT'
-            export_fig([str_filename '.png'], '-png', '-r150', '-nocrop', '-transparent');
-        case 'jpg'
-            export_fig([str_filename '.jpg'], '-jpg', '-r150', '-nocrop');
-        otherwise
-            export_fig([str_filename '.eps'], '-eps', '-nocrop');
-    end
-end
+print('-dpsc2', '-bestfit', [str_filename, '.ps']);
 %
 % *********************************************************************** %
 
