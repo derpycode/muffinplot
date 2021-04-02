@@ -305,6 +305,8 @@ function [OUTPUT] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 %             *** VERSION 1.53 ********************************************
 %   21/02/25: switched model1 vs. model2 order in cross-plot
 %             added ASCII data-dump of model1 and model2 3D data
+%   21/04/02: added basic stats to the function return
+%             *** VERSION 1.54 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -316,7 +318,7 @@ function [OUTPUT] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.53;
+par_ver = 1.54;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -2274,20 +2276,23 @@ if (data_output_old == 'y')
         OUTPUT = [DIAG];
     end
 else
-    %
+    % basic stats
+    output = datastats(reshape(zm,[],1));
+    % add inventory/global volumn-weighted mean
     output.data_inventory = 1027.649*z;
-    output.data_mean = z/z_V;
-    output.data_min   = min(min(zm));
-    output.data_max   = max(max(zm));
-    % MOC
+    output.data_mean      = z/z_V;
+    % add old min,max
+    output.data_min   = min(reshape(zm,[],1));
+    output.data_max   = max(reshape(zm,[],1));
+    % add MOC properties
     if ~isempty(plot_opsi)
         loc_opsi = opsizm(find(opsigrid_zt<(-plot_D_min)));
         output.moc_min = min(loc_opsi);
         output.moc_max = max(loc_opsi);
     end
-    %
+    % add model-data/model stats
     if exist('STATM')
-        output.statm = STATM;
+        output.statm          = STATM;
         output.statm_mean     = STATM(1,2);
         output.statm_std      = STATM(2,2);
         output.statm_rmsd     = STATM(3,2);

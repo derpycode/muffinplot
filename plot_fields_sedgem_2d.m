@@ -233,6 +233,8 @@ function [OUTPUT] = plot_fields_sedgem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,PM
 %   20/12/30: added checks on discrete data (for stats, cross-plotting)
 %             *** VERSION 1.53 ********************************************
 %   21/02/25: switched model1 vs. model2 order in cross-plot
+%   21/04/02: added basic stats to the function return
+%             *** VERSION 1.54 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -244,7 +246,7 @@ function [OUTPUT] = plot_fields_sedgem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,PM
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.53;
+par_ver = 1.54;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -1421,11 +1423,14 @@ if (data_output_old == 'y')
         OUTPUT = [];
     end
 else
-    output.data_min   = min(min(zm));
-    output.data_max   = max(max(zm));
+    % basic stats
+    output = datastats(reshape(zm,[],1));
+    % add old min,max
+    output.data_min   = min(reshape(zm,[],1));
+    output.data_max   = max(reshape(zm,[],1));
     %
     if exist('STATM')
-        output.statm = STATM;
+        output.statm          = STATM;
         output.statm_mean     = STATM(1,2);
         output.statm_std      = STATM(2,2);
         output.statm_rmsd     = STATM(3,2);
