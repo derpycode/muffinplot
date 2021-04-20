@@ -307,6 +307,8 @@ function [OUTPUT] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 %             added ASCII data-dump of model1 and model2 3D data
 %   21/04/02: added basic stats to the function return
 %             *** VERSION 1.54 ********************************************
+%   21/04/20: adjusted function return stats
+%             *** VERSION 1.55 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -318,7 +320,7 @@ function [OUTPUT] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.54;
+par_ver = 1.55;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -2266,6 +2268,17 @@ end
 %       STATM(9,2) = R2;
 %       STATM(10,2) = M;
 %
+% NOTE2:
+% xds = datastats(x) returns statistics for the column vector x 
+% to the structure xds. Fields in xds are:
+% num       -- The number of data values
+% max       -- The maximum data value
+% min       -- The minimum data value
+% mean      -- The mean value of the data
+% median    -- The median value of the data
+% range     -- The range of the data
+% std       -- The standard deviation of the data
+%
 if (data_output_old == 'y')
     % return diagnostics
     DIAG = [z/z_V 1027.649*z];
@@ -2277,7 +2290,8 @@ if (data_output_old == 'y')
     end
 else
     % basic stats
-    output = datastats(reshape(zm,[],1));
+    % NOTE: use data_vector_1 which is the full grid data
+    output = datastats(reshape(data_vector_1,[],1));
     % add inventory/global volumn-weighted mean
     output.data_inventory = 1027.649*z;
     output.data_mean      = z/z_V;

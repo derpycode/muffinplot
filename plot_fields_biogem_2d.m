@@ -262,6 +262,8 @@ function [OUTPUT] = plot_fields_biogem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,PM
 %   21/02/25: switched model1 vs. model2 order in cross-plot
 %   21/04/02: added basic stats to the function return
 %             *** VERSION 1.54 ********************************************
+%   21/04/20: adjusted function return stats
+%             *** VERSION 1.55 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -273,7 +275,7 @@ function [OUTPUT] = plot_fields_biogem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,PM
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.54;
+par_ver = 1.55;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -1990,6 +1992,17 @@ end
 %       STATM(9,2) = R2;
 %       STATM(10,2) = M;
 %
+% NOTE2:
+% xds = datastats(x) returns statistics for the column vector x 
+% to the structure xds. Fields in xds are:
+% num       -- The number of data values
+% max       -- The maximum data value
+% min       -- The minimum data value
+% mean      -- The mean value of the data
+% median    -- The median value of the data
+% range     -- The range of the data
+% std       -- The standard deviation of the data
+%
 if (data_output_old == 'y') 
     if exist('STATM')
         OUTPUT = STATM;
@@ -1998,7 +2011,8 @@ if (data_output_old == 'y')
     end
 else
     % basic stats
-    output = datastats(reshape(zm,[],1));
+    % NOTE: use data_vector_1 which is the full grid data
+    output = datastats(reshape(data_vector_1,[],1));
     % add old min,max
     output.data_min   = min(min(zm));
     output.data_max   = max(max(zm));
