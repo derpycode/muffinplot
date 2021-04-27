@@ -264,6 +264,8 @@ function [OUTPUT] = plot_fields_biogem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,PM
 %             *** VERSION 1.54 ********************************************
 %   21/04/20: adjusted function return stats
 %             *** VERSION 1.55 ********************************************
+%   21/04/27: revised data read-in allowable formats
+%             *** VERSION 1.56 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -275,7 +277,7 @@ function [OUTPUT] = plot_fields_biogem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,PM
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.55;
+par_ver = 1.56;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -976,7 +978,7 @@ if ~isempty(overlaydataid)
             if (sum(v_format(1:3)) == 0)
                 % lon, lat, value
                 overlaydata_raw  = cell2mat(cdata(:,1:3));
-                % NOTE: add fake data (0.0)
+                % create dummay (blank space) labels
                 overlaylabel_raw = (blanks(n_rows))';
                 data_shapecol    = 'n';
                 % flag for a valid format

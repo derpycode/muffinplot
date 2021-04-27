@@ -338,6 +338,8 @@ function [OUTPUT] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 %             *** VERSION 1.54 ********************************************
 %   21/04/20: adjusted function return stats
 %             *** VERSION 1.55 ********************************************
+%   21/04/27: revised data read-in allowable formats
+%             *** VERSION 1.56 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -349,7 +351,7 @@ function [OUTPUT] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.55;
+par_ver = 1.56;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -1221,6 +1223,16 @@ if ~isempty(overlaydataid)
                 overlaydata_raw  = cell2mat(cdata(:,1:4));
                 overlaylabel_raw = (blanks(n_rows))';
                 data_shapecol    = 'n';
+                % flag for a valid format
+                flag_format      = true;
+            elseif ((sum(v_format(1:3)) == 0) && (v_format(4) == 1))
+                % lon, lat, value, LABEL
+                overlaydata_raw  = cell2mat(cdata(:,1:3));
+                overlaylabel_raw = char(cdata(:,4));
+                data_shapecol    = 'n';
+                % add fake depth
+                overlaydata_raw(:,4) = 0.0;
+                % flag for a valid format
                 flag_format      = true;
             end
         case 5
@@ -1229,6 +1241,7 @@ if ~isempty(overlaydataid)
                 overlaydata_raw  = cell2mat(cdata(:,1:4));
                 overlaylabel_raw = char(cdata(:,5));
                 data_shapecol    = 'n';
+                % flag for a valid format
                 flag_format      = true;
             end
         case 7
@@ -1240,6 +1253,7 @@ if ~isempty(overlaydataid)
                 overlaydata_ecol  = char(cdata(:,6));
                 overlaydata_fcol  = char(cdata(:,7));
                 data_shapecol     = 'y';
+                % flag for a valid format
                 flag_format       = true;
             end
         case 8
@@ -1251,6 +1265,7 @@ if ~isempty(overlaydataid)
                 overlaydata_ecol  = char(cdata(:,7));
                 overlaydata_fcol  = char(cdata(:,8));
                 data_shapecol     = 'y';
+                % flag for a valid format
                 flag_format       = true;
             end
         otherwise
@@ -1851,7 +1866,8 @@ if ~isempty(overlaydataid)
         zm(find(zm(:,:) == 0)) = NaN;
     end
     % ditto if water column inventory option plus data
-    if ( ~isempty(overlaydataid) && (kplot == 0) )
+    % UNLESS min/max is requested
+    if ( ~isempty(overlaydataid) && kplot==0 && plot_minval=='n' && plot_maxval=='n' )
         zm = zeros(size(zm(:,:)));
         zm(find(zm(:,:) == 0)) = NaN;
     end
@@ -1996,8 +2012,8 @@ if (plot_main == 'y')
         title(['Data: ',strrep(dataid_1,'_',' '),' / Level (k) = ', num2str(kplot)],'FontSize',12);
     end
     % draw filled rectangles
-    for i = 1:imax,
-        for j = 1:jmax,
+    for i = 1:imax
+        for j = 1:jmax
             if topo(j,i) > layb(j,i)
                 h = patch([lonw(j,i) lonw(j,i) lone(j,i) lone(j,i)],[lats(j,i) latn(j,i) latn(j,i) lats(j,i)],color_g);
                 set(h,'EdgeColor',color_g);
@@ -2019,8 +2035,8 @@ if (plot_main == 'y')
     % *** PLOT CONTINENTAL OUTLINE ****************************************** %
     %
     % draw continental outline
-    for j = 1:jmax,
-        for i = 1:imax-1,
+    for j = 1:jmax
+        for i = 1:imax-1
             if topo(j,i) > layb(j,i)
                 if topo(j,i+1) <= layb(j,i+1)
                     h = plot([lone(j,i) lone(j,i)],[lats(j,i) latn(j,i)],'k-');
@@ -2028,7 +2044,7 @@ if (plot_main == 'y')
                 end
             end
         end
-        for i = 2:imax,
+        for i = 2:imax
             if topo(j,i) > layb(j,i)
                 if topo(j,i-1) <= layb(j,i-1)
                     h = plot([lonw(j,i) lonw(j,i)],[lats(j,i) latn(j,i)],'k-');
@@ -2037,8 +2053,8 @@ if (plot_main == 'y')
             end
         end
     end
-    for i = 1:imax,
-        for j = 1:jmax-1,
+    for i = 1:imax
+        for j = 1:jmax-1
             if topo(j,i) > layb(j,i)
                 if topo(j+1,i) <= layb(j+1,i)
                     h = plot([lonw(j,i) lone(j,i)],[latn(j,i) latn(j,i)],'k-');
@@ -2046,7 +2062,7 @@ if (plot_main == 'y')
                 end
             end
         end
-        for j = 2:jmax,
+        for j = 2:jmax
             if topo(j,i) > layb(j,i)
                 if topo(j-1,i) <= layb(j-1,i)
                     h = plot([lonw(j,i) lone(j,i)],[lats(j,i) lats(j,i)],'k-');
@@ -2058,16 +2074,16 @@ if (plot_main == 'y')
     %
     % *** OVERLAY CONTOURS ************************************************** %
     %
-    if (contour_plot == 'y') && (data_only == 'n'),
+    if (contour_plot == 'y') && (data_only == 'n')
         v = [con_min:(con_max-con_min)/(con_n/contour_mod):con_max];
-        if (plot_equallat == 'n'),
+        if (plot_equallat == 'n')
             [C,h] = contour(xm_ex,sin(pi*ym_ex/180.0),zm_ex,v,'k-');
         else
             [C,h] = contour(xm_ex,ym_ex,zm_ex,v,'k-');
         end
         set(h,'LineWidth',0.25);
         v = [con_min:(con_max-con_min)/(con_n/contour_mod_label):con_max];
-        if (plot_equallat == 'n'),
+        if (plot_equallat == 'n')
             [C,h] = contour(xm_ex,sin(pi*ym_ex/180.0),zm_ex,v,'k');
         else
             [C,h] = contour(xm_ex,ym_ex,zm_ex,v,'k');
@@ -2080,18 +2096,18 @@ if (plot_main == 'y')
         end
         % additional highlight contours
         loc_lim = 2.0*(abs(con_min) + abs(con_max));
-        if (contour_hlt == 'y'),
+        if (contour_hlt == 'y')
             v = [-loc_lim+contour_hltval:loc_lim:loc_lim+contour_hltval];
-            if (plot_equallat == 'n'),
+            if (plot_equallat == 'n')
                 [C,h] = contour(xm_ex,sin(pi*ym_ex/180.0),zm_ex,v,'w-');
             else
                 [C,h] = contour(xm_ex,ym_ex,zm_ex,v,'w-');
             end
             set(h,'LineWidth',1.0);
         end
-        if (contour_hlt2 == 'y'),
+        if (contour_hlt2 == 'y')
             v = [-loc_lim+contour_hltval2:loc_lim:loc_lim+contour_hltval2];
-            if (plot_equallat == 'n'),
+            if (plot_equallat == 'n')
                 [C,h] = contour(xm_ex,sin(pi*ym_ex/180.0),zm_ex,v,'w--');
             else
                 [C,h] = contour(xm_ex,ym_ex,zm_ex,v,'w--');
@@ -2104,8 +2120,8 @@ if (plot_main == 'y')
     %
     % plot velocity field if requested
     % NOTE: units == m s-1
-    if (data_uv == 'y'),
-        if (plot_equallat == 'n'),
+    if (data_uv == 'y')
+        if (plot_equallat == 'n')
             % set flag
             loc_flag = true;
             % calculate maximum velocities
@@ -2122,8 +2138,8 @@ if (plot_main == 'y')
             loc_w = loc_width1*loc_width2;
             loc_h = loc_height1*loc_height2;
             %
-            for i = 1:imax,
-                for j = 1:jmax,
+            for i = 1:imax
+                for j = 1:jmax
                     if topo(j,i) <= layb(j,i)
                         % plot velocity vector
                         loc_x = xm(j,i);
@@ -2180,11 +2196,12 @@ if (plot_main == 'y')
     %
     % *** OVERLAY DATA ****************************************************** %
     %
-    % NOTE: do nto plot data for 'water column integral'
-    if (~isempty(overlaydataid) && (kplot ~= 0))
+    % NOTE: do not plot data for 'water column integral'
+    %       UNLESS min/max is requested
+    if (~isempty(overlaydataid) && (kplot~=0 || plot_minval=='y' || plot_maxval=='y') )
         % set uniform marker shape and color
-        if (data_shapecol == 'n'),
-            for n = 1:nmax,
+        if (data_shapecol == 'n')
+            for n = 1:nmax
                 overlaydata_shape(n) = 'o';
                 overlaydata_ecol(n) = data_sitecolor;
                 if ( (data_only == 'y') && (data_siteonly == 'y') )
@@ -2195,18 +2212,18 @@ if (plot_main == 'y')
             end
         end
         % plot overlay data
-        for n = 1:nmax,
-            if (data_siteonly == 'n'),
+        for n = 1:nmax
+            if (data_siteonly == 'n')
                 scatter(overlaydata(n,1),overlaydata(n,2),4,overlaydata(n,4),overlaydata_shape(n),'Filled','LineWidth',data_sitelineth,'Sizedata',data_size,'MarkerEdgeColor',overlaydata_ecol(n));
             else
-                if (overlaydata_fcol(n) == '-'),
+                if (overlaydata_fcol(n) == '-')
                     scatter(overlaydata(n,1),overlaydata(n,2),4,overlaydata_shape(n),'LineWidth',data_sitelineth,'Sizedata',data_size,'MarkerEdgeColor',overlaydata_ecol(n));
                 else
                     scatter(overlaydata(n,1),overlaydata(n,2),4,overlaydata_shape(n),'LineWidth',data_sitelineth,'Sizedata',data_size,'MarkerEdgeColor',overlaydata_ecol(n),'MarkerFaceColor',overlaydata_fcol(n));
                 end
             end
         end
-        if ( (data_sitelabel == 'y') && (data_ijk_mean == 'n') ),
+        if ( (data_sitelabel == 'y') && (data_ijk_mean == 'n') )
             text(overlaydata(:,1)+(data_size/30),overlaydata(:,2)+(data_size/1200),overlaylabel(:,:),'FontSize',data_fontsz,'Color',data_sitecolor);
         end
     end
