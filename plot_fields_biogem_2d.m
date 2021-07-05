@@ -266,6 +266,8 @@ function [OUTPUT] = plot_fields_biogem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,PM
 %             *** VERSION 1.55 ********************************************
 %   21/04/27: revised data read-in allowable formats
 %             *** VERSION 1.56 ********************************************
+%   21/07/5: added (back?) default vector_1
+%             *** VERSION 1.57 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -277,7 +279,7 @@ function [OUTPUT] = plot_fields_biogem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,PM
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.56;
+par_ver = 1.57;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -1200,6 +1202,14 @@ if ~isempty(dataid_2)
             %%%print('-depsc2', [filename, '_TargetDiagram.', str_date, '.eps']);
         end
     end
+else
+    % set default vector_1
+    % NOTE: if discrete data is present, this will be replaced
+    % transform data sets in vectors
+    data_vector_1 = reshape(data_1(:,:),imax*jmax,1);
+    % filter data
+    data_vector_1(find(data_vector_1(:) < -1.0E6)) = NaN;
+    data_vector_1(find(data_vector_1(:) > 0.9E36)) = NaN;
 end
 %
 % *********************************************************************** %
