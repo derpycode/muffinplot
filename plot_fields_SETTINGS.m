@@ -125,6 +125,7 @@ contour_hlt = 'n';      % [ 'n']  ADD HIGHLIGHT CONTOUR?
 contour_hltval = 0.0;   % [ 0.0]  HIGHLIGHT CONTOUR VALUE
 contour_hlt2 = 'n';     % [ 'n']  ADD 2nd HIGHLIGHT CONTOUR?
 contour_hltval2 = 0.0;  % [ 0.0]  2nd HIGHLIGHT CONTOUR VALUE
+contour_zero = 'y';     % [ 'y']  PLOT ZERO CONTOUR
 contour_file = '';      % [  '']  OPTIONAL EXTERNAL PLOTTING SCALE
 colorbar_name='plasma'; % ['plasma'] COLORBAR COLOR SCALE NAME
 colorbar_inv = 'n';     % [ 'n']  INVERT COLORBAR
