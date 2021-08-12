@@ -1,20 +1,13 @@
-function [] = fun_make_analysis_bio(DUM_EXP,DUM_T)
+function [] = fun_make_analysis_bio(DUM_EXP,DUM_T,DUM_NAME)
 
-% *** BIOGEOCHEM -- horizontal ****************************************** %
+% *** EXPORT PROPERTIES ************************************************* %
 %
-% sur [PO4]
-plot_fields_biogem_3d_k(DUM_EXP,'','ocn_PO4','',DUM_T,-1,16,'',1.0E-6,0.0,1.0,20,'','plot_fields_settings_BIO',[DUM_EXP '.SURpo4']);
-% sur [Fe]
-% plot_fields_biogem_3d_k(DUM_EXP,'','ocn_TDFe','',DUM_T,-1,16,'',1.0E-9,0.0,1.0,20,'','plot_fields_settings_BIO',[DUM_EXP '.SURFe']);
-% plot_fields_biogem_3d_k(DUM_EXP,'','misc_FeT','',DUM_T,-1,16,'',1.0E-9,0.0,1.0,20,'','plot_fields_settings_BIO',[DUM_EXP '.SURfe']);
-%
-% *** BIOGEOCHEM -- vertical ******************************************** %
-%
-% [PO4]
-plot_fields_biogem_3d_i(DUM_EXP,'','ocn_PO4','',DUM_T,-1,0,'',1.0E-6,0.0,3.0,30,'','plot_fields_settings_BIO',[DUM_EXP '.ZONALpo4']);
-% [Fe]
-% plot_fields_biogem_3d_i(DUM_EXP,'','ocn_TDFe','',DUM_T,-1,0,'',1.0E-9,0.0,1.0,20,'','plot_fields_settings_BIO',[DUM_EXP '.ZONALfe']);
-% plot_fields_biogem_3d_i(DUM_EXP,'','misc_FeT','',DUM_T,-1,0,'',1.0E-9,0.0,1.0,20,'','plot_fields_settings_BIO',[DUM_EXP '.ZONALfe']);
+% [POC]
+plot_fields_biogem_2d(DUM_EXP,'','bio_export_POC','',DUM_T,-1,16,'',1.0,0.0,4.0,20,'','plot_fields_SETTINGS_EXPORT',[DUM_NAME '.BIO_pocexport']);
+% [CaCO3]
+plot_fields_biogem_2d(DUM_EXP,'','bio_export_CaCO3','',DUM_T,-1,16,'',1.0,0.0,1.0,20,'','plot_fields_SETTINGS_EXPORT',[DUM_NAME '.BIO_caco3export']);
+% CaCO3/POC rain ratio
+plot_fields_biogem_2d(DUM_EXP,'','misc_sur_rCaCO3toPOC','',DUM_T,-1,16,'',1.0,0.0,1.0,20,'','plot_fields_SETTINGS_RATIO',[DUM_NAME '.BIO_rainratio']);
 %
 % *********************************************************************** %
 
