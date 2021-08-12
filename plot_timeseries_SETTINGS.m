@@ -126,6 +126,6 @@ opt_fatplot=false;         % [false] FATTER PLOTS?
 plot_title = '';           % [  '']  OPTIONAL REPLACEMENT TITLE
 %                          *** data saving s ***
 opt_save_diagnostics=false;% [false] 
-opt_savetimeseries=true;   % [true] 
+opt_save_timeseries=true;   % [true] 
 %
 % *********************************************************************** %

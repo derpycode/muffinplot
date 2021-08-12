@@ -237,6 +237,8 @@ function [OUTPUT] = plot_fields_sedgem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,PM
 %             *** VERSION 1.54 ********************************************
 %   21/04/20: adjusted function return stats
 %             *** VERSION 1.55 ********************************************
+%   21/08/2: added (back?) default vector_1
+%             *** VERSION 1.57 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -248,7 +250,7 @@ function [OUTPUT] = plot_fields_sedgem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,PM
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.55;
+par_ver = 1.57;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -625,9 +627,9 @@ end
 % *********************************************************************** %
 %
 % create an output filestring for data and plot saving
-if ~isempty(exp_2),
+if ~isempty(exp_2)
     filename = [exp_1, '_MINUS_' exp_2, '.', dataid_1];
-    if ~isempty(dataid_2),
+    if ~isempty(dataid_2)
         filename = [exp_1, '_MINUS_' exp_2, '.', dataid_1, '_MINUS_', dataid_2];
     end
 elseif ~isempty(dataid_2)
@@ -635,16 +637,16 @@ elseif ~isempty(dataid_2)
 else
     filename = [exp_1, '.', dataid_1];
 end
-if ~isempty(overlaydataid),
+if ~isempty(overlaydataid)
     filename = [filename, '_VS_', overlaydataid];
-    if (data_anomoly == 'y'),
+    if (data_anomoly == 'y')
         filename = [filename, '.ANOM'];
     end
-    if (data_only == 'y'),
+    if (data_only == 'y')
         filename = [filename, '.DO'];
     end
 end
-if ~isempty(maskid),
+if ~isempty(maskid)
     filename = [filename, '.', maskid];
 end
 if (~isempty(altfilename)), filename = altfilename; end
@@ -919,6 +921,23 @@ end
 % NOTE: no scale transformatoin has been appplied
 %       to either gridded or % overlay data
 % NOTE: valid only for data on a single depth level
+%
+if ~isempty(dataid_2)
+    %
+    % *** 3D (GRIDDED) DATA ********************************************* %
+    %
+else
+    % set default vector_1
+    % NOTE: if discrete data is present, this will be replaced
+    % transform data sets in vectors
+    data_vector_1 = reshape(data_1(:,:),imax*jmax,1);
+    % filter data
+    data_vector_1(find(data_vector_1(:) < -1.0E6)) = NaN;
+    data_vector_1(find(data_vector_1(:) > 0.9E36)) = NaN;
+end
+%
+% *********************************************************************** %
+%
 if (~isempty(overlaydataid) && ((data_only == 'n') || (data_anomoly == 'y')))
     % set overlay data vector
     data_vector_1 = overlaydata(:,3);

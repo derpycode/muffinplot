@@ -130,6 +130,10 @@ function [] = plot_timeseries_biogem(PEXP1,PEXP2,PTMIN,PTMAX,PDATA1,PDATA1N,PDAT
 %             *** VERSION 1.17 ********************************************
 %   19/10/18: added work-around for plotting runs with no carbon cycle
 %             *** VERSION 1.18 ********************************************
+%   21/08/09: various + some code cleaning
+%             improved auto-scaling
+%             added detection of archive files (+ unpacking then cleaning)
+%             *** VERSION 1.19 ********************************************
 %
 %   ***********************************************************************
 
@@ -140,7 +144,7 @@ function [] = plot_timeseries_biogem(PEXP1,PEXP2,PTMIN,PTMAX,PDATA1,PDATA1N,PDAT
 % *** initialize ******************************************************** %
 %
 % set version!
-par_ver = 1.18;
+par_ver = 1.19;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -150,6 +154,10 @@ if isempty(POPT), POPT='plot_timeseries_SETTINGS'; end
 eval(POPT);
 % set date
 str_date = [datestr(date,11), datestr(date,5), datestr(date,7)];
+% determine whcih stupid version of MUTLAB we are using
+tmp_mutlab = version('-release');
+str_mutlab = tmp_mutlab(1:4);
+par_mutlab = str2num(str_mutlab);
 %
 % *** backwards compatability ******************************************* %
 %
@@ -166,7 +174,7 @@ if ~exist('par_pathmask','var'), par_pathmask = 'MASKS'; end
 if ~exist('par_pathexam','var'), par_pathexam = 'EXAMPLES'; end
 % data saving
 if ~exist('opt_save_diagnostics','var'), opt_save_diagnostics = false; end
-if ~exist('opt_save_timeseries','var'), opt_save_timeseries = true; end
+if ~exist('opt_save_timeseries','var'), opt_save_timeseries = false; end
 %
 % *** copy passed parameters ******************************************** %
 %
@@ -175,25 +183,25 @@ expid1 = PEXP1;
 expid2 = PEXP2;
 data1_name = PDATA1;
 data1_n = PDATA1N;
-if (~isempty(data1_name) && ischar(data1_n)),
+if (~isempty(data1_name) && ischar(data1_n))
     disp(['ERROR: column number of data #1 must be entered as a number, not string.']);
     return;
 end
 data2_name = PDATA2;
 data2_n = PDATA2N;
-if (~isempty(data2_name) && ischar(data2_n)),
+if (~isempty(data2_name) && ischar(data2_n))
     disp(['ERROR: column number of data #2 must be entered as a number, not string.']);
     return;
 end
 data3_name = PDATA3;
 data3_n = PDATA3N;
-if (~isempty(data3_name) && ischar(data3_n)),
+if (~isempty(data3_name) && ischar(data3_n))
     disp(['ERROR: column number of data #3 must be entered as a number, not string.']);
     return;
 end
 axis_tmin = PTMIN;
 axis_tmax = PTMAX;
-if (ischar(axis_tmin) || ischar(axis_tmax)),
+if (ischar(axis_tmin) || ischar(axis_tmax))
     disp(['ERROR: min/max time must be entered as a number, not string.']);
     return;
 end
@@ -226,7 +234,7 @@ str_current_path = pwd;
 str_function_path = which(str_function);
 str_function_path = str_function_path(1:end-length(str_function)-3);
 % check source code directory and add search path
-if ~(exist([str_function_path '/' par_pathlib],'dir') == 7),
+if ~(exist([str_function_path '/' par_pathlib],'dir') == 7)
     disp([' * ERROR: Cannot find source directory']);
     disp([' ']);
     return;
@@ -234,7 +242,7 @@ else
     addpath([str_function_path '/' par_pathlib]);
 end
 % check masks directory and add search path
-if ~(exist([str_function_path '/' par_pathmask],'dir') == 7),
+if ~(exist([str_function_path '/' par_pathmask],'dir') == 7)
     disp([' * ERROR: Cannot find MASKS directory -- was it moved ... ?']);
     disp([' ']);
     return;
@@ -243,7 +251,7 @@ else
 end
 % set input path
 par_pathin = [str_current_path '/' par_pathin];
-if ~(exist(par_pathin,'dir') == 7),
+if ~(exist(par_pathin,'dir') == 7)
     disp([' * ERROR: Cannot find experiment results directory']);
     disp([' ']);
     return;
@@ -252,14 +260,14 @@ end
 par_pathout = [str_current_path '/' par_pathout];
 if ~(exist(par_pathout,'dir') == 7), mkdir(par_pathout);  end
 % check/add data path
-if ~(exist([str_current_path '/' par_pathdata],'dir') == 7),
+if ~(exist([str_current_path '/' par_pathdata],'dir') == 7)
     mkdir([str_current_path '/' par_pathdata]);
 end
 addpath([str_current_path '/' par_pathdata]);
 % check plot format setting
 if ~isempty(plot_format), plot_format_old='n'; end
 % add plotting paths
-if (plot_format_old == 'n'),
+if (plot_format_old == 'n')
     addpath([str_function_path '/' par_pathlib '/xpdfbin-win-3.03/bin32']);
     addpath([str_function_path '/' par_pathlib '/export_fig']);
 end
@@ -276,13 +284,22 @@ str_function = strrep(str_function,'_','-');
 data_dir = [par_pathin '/' expid1];
 if (exist(data_dir, 'dir') == 0)
     disp(['ERROR: Experiment cannot be found.']);
-    if (exist(data_path, 'dir') == 0)
-        disp(['INFO: Path: ' data_path ' cannot be found.']);
+    if (exist(par_pathin, 'dir') == 0)
+        disp(['INFO: Path: ' par_pathin ' cannot be found.']);
     else
-        disp(['INFO: Path: ' data_path ' exists.']);
+        disp(['INFO: Path: ' par_pathin ' exists.']);
         disp(['INFO: Experiment name: ' expid1 ' cannot be found.']);
     end
-    return;
+    if (exist([data_dir '.tar.gz'],'file'))
+        disp(['INFO: Archive: ' [data_dir '.tar.gz'] ' exists.']);
+        disp([' * UN-PACKING ...']);
+        untar([data_dir '.tar.gz'],par_pathin);
+        loc_flag_unpack = true;
+    else
+        return;
+    end
+else
+    loc_flag_unpack = false;
 end
 % load basic data
 data_Tatm     = load([par_pathin '/' expid1 '/biogem/biogem_series_atm_temp.res'],'ascii');
@@ -293,8 +310,10 @@ if (exist(data_file, 'file') ~= 2)
     disp(['WARNING: The experiment needs to be CO2-enabled in order to fully use this plotting function.']);
     data_pCO2(:,1)   = data_Tatm(:,1);
     data_pCO2(:,2:3) = rand(length(data_Tatm(:,1)),2);
+    flag_noCO2 = true;
 else
     data_pCO2 = load([par_pathin '/' expid1 '/biogem/biogem_series_atm_pCO2.res'],'ascii');
+    flag_noCO2 = false;
 end
 % test for an isotope-enabled experiment
 data_file = [par_pathin '/' expid1 '/biogem/biogem_series_atm_pCO2_13C.res'];
@@ -302,8 +321,10 @@ if (exist(data_file, 'file') ~= 2)
     disp(['WARNING: The experiment needs to be 13C-enabled in order to fully use this plotting function.']);
     data_pCO2_13C(:,1)   = data_Tatm(:,1);
     data_pCO2_13C(:,2:3) = rand(length(data_Tatm(:,1)),2);
+    flag_no13CO2 = true;
 else
     data_pCO2_13C = load([par_pathin '/' expid1 '/biogem/biogem_series_atm_pCO2_13C.res'],'ascii');
+    flag_no13CO2 = false;
 end
 % set time units
 switch plot_tunits
@@ -555,7 +576,7 @@ end
 %
 % *** DIAGNOSED EMISSIONS FORCING DATA ********************************** &
 %
-if opt_invanalysis,
+if opt_invanalysis
     % determine for type of forcing output and load
     file_FpCO2 = [par_pathin '/' expid1 '/biogem/biogem_series_diag_misc_inversion_forcing_FpCO2.res'];
     file_FpCO2_13C = [par_pathin '/' expid1 '/biogem/biogem_series_diag_misc_inversion_forcing_FpCO2_13C.res'];
@@ -583,11 +604,11 @@ if opt_invanalysis,
             data_FCO2_13C = data_FDIC_13C(:,3);
         end
     end
-    if (~exist(file_FpCO2, 'file') == 2) && (~exist(file_FDIC, 'file') == 2),
+    if (~exist(file_FpCO2, 'file') == 2) && (~exist(file_FDIC, 'file') == 2)
         disp(['ERROR: Diagnosed emissions forcing data does not exist.']);
         return;
     end
-    if (exist('data_FCO2','var') ~= 1),
+    if (exist('data_FCO2','var') ~= 1)
         disp(['ERROR: Non-zero cumulative diagnosed emissions do not exist.']);
         return;
     end
@@ -596,20 +617,26 @@ end
 % *** PROCESS DATA ****************************************************** %
 %
 % set length justin case ...
-n_data = length(data_pCO2(:,1));
+n_data = length(data_Tatm(:,1));
 % set time-axis
 % NOTE: correct to nearest integer
 if (axis_tmin == axis_tmax),
-    axis_tmin = int32(data_pCO2(1,1)-0.001);
-    axis_tmax = int32(data_pCO2(end,1)+0.001);
+    axis_tmin = int32(data_Tatm(1,1)-0.001);
+    axis_tmax = int32(data_Tatm(end,1)+0.001);
 end
-if opt_log10,
+if opt_log10
     axis_tmin = log10(max(1.0,axis_tmin));
     axis_tmax = log10(axis_tmax);
 end
+% set plot limits in terms of 'n'
+loc_data = data_Tatm;
+loc_terr = min(abs(loc_data(:,1) - axis_tmin));
+axis_n_min = find(abs(loc_data(:,1) - axis_tmin) == loc_terr);
+loc_terr = min(abs(loc_data(:,1) - axis_tmax));
+axis_n_max = find(abs(loc_data(:,1) - axis_tmax) == loc_terr);
 %
 % *** process CO2 inversion data ***
-if opt_invanalysis,
+if opt_invanalysis
     n = 1;
     data_FCO2_t(1) = data_FCO2(n,1);
     data_FCO2_sum(1) = data_FCO2(n,2);
@@ -674,7 +701,7 @@ if (opt_save_diagnostics)
     %
     loc_str_data = struct('name', {}, 'time', {}, 'value', {});
     %
-    loc_data = data_pCO2;
+    loc_data = data_Tatm;
     loc_terr = min(abs(loc_data(:,1) - axis_tmin));
     loc_n_min = find(abs(loc_data(:,1) - axis_tmin) == loc_terr);
     loc_terr = min(abs(loc_data(:,1) - axis_tmax));
@@ -774,7 +801,7 @@ if (opt_save_diagnostics)
     %
     % *** DATA #5 (OPTIONAL DATA #1) **************************************** %
     %
-    if (~isempty(data1) && ~opt_invanalysis),
+    if (~isempty(data1) && ~opt_invanalysis)
         loc_str = strrep(plot_data1_title,' ','_');
         loc_data = data1;
         loc_data_min = min(loc_data(loc_n_min:loc_n_max,data1_n));
@@ -799,7 +826,7 @@ if (opt_save_diagnostics)
     %
     % *** DATA #6 (OPTIONAL DATA #2) **************************************** %
     %
-    if (~isempty(data2) && ~opt_invanalysis),
+    if (~isempty(data2) && ~opt_invanalysis)
         loc_str = strrep(plot_data2_title,' ','_');
         loc_data = data2;
         loc_data_min = min(loc_data(loc_n_min:loc_n_max,data2_n));
@@ -824,7 +851,7 @@ if (opt_save_diagnostics)
     %
     % *** DATA #7 (OPTIONAL DATA #3) **************************************** %
     %
-    if (~isempty(data3) && ~opt_invanalysis),
+    if (~isempty(data3) && ~opt_invanalysis)
         loc_str = strrep(plot_data3_title,' ','_');
         loc_data = data3;
         loc_data_min = min(loc_data(loc_n_min:loc_n_max,data3_n));
@@ -854,13 +881,13 @@ if (opt_save_diagnostics)
         loc_C_SUM = 12E-15*sum(data_FCO2(loc_n_min:loc_n_max,2));
         loc_C13_AV = sum(data_FCO2(loc_n_min:loc_n_max,2).*data_FCO2_13C(loc_n_min:loc_n_max))/sum(data_FCO2(loc_n_min:loc_n_max,2));
         %
-        if (opt_rebinned),
+        if (opt_rebinned)
             loc_n_min = 1;
             loc_n_max = length(binctrs_FCO2);
         end
         %
         loc_str = 'dFCO2dt';
-        if (opt_rebinned),
+        if (opt_rebinned)
             loc_data = bindata_FCO2_dF;
             loc_data_t = binctrs_FCO2;
         else
@@ -887,7 +914,7 @@ if (opt_save_diagnostics)
         loc_str_data = setfield(loc_str_data, {20}, 'value', loc_data_max);
         %
         loc_str = 'FCO2_13C';
-        if (opt_rebinned),
+        if (opt_rebinned)
             loc_data = bindata_FCO2_13C;
             loc_data_t = binctrs_FCO2;
         else
@@ -923,9 +950,9 @@ if (opt_save_diagnostics)
     %
     % *** SAVE DATA ********************************************************* %
     %
-    if (par_mutlab >= 2014),
+    if (par_mutlab >= 2014)
         loc_table = struct2table(loc_str_data);
-        if ~isempty(altfilename),
+        if ~isempty(altfilename)
             writetable(loc_table,[par_pathout '/' altfilename '.txt'],'Delimiter',' ');
         else
             writetable(loc_table,[par_pathout '/' str_filename '.txt'],'Delimiter',' ');
@@ -953,6 +980,7 @@ end
 % create figure
 scrsz = get(0,'ScreenSize');
 figure('Position',[((1.0-plot_dscrsz)/2)*plot_dscrsz*scrsz(3) ((1.0-plot_dscrsz)/2)*plot_dscrsz*scrsz(4) 0.50*plot_dscrsz*scrsz(3) 0.90*plot_dscrsz*scrsz(4)]);
+if (par_mutlab > 2015), hfig.Renderer='Painters'; end
 clf;
 % define plotting regions
 fh(1) = axes('Position',[0 0 1 1],'Visible','off');
@@ -977,7 +1005,7 @@ fh(9) = axes('Position',[0.00 0.90 loc_dx*0.70 0.10],'Visible','off');
 % date-stamp plot
 set(gcf,'CurrentAxes',fh(1));
 text(0.95,0.50,[str_function, ' : ', strrep(expid1,'_',' '), ' : ', str_date],'FontName','Arial','FontSize',10,'Rotation',90.0,'HorizontalAlignment','center','VerticalAlignment','top');
-%
+% add title
 set(gcf,'CurrentAxes',fh(9));
 if ~isempty(plot_title)
     str_title = plot_title;
@@ -990,7 +1018,7 @@ else
     str_title_sze = 12;
 end
 text(0.15,0.25,str_title,'FontName','Arial','FontSize',str_title_sze);
-%
+% set units
 switch plot_tunits
     case 'kyr'
         str_tunits = 'kyr';
@@ -1009,7 +1037,7 @@ data_pCO2(:,1)     = plot_toffset + plot_tdir*data_pCO2(:,1);
 data_pCO2_13C(:,1) = plot_toffset + plot_tdir*data_pCO2_13C(:,1);
 % create plot on first y-axis
 % set axes
-if (axis_pCO2min == axis_pCO2max),
+if (axis_pCO2min == axis_pCO2max)
     axis_pCO2min = 1.0E6*min(data_pCO2(:,3));
     axis_pCO2max = 1.0E6*max(data_pCO2(:,3));
 end
@@ -1019,10 +1047,12 @@ if (axis_pCO2min == axis_pCO2max)
     axis_pCO2max = (1.0 + sign(axis_pCO2min)/1000.0)*axis_pCO2max;
 end
 %
-if opt_log10,
-    hl1 = line(log10(data_pCO2(:,1)),1.0E6*data_pCO2(:,3),'Color','r','LineWidth',1.0);
-else
-    hl1 = line(data_pCO2(:,1),1.0E6*data_pCO2(:,3),'Color','r','LineWidth',1.0);
+if (~flag_noCO2)
+    if opt_log10
+        hl1 = line(log10(data_pCO2(:,1)),1.0E6*data_pCO2(:,3),'Color','r','LineWidth',1.0);
+    else
+        hl1 = line(data_pCO2(:,1),1.0E6*data_pCO2(:,3),'Color','r','LineWidth',1.0);
+    end
 end
 ax1 = gca;
 set(ax1,'XColor','k','TickDir','out','XTickLabel','');
@@ -1032,7 +1062,7 @@ set(ax1,'YLim',[axis_pCO2min, axis_pCO2max]);
 set(ax1,'YLabel',text('String',['pCO_{2} (\muatm)'],'FontSize',10));
 % create 2nd y-axis
 % set axes
-if (axis_d13Cmin == axis_d13Cmax),
+if (axis_d13Cmin == axis_d13Cmax)
     axis_d13Cmin = min(data_pCO2_13C(:,3));
     axis_d13Cmax = max(data_pCO2_13C(:,3));
 end
@@ -1043,10 +1073,12 @@ if (axis_d13Cmin == axis_d13Cmax)
 end
 %
 ax2 = axes('Position',get(ax1,'Position'),'Color','none','YAxisLocation','right','YColor','b');
-if opt_log10,
-    hl2 = line(log10(data_pCO2_13C(:,1)),data_pCO2_13C(:,3),'Color','b','LineWidth',1.0,'Parent',ax2);
-else
-    hl2 = line(data_pCO2_13C(:,1),data_pCO2_13C(:,3),'Color','b','LineWidth',1.0,'Parent',ax2);
+if (~flag_no13CO2)
+    if opt_log10
+        hl2 = line(log10(data_pCO2_13C(:,1)),data_pCO2_13C(:,3),'Color','b','LineWidth',1.0,'Parent',ax2);
+    else
+        hl2 = line(data_pCO2_13C(:,1),data_pCO2_13C(:,3),'Color','b','LineWidth',1.0,'Parent',ax2);
+    end
 end
 set(ax2,'XAxisLocation','bottom','XColor','k','XTick',[],'XTickLabel','');
 set(ax2,'XLim',[axis_tmin axis_tmax]);
@@ -1062,7 +1094,7 @@ data_Tatm(:,1)   = plot_toffset + plot_tdir*data_Tatm(:,1);
 data_seaice(:,1) = plot_toffset + plot_tdir*data_seaice(:,1);
 % create plot on first y-axis
 % set axes
-if (axis_Tatmmin == axis_Tatmmax),
+if (axis_Tatmmin == axis_Tatmmax)
     axis_Tatmmin = min(data_Tatm(:,2));
     axis_Tatmmax = max(data_Tatm(:,2));
 end
@@ -1072,7 +1104,7 @@ if (axis_Tatmmin == axis_Tatmmax)
     axis_Tatmmax = (1.0 + sign(axis_Tatmmax)/1000.0)*axis_Tatmmax;
 end
 %
-if opt_log10,
+if opt_log10
     hl1 = line(log10(data_Tatm(:,1)),data_Tatm(:,2),'Color','r','LineWidth',1.0);
 else
     hl1 = line(data_Tatm(:,1),data_Tatm(:,2),'Color','r','LineWidth',1.0);
@@ -1084,7 +1116,7 @@ set(ax1,'YColor','r','TickDir','out');
 set(ax1,'YLim',[axis_Tatmmin axis_Tatmmax]);
 set(ax1,'YLabel',text('String',['T_{atm} (' char(176) 'C)'],'FontSize',10));
 % create 2nd y-axis
-if (axis_icemin == axis_icemax),
+if (axis_icemin == axis_icemax)
     axis_icemin = min(data_seaice(:,3));
     axis_icemax = max(data_seaice(:,3));
 end
@@ -1095,7 +1127,7 @@ if (axis_icemin == axis_icemax)
 end
 % set 2nd axes
 ax2 = axes('Position',get(ax1,'Position'),'Color','none','YAxisLocation','right','YColor','b');
-if opt_log10,
+if opt_log10
     hl2 = line(log10(data_seaice(:,1)),data_seaice(:,3),'Color','b','LineWidth',1.0,'Parent',ax2);
 else
     hl2 = line(data_seaice(:,1),data_seaice(:,3),'Color','b','LineWidth',1.0,'Parent',ax2);
@@ -1106,7 +1138,7 @@ set(ax2,'YLabel',text('String',['Seaice (%)'],'FontSize',10));
 if (isempty(data1) && ~opt_invanalysis)
     set(ax2,'XAxisLocation','bottom','XColor','k','TickDir','out','XTickLabelMode','auto');
     set(ax2,'XLim',[axis_tmin axis_tmax]);
-    if opt_log10,
+    if opt_log10
         set(ax2,'XLabel',text('String',['log_{10}(time) (' str_tunits ')'],'FontSize',15));
     else
         set(ax2,'XLabel',text('String',['time (' str_tunits ')'],'FontSize',15));
@@ -1125,9 +1157,10 @@ if (~isempty(data1))
     set(gcf,'CurrentAxes',fh(5));
     hold on;
     % set axes limits
-    if (axis_data1_min >= axis_data1_max),
-        axis_data1_min = min(data1(:,data1_n));
-        axis_data1_max = max(data1(:,data1_n));
+    % NOTE: auto-scale only within the requested plotting limits
+    if (axis_data1_min >= axis_data1_max)
+        axis_data1_min = min(data1(axis_n_min:axis_n_max,data1_n));
+        axis_data1_max = max(data1(axis_n_min:axis_n_max,data1_n));
     end
     %     if (axis_data1_min >= axis_data1_max), disp(['ERROR: Failed to autoscale data1 ... ']); return; end
     if (axis_data1_min == axis_data1_max)
@@ -1135,7 +1168,7 @@ if (~isempty(data1))
         axis_data1_max = (1.0 + sign(axis_data1_max)/1000.0)*axis_data1_max;
     end
     % plot data
-    if opt_log10,
+    if opt_log10
         hl1 = line(log10(data1(:,1)),data1(:,data1_n),'Color','k','LineWidth',1.0);
         if (opt_plotpoints), hp1 = scatter(log10(data1(:,1)),data1(:,data1_n),'o','Filled','Sizedata',plot_datasize,'MarkerFaceColor','y','MarkerEdgeColor','k'); end
         if (~isempty(overlaydata1_file)), hp1 = scatter(log10(overlaydata1(:,1)),overlaydata1(:,2),'o','Filled','Sizedata',plot_datasize,'MarkerFaceColor','y','MarkerEdgeColor','k'); end
@@ -1152,27 +1185,27 @@ elseif(opt_invanalysis)
     set(gcf,'CurrentAxes',fh(5));
     hold on;
     % set axes limits
-    if (axis_data1_min >= axis_data1_max),
+    if (axis_data1_min >= axis_data1_max)
         axis_data1_min = min(data_FCO2_dF(:));
         axis_data1_max = max(data_FCO2_dF(:));
     end
     if (axis_data1_min >= axis_data1_max), disp(['ERROR: Failed to autoscale data1 ... ']); return; end
     % create plot on first y-axis
-    if (opt_rebinned),
-        hl1 = bar(binctrs_FCO2(:),bindata_FCO2_dF(:),1.0,'EdgeColor','k','FaceColor','none');        
+    if (opt_rebinned)
+        hl1 = bar(binctrs_FCO2(:),bindata_FCO2_dF(:),1.0,'EdgeColor','k','FaceColor','none');
     else
         hl1 = bar(data_FCO2_t(:),data_FCO2_dF(:),1.0,'hist');
     end
     delete(findobj('marker','*'))
 end
 % AXES
-if (~isempty(data1) || opt_invanalysis),
+if (~isempty(data1) || opt_invanalysis)
     ax1 = gca;
     % create and label y-axis
     set(ax1,'YColor','k','TickDir','out');
     set(ax1,'YLim',[axis_data1_min axis_data1_max]);
-    if (~isempty(data1)),
-        if (isempty(plot_data1_title)),
+    if (~isempty(data1))
+        if (isempty(plot_data1_title))
             plot_data1_title = data1_name;
             plot_data1_title(find(plot_data1_title(:)=='_')) = '.';
             set(ax1,'YLabel',text('String',[plot_data1_title ' (' plot_data1_units ')'],'FontSize',10));
@@ -1183,10 +1216,10 @@ if (~isempty(data1) || opt_invanalysis),
         set(ax1,'YLabel',text('String','Emissions (PgC yr^{-1})','FontSize',10));
     end
     % create and label x-axis depending on number of panels
-    if (isempty(data2) && ~opt_invanalysis),
+    if (isempty(data2) && ~opt_invanalysis)
         set(ax1,'XColor','k','TickDir','out','XTickLabelMode','auto');
         set(ax1,'XLim',[axis_tmin axis_tmax]);
-        if opt_log10,
+        if opt_log10
             set(ax1,'XLabel',text('String',['log_{10}(time) (' str_tunits ')'],'FontSize',15));
         else
             set(ax1,'XLabel',text('String',['time (' str_tunits ')'],'FontSize',15));
@@ -1206,17 +1239,18 @@ if (~isempty(data2))
     set(gcf,'CurrentAxes',fh(4));
     hold on;
     % set axes limits
-    if (axis_data2_min >= axis_data2_max),
-        axis_data2_min = min(data2(:,data2_n));
-        axis_data2_max = max(data2(:,data2_n));
+    % NOTE: auto-scale only within the requested plotting limits
+    if (axis_data2_min >= axis_data2_max)
+        axis_data2_min = min(data2(axis_n_min:axis_n_max,data2_n));
+        axis_data2_max = max(data2(axis_n_min:axis_n_max,data2_n));
     end
-%     if (axis_data2_min >= axis_data2_max), disp(['ERROR: Failed to autoscale data2 ... ']); return; end
+    %     if (axis_data2_min >= axis_data2_max), disp(['ERROR: Failed to autoscale data2 ... ']); return; end
     if (axis_data2_min == axis_data2_max)
         axis_data2_min = (1.0 - sign(axis_data2_min)/1000.0)*axis_data2_min;
         axis_data2_max = (1.0 + sign(axis_data2_max)/1000.0)*axis_data2_max;
     end
     % plot data
-    if opt_log10,
+    if opt_log10
         hl1 = line(log10(data2(:,1)),data2(:,data2_n),'Color','k','LineWidth',1.0);
         if (opt_plotpoints), hp1 = scatter(log10(data2(:,1)),data2(:,data2_n),'o','Filled','Sizedata',plot_datasize,'MarkerFaceColor','y','MarkerEdgeColor','k'); end
         if (~isempty(overlaydata2_file)), hp1 = scatter(log10(overlaydata2(:,1)),overlaydata2(:,2),'o','Filled','Sizedata',plot_datasize,'MarkerFaceColor','y','MarkerEdgeColor','k'); end
@@ -1232,13 +1266,13 @@ elseif(opt_invanalysis)
     set(gcf,'CurrentAxes',fh(4));
     hold on;
     % set axes limits
-    if (axis_data2_min >= axis_data2_max),
+    if (axis_data2_min >= axis_data2_max)
         axis_data2_min = min(data_FCO2_sum(:));
         axis_data2_max = max(data_FCO2_sum(:));
     end
     if (axis_data2_min >= axis_data2_max), disp(['ERROR: Failed to autoscale data2 ... ']); return; end
     % create plot on first y-axis
-    if (opt_rebinned),
+    if (opt_rebinned)
         hl1 = bar(binctrs_FCO2(:),bindata_FCO2_sum(:),1.0,'EdgeColor','k','FaceColor','none');
     else
         hl1 = bar(data_FCO2_t(:),data_FCO2_sum(:),1.0,'hist');
@@ -1247,7 +1281,7 @@ elseif(opt_invanalysis)
     delete(findobj('marker','*'))
 end
 % AXES
-if (~isempty(data2) || opt_invanalysis),
+if (~isempty(data2) || opt_invanalysis)
     ax1 = gca;
     set(ax1,'XLim',[axis_tmin axis_tmax]);
     set(ax1,'XColor','k','XTick',[]);
@@ -1258,8 +1292,8 @@ if (~isempty(data2) || opt_invanalysis),
     % create and label y-axis
     set(ax2,'YColor','k','TickDir','out','YTickLabelMode','auto');
     set(ax2,'YLim',[axis_data2_min axis_data2_max]);
-    if (~isempty(data2)),
-        if (isempty(plot_data2_title)),
+    if (~isempty(data2))
+        if (isempty(plot_data2_title))
             plot_data2_title = data2_name;
             plot_data2_title(find(plot_data2_title(:)=='_')) = '.';
             set(ax2,'YLabel',text('String',[plot_data2_title ' (' plot_data2_units ')'],'FontSize',10));
@@ -1270,10 +1304,10 @@ if (~isempty(data2) || opt_invanalysis),
         set(ax2,'YLabel',text('String','\Sigma(emissions) (PgC)','FontSize',10));
     end
     % create and label x-axis depending on number of panels
-    if (isempty(data3) && ~opt_invanalysis),
+    if (isempty(data3) && ~opt_invanalysis)
         set(ax2,'XColor','k','TickDir','out','XTickLabelMode','auto');
         set(ax2,'XLim',[axis_tmin axis_tmax]);
-        if opt_log10,
+        if opt_log10
             set(ax2,'XLabel',text('String',['log_{10}(time) (' str_tunits ')'],'FontSize',15));
         else
             set(ax2,'XLabel',text('String',['time (' str_tunits ')'],'FontSize',15));
@@ -1293,17 +1327,18 @@ if (~isempty(data3))
     set(gcf,'CurrentAxes',fh(3));
     hold on;
     % set axes limits
-    if (axis_data3_min >= axis_data3_max),
-        axis_data3_min = min(data3(:,data3_n));
-        axis_data3_max = max(data3(:,data3_n));
+    % NOTE: auto-scale only within the requested plotting limits
+    if (axis_data3_min >= axis_data3_max)
+        axis_data3_min = min(data3(axis_n_min:axis_n_max,data3_n));
+        axis_data3_max = max(data3(axis_n_min:axis_n_max,data3_n));
     end
-%     if (axis_data3_min >= axis_data3_max), disp(['ERROR: Failed to autoscale data3 ... ']); return; end
+    %     if (axis_data3_min >= axis_data3_max), disp(['ERROR: Failed to autoscale data3 ... ']); return; end
     if (axis_data3_min == axis_data3_max)
         axis_data3_min = (1.0 - sign(axis_data3_min)/1000.0)*axis_data3_min;
         axis_data3_max = (1.0 + sign(axis_data3_max)/1000.0)*axis_data3_max;
     end
     % plot data
-    if opt_log10,
+    if opt_log10
         hl1 = line(log10(data3(:,1)),data3(:,data3_n),'Color','k','LineWidth',1.0);
         if (opt_plotpoints), hp1 = scatter(log10(data3(:,1)),data3(:,data3_n),'o','Filled','Sizedata',plot_datasize,'MarkerFaceColor','y','MarkerEdgeColor','k'); end
         if (~isempty(overlaydata3_file)), hp1 = scatter(log10(overlaydata3(:,1)),overlaydata3(:,2),'o','Filled','Sizedata',plot_datasize,'MarkerFaceColor','y','MarkerEdgeColor','k'); end
@@ -1319,7 +1354,7 @@ elseif(opt_invanalysis)
     set(gcf,'CurrentAxes',fh(3));
     hold on;
     % set axes limits
-    if (axis_data3_min >= axis_data3_max),
+    if (axis_data3_min >= axis_data3_max)
         axis_data3_min = max(-100,min(data_FCO2_13C(:)));
         axis_data3_max = min(100,max(data_FCO2_13C(:)));
         loc_lim = max(abs(axis_data3_min),abs(axis_data3_max));
@@ -1328,7 +1363,7 @@ elseif(opt_invanalysis)
     end
     if (axis_data3_min >= axis_data3_max), disp(['ERROR: Failed to autoscale data3 ... ']); return; end
     % create plot on first y-axis
-    if (opt_rebinned),
+    if (opt_rebinned)
         hl1 = bar(binctrs_FCO2(:),bindata_FCO2_13C(:),1.0,'EdgeColor','k','FaceColor','none');
     else
         hl1 = bar(data_FCO2_t(:),data_FCO2_13C(:),1.0,'hist');
@@ -1336,13 +1371,13 @@ elseif(opt_invanalysis)
     delete(findobj('marker','*'))
 end
 % AXES
-if (~isempty(data3) || opt_invanalysis),
+if (~isempty(data3) || opt_invanalysis)
     ax1 = gca;
     % create and label y-axis
     set(ax1,'YColor','k','TickDir','out');
     set(ax1,'YLim',[axis_data3_min axis_data3_max]);
-    if (~isempty(data3)),
-        if (isempty(plot_data3_title)),
+    if (~isempty(data3))
+        if (isempty(plot_data3_title))
             plot_data3_title = data3_name;
             plot_data3_title(find(plot_data3_title(:)=='_')) = '.';
             set(ax1,'YLabel',text('String',[plot_data3_title ' (' plot_data3_units ')'],'FontSize',10));
@@ -1355,7 +1390,7 @@ if (~isempty(data3) || opt_invanalysis),
     % create and label x-axis
     set(ax1,'XColor','k','TickDir','out','XTickLabelMode','auto');
     set(ax1,'XLim',[axis_tmin axis_tmax]);
-    if opt_log10,
+    if opt_log10
         set(ax1,'XLabel',text('String',['log_{10}(time) (' str_tunits ')'],'FontSize',15));
     else
         set(ax1,'XLabel',text('String',['time (' str_tunits ')'],'FontSize',15));
@@ -1373,7 +1408,12 @@ if opt_log10, str_filename = [str_filename '.' 'LOG10']; end
 if (~isempty(expid2)), str_filename = [str_filename '.' 'ANOM']; end
 str_filename = [str_filename '.' str_date];
 if (plot_format_old == 'y')
-    print('-dpsc2', [par_pathout '/' str_filename, '.ps']);
+    %%%print('-dpsc2', [par_pathout '/' str_filename, '.ps']);
+    if (par_mutlab > 2015)
+        print('-dpsc2', '-bestfit', [par_pathout '/' str_filename '.ps']);
+    else
+        print('-dpsc2', [par_pathout '/' str_filename '.ps']);
+    end
 else
     switch plot_format
         case 'png'
@@ -1446,6 +1486,12 @@ end
 % *** END *************************************************************** %
 % *********************************************************************** %
 %
-%%%close all;
+% *** clean up ****************************************************** %
+%
+% (optional) remove unpacked dir
+if loc_flag_unpack
+    disp(['    REMOVE DIR']);
+    rmdir([data_dir],'s');
+end
 %
 % *********************************************************************** %
