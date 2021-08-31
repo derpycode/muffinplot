@@ -239,6 +239,10 @@ function [OUTPUT] = plot_fields_sedgem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,PM
 %             *** VERSION 1.55 ********************************************
 %   21/08/2: added (back?) default vector_1
 %             *** VERSION 1.57 ********************************************
+%   21/08/27: added detection of archive files (+ unpacking then cleaning)
+%             *** VERSION 1.58 ********************************************
+%   21/08/31: added sum to returned structure, renoved NaNs from vector
+%             *** VERSION 1.59 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -250,7 +254,7 @@ function [OUTPUT] = plot_fields_sedgem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,PM
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.57;
+par_ver = 1.59;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -453,6 +457,27 @@ data_2=[];
 if strcmp(exp_1(end-2:end),'.nc'),
     ncid_1=netcdf.open(exp_1,'nowrite');
 else
+    % test for experiment
+    data_dir = [par_pathin '/' exp_1];
+    if (exist(data_dir, 'dir') == 0)
+        disp(['ERROR: Experiment cannot be found.']);
+        if (exist(par_pathin, 'dir') == 0)
+            disp(['INFO: Path: ' par_pathin ' cannot be found.']);
+        else
+            disp(['INFO: Path: ' par_pathin ' exists.']);
+            disp(['INFO: Experiment name: ' exp_1 ' cannot be found.']);
+        end
+        if (exist([data_dir '.tar.gz'],'file'))
+            disp(['INFO: Archive: ' [data_dir '.tar.gz'] ' exists.']);
+            disp([' * UN-PACKING ...']);
+            untar([data_dir '.tar.gz'],par_pathin);
+            loc_flag_unpack = true;
+        else
+            return;
+        end
+    else
+        loc_flag_unpack = false;
+    end
     ncid_1=netcdf.open([par_pathin '/' exp_1 '/sedgem/fields_sedgem_2d.nc'],'nowrite');
 end
 % read netCDf information
@@ -1457,7 +1482,11 @@ if (data_output_old == 'y')
 else
     % basic stats
     % NOTE: use data_vector_1 which is the full grid data
+    % NOTE: remove NaNs first
+    data_vector_1(find(isnan(data_vector_1))) = [];
     output = datastats(reshape(data_vector_1,[],1));
+    % add sum
+    output.sum  = sum(data_vector_1);
     % add old min,max
     output.data_min   = min(reshape(zm,[],1));
     output.data_max   = max(reshape(zm,[],1));
@@ -1489,6 +1518,14 @@ end
 netcdf.close(ncid_1);
 if ~isempty(exp_2)
     netcdf.close(ncid_2);
+end
+%
+% *** clean up ****************************************************** %
+%
+% (optional) remove unpacked dir
+if loc_flag_unpack
+    disp(['    REMOVE DIR']);
+    rmdir([data_dir],'s');
 end
 %
 % *********************************************************************** %
