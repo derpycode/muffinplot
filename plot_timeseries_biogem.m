@@ -280,7 +280,7 @@ str_function = strrep(str_function,'_','-');
 % *** LOAD DATA ********************************************************* %
 % *********************************************************************** %
 %
-% test for relevant directories
+% test for experiment
 data_dir = [par_pathin '/' expid1];
 if (exist(data_dir, 'dir') == 0)
     disp(['ERROR: Experiment cannot be found.']);
