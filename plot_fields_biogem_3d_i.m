@@ -313,6 +313,8 @@ function [OUTPUT] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 %             *** VERSION 1.58 ********************************************
 %   21/08/31: added sum to returned structure, renoved NaNs from vector
 %             *** VERSION 1.59 ********************************************
+%   22/01/19: added loc_flag_unpack = false for data (not GENIE) netCDF 
+%             *** VERSION 1.60 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -324,7 +326,7 @@ function [OUTPUT] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.59;
+par_ver = 1.60;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -545,8 +547,9 @@ data_2=[];
 %
 % open netCDF file -- test for 'experiment format' or not
 % NOTE: other format is indicated by '.nc' extension as experiment ID
-if strcmp(exp_1(end-2:end),'.nc'),
+if strcmp(exp_1(end-2:end),'.nc')
     ncid_1=netcdf.open(exp_1,'nowrite');
+    loc_flag_unpack = false;
 else
     % test for experiment
     data_dir = [par_pathin '/' exp_1];
