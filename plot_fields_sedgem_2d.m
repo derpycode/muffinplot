@@ -1036,22 +1036,24 @@ end
 % *** SAVE EQUIVALENT MODEL DATA **************************************** %
 %
 % save model data at the data locations
-if (~isempty(overlaydataid) && (data_only == 'n'))
-    fid = fopen([par_pathout '/' filename '_MODELDATAPOINTS', '.', str_date '.dat'], 'wt');
-    fprintf(fid, '%% Model value at data locations');
-    fprintf(fid, '\n');
-    if (data_ijk == 'y'),
-        fprintf(fid, '%% Format: i, j, model lon, model lat, model value, data value, data label');
-    elseif (data_ijk_mean == 'y')
-        fprintf(fid, '%% Format: i, j, model lon, model lat, model value, re-gridded data value, (no data label)');
-    else
-        fprintf(fid, '%% Format: i, j, data lon, data lat, model value, data value, data label');
+if (data_save == 'y'),
+    if (~isempty(overlaydataid) && (data_only == 'n'))
+        fid = fopen([par_pathout '/' filename '_MODELDATAPOINTS', '.', str_date '.dat'], 'wt');
+        fprintf(fid, '%% Model value at data locations');
+        fprintf(fid, '\n');
+        if (data_ijk == 'y'),
+            fprintf(fid, '%% Format: i, j, model lon, model lat, model value, data value, data label');
+        elseif (data_ijk_mean == 'y')
+            fprintf(fid, '%% Format: i, j, model lon, model lat, model value, re-gridded data value, (no data label)');
+        else
+            fprintf(fid, '%% Format: i, j, data lon, data lat, model value, data value, data label');
+        end
+        fprintf(fid, '\n');
+        for n = 1:nmax,
+            fprintf(fid, '%d %d %8.3f %8.3f %8.6e %8.6e %s \n', int16(overlaydata_ij(n,1)), int16(overlaydata_ij(n,2)), overlaydata(n,1), 180.0*asin(overlaydata(n,2))/pi, data_vector_2(n), data_vector_1(n), overlaylabel(n,:));
+        end
+        fclose(fid);
     end
-    fprintf(fid, '\n');
-    for n = 1:nmax,
-        fprintf(fid, '%d %d %8.3f %8.3f %8.6e %8.6e %s \n', int16(overlaydata_ij(n,1)), int16(overlaydata_ij(n,2)), overlaydata(n,1), 180.0*asin(overlaydata(n,2))/pi, data_vector_2(n), data_vector_1(n), overlaylabel(n,:));
-    end
-    fclose(fid);
 end
 %
 % *********************************************************************** %
@@ -1176,188 +1178,179 @@ end
 %
 % *** CREATE MAIN PLOT ************************************************** %
 %
-set(gcf,'CurrentAxes',fh(2));
-hold on;
-% set color and lat/lon axes and labels
-caxis([con_min-(con_max-con_min)/con_n con_max]);
-set(gca,'PlotBoxAspectRatio',[1.0 plot_xy_scaling*0.5 1.0]);
-axis([lon_min lon_max lat_min lat_max]);
-if plot_global,
-    axis([lon_min lon_max lat_min lat_max]);
-    set(gca,'XLabel',text('String','Longitude','FontSize',15),'XTick',[lon_min:plot_lon_delta:lon_max]);
-    if (plot_equallat == 'n'),
-        set(gca,'YLabel',text('String','Latitude','FontSize',15),'YTick',[-1 -0.866 -0.5 0 0.5 0.866 1], 'YTickLabel',{'-90';'-60';'-30';'0';'30';'60';'90'});
-    else
-        set(gca,'YLabel',text('String','Latitude','FontSize',15),'YTick',[-90.0 -60.0 -30.0 0 30.0 60.0 90.0], 'YTickLabel',{'-90';'-60';'-30';'0';'30';'60';'90'});
-    end
-else
-    axis([plot_lon_min plot_lon_max plot_lat_min plot_lat_max]);
-    set(gca,'XLabel',text('String','Longitude','FontSize',15),'XTick',[plot_lon_min plot_lon_max]);
-    if (plot_equallat == 'n'),
-        set(gca,'YLabel',text('String','Latitude','FontSize',15),'YTick',[plot_lat_min plot_lat_max], 'YTickLabel',{num2str(180*asin(plot_lat_min)/pi);num2str(180*asin(plot_lat_max)/pi)});
-    else
-        set(gca,'YLabel',text('String','Latitude','FontSize',15),'YTick',[plot_lat_min plot_lat_max], 'YTickLabel',{num2str(plot_lat_min);num2str(plot_lat_max)});
-    end
-end
-set(gca,'TickDir','out');
-if isempty(plot_title)
-    plot_title = ['Data ID: ',strrep(dataid_1,'_',' ')];
-    plot_title(find(plot_title(:)=='_')) = '-';
-end
-title(plot_title,'FontSize',12);
-% draw filled rectangles
-for i = 1:imax,
-    for j = 1:jmax,
-        if topo(j,i) > layb(j,i)
-            h = patch([lonw(j,i) lonw(j,i) lone(j,i) lone(j,i)],[lats(j,i) latn(j,i) latn(j,i) lats(j,i)],color_g);
-            set(h,'EdgeColor',color_g);
-        else
-            if (isnan(zm(j,i)))
-                if exist('data_nancolor')
-                    h = patch([lonw(j,i) lonw(j,i) lone(j,i) lone(j,i)],[lats(j,i) latn(j,i) latn(j,i) lats(j,i)],data_nancolor);
-                    set(h,'EdgeColor',data_nancolor);
-                else
-                    h = patch([lonw(j,i) lonw(j,i) lone(j,i) lone(j,i)],[lats(j,i) latn(j,i) latn(j,i) lats(j,i)],[1 1 1]);
-                    set(h,'EdgeColor',[1 1 1]);
-                end
-            else
-                col = 1 + round(0.5+con_n*(zm(j,i)-con_min)/(con_max-con_min));
-                if col < 1, col = 1; end
-                if col > con_n+2, col = con_n+2; end
-                h = patch([lonw(j,i) lonw(j,i) lone(j,i) lone(j,i)],[lats(j,i) latn(j,i) latn(j,i) lats(j,i)],cmap(col,:));
-                set(h,'EdgeColor',cmap(col,:));
-            end
-        end
-    end
-end
-%
-% *** PLOT CONTINENTAL OUTLINE ****************************************** %
-%
-% draw continental outline
-for j = 1:jmax,
-    for i = 1:imax-1,
-        if topo(j,i) > layb(j,i)
-            if topo(j,i+1) <= layb(j,i+1)
-                h = plot([lone(j,i) lone(j,i)],[lats(j,i) latn(j,i)],'k-');
-                set(h,'LineWidth',1.0);
-            end
-        end
-    end
-    for i = 2:imax,
-        if topo(j,i) > layb(j,i)
-            if topo(j,i-1) <= layb(j,i-1)
-                h = plot([lonw(j,i) lonw(j,i)],[lats(j,i) latn(j,i)],'k-');
-                set(h,'LineWidth',1.0);
-            end
-        end
-    end
-end
-for i = 1:imax,
-    for j = 1:jmax-1,
-        if topo(j,i) > layb(j,i)
-            if topo(j+1,i) <= layb(j+1,i)
-                h = plot([lonw(j,i) lone(j,i)],[latn(j,i) latn(j,i)],'k-');
-                set(h,'LineWidth',1.0);
-            end
-        end
-    end
-    for j = 2:jmax,
-        if topo(j,i) > layb(j,i)
-            if topo(j-1,i) <= layb(j-1,i)
-                h = plot([lonw(j,i) lone(j,i)],[lats(j,i) lats(j,i)],'k-');
-                set(h,'LineWidth',1.0);
-            end
-        end
-    end
-end
-%
-% *** OVERLAY CONTOURS ************************************************** %
-%
-% plot contours
-if (contour_plot == 'y') && (data_only == 'n'),
-    v = [con_min:(con_max-con_min)/(con_n/contour_mod):con_max];
-    [C,h] = contour(xm_ex,sin(pi*ym_ex/180.0),zm_ex,v,'k-');
-    set(h,'LineWidth',0.25);
-    v = [con_min:(con_max-con_min)/(con_n/contour_mod_label):con_max];
-    [C,h] = contour(xm_ex,sin(pi*ym_ex/180.0),zm_ex,v,'k');
-    set(h,'LineWidth',0.5);
-    if data_log10 == 'y'
-        %%%%%%%%
-    elseif contour_label == 'y'
-        clabel(C,h);
-    end
-end
-%
-% *** OVERLAY DATA ****************************************************** %
-%
-if ~isempty(overlaydataid)
-    % set uniform marker shape and color
-    if (data_shapecol == 'n'),
-        for n = 1:nmax,
-            overlaydata_shape(n) = 'o';
-            overlaydata_fcol(n) = data_sitecolor;
-            if exist('data_linecolor')
-                overlaydata_ecol(n) = data_linecolor;
-            else
-                overlaydata_ecol(n) = data_sitecolor;
-            end
-        end
-    end
-    % plot overlay data
-    if (data_siteonly == 'n')
-        scatter(overlaydata(:,1),overlaydata(:,2),4,overlaydata(:,3)/data_scale,overlaydata_shape(n),'Filled','LineWidth',data_sitelineth,'Sizedata',data_size,'MarkerEdgeColor',overlaydata_ecol(n));
-    else
-        if (overlaydata_fcol(n) == '-'),
-            scatter(overlaydata(:,1),overlaydata(:,2),4,overlaydata_shape(n),'LineWidth',data_sitelineth,'Sizedata',data_size,'MarkerEdgeColor',overlaydata_ecol(n));
-        else
-            scatter(overlaydata(:,1),overlaydata(:,2),4,overlaydata_shape(n),'LineWidth',data_sitelineth,'Sizedata',data_size,'MarkerEdgeColor',overlaydata_ecol(n),'MarkerFaceColor',overlaydata_fcol(n));
-        end
-    end
-    if (data_sitelabel == 'y'),
-        text(overlaydata(:,1)+(data_size/30),overlaydata(:,2)+(data_size/1200),overlaylabel(:,:),'FontSize',data_fontsz,'Color',data_sitecolor);    
-    end
-end
-%
-% *** PLOT BORDER ******************************************************* %
-%
-% draw plot border
-h = plot([lon_min lon_max],[lat_min lat_min],'k-');
-set(h,'LineWidth',1.0);
-h = plot([lon_min lon_max],[lat_max lat_max],'k-');
-set(h,'LineWidth',1.0);
-h = plot([lon_min lon_min],[lat_min lat_max],'k-');
-set(h,'LineWidth',1.0);
-h = plot([lon_max lon_max],[lat_min lat_max],'k-');
-set(h,'LineWidth',1.0);
-%
-hold off;
-%
-% *** CREATE COLOR BAR ************************************************** %
-%
-if (~((data_only == 'y') && (data_siteonly == 'y')))
+if (plot_main == 'y')
     %
-    set(gcf,'CurrentAxes',fh(3));
+    % *** CONFIGURE AND CREATE PLOTTING WINDOW ************************** %
+    %
+    set(gcf,'CurrentAxes',fh(2));
     hold on;
-    %
-    set(gca,'XTick',[],'YTick',[]);
-    axis([0 1 0 con_n+2]);
-    % draw and label color bar rectangles
-    % draw and label start triangle
-    c = 1;
-    h = fill([0.1 0.2 0.3],[c c-1.0 c],cmap(c,:));
-    if isempty(contour_file),
-        str = [num2str(con_min + (c-1)*(con_max-con_min)/con_n)];
+    % set color and lat/lon axes and labels
+    caxis([con_min-(con_max-con_min)/con_n con_max]);
+    set(gca,'PlotBoxAspectRatio',[1.0 plot_xy_scaling*0.5 1.0]);
+    axis([lon_min lon_max lat_min lat_max]);
+    if plot_global,
+        axis([lon_min lon_max lat_min lat_max]);
+        set(gca,'XLabel',text('String','Longitude','FontSize',15),'XTick',[lon_min:plot_lon_delta:lon_max]);
+        if (plot_equallat == 'n'),
+            set(gca,'YLabel',text('String','Latitude','FontSize',15),'YTick',[-1 -0.866 -0.5 0 0.5 0.866 1], 'YTickLabel',{'-90';'-60';'-30';'0';'30';'60';'90'});
+        else
+            set(gca,'YLabel',text('String','Latitude','FontSize',15),'YTick',[-90.0 -60.0 -30.0 0 30.0 60.0 90.0], 'YTickLabel',{'-90';'-60';'-30';'0';'30';'60';'90'});
+        end
     else
-        str = num2str(contour_data(c));
+        axis([plot_lon_min plot_lon_max plot_lat_min plot_lat_max]);
+        set(gca,'XLabel',text('String','Longitude','FontSize',15),'XTick',[plot_lon_min plot_lon_max]);
+        if (plot_equallat == 'n'),
+            set(gca,'YLabel',text('String','Latitude','FontSize',15),'YTick',[plot_lat_min plot_lat_max], 'YTickLabel',{num2str(180*asin(plot_lat_min)/pi);num2str(180*asin(plot_lat_max)/pi)});
+        else
+            set(gca,'YLabel',text('String','Latitude','FontSize',15),'YTick',[plot_lat_min plot_lat_max], 'YTickLabel',{num2str(plot_lat_min);num2str(plot_lat_max)});
+        end
     end
-    textsize = 2+round(80/con_n);
-    if textsize > 10, textsize = 10; end
-    text(0.40,c,str,'FontName','Arial','FontSize',textsize);
-    set(h,'LineWidth',0.5);
-    set(h,'EdgeColor','k');
-    % draw and label bars
-    for c = 2:con_n+1,
-        h = fill([0.1 0.1 0.3 0.3],[c-1.0 c c c-1.0],cmap(c,:));
+    set(gca,'TickDir','out');
+    if isempty(plot_title)
+        plot_title = ['Data ID: ',strrep(dataid_1,'_',' ')];
+        plot_title(find(plot_title(:)=='_')) = '-';
+    end
+    title(plot_title,'FontSize',12);
+    % draw filled rectangles
+    for i = 1:imax,
+        for j = 1:jmax,
+            if topo(j,i) > layb(j,i)
+                h = patch([lonw(j,i) lonw(j,i) lone(j,i) lone(j,i)],[lats(j,i) latn(j,i) latn(j,i) lats(j,i)],color_g);
+                set(h,'EdgeColor',color_g);
+            else
+                if (isnan(zm(j,i)))
+                    if exist('data_nancolor')
+                        h = patch([lonw(j,i) lonw(j,i) lone(j,i) lone(j,i)],[lats(j,i) latn(j,i) latn(j,i) lats(j,i)],data_nancolor);
+                        set(h,'EdgeColor',data_nancolor);
+                    else
+                        h = patch([lonw(j,i) lonw(j,i) lone(j,i) lone(j,i)],[lats(j,i) latn(j,i) latn(j,i) lats(j,i)],[1 1 1]);
+                        set(h,'EdgeColor',[1 1 1]);
+                    end
+                else
+                    col = 1 + round(0.5+con_n*(zm(j,i)-con_min)/(con_max-con_min));
+                    if col < 1, col = 1; end
+                    if col > con_n+2, col = con_n+2; end
+                    h = patch([lonw(j,i) lonw(j,i) lone(j,i) lone(j,i)],[lats(j,i) latn(j,i) latn(j,i) lats(j,i)],cmap(col,:));
+                    set(h,'EdgeColor',cmap(col,:));
+                end
+            end
+        end
+    end
+    %
+    % *** PLOT CONTINENTAL OUTLINE ****************************************** %
+    %
+    % draw continental outline
+    for j = 1:jmax,
+        for i = 1:imax-1,
+            if topo(j,i) > layb(j,i)
+                if topo(j,i+1) <= layb(j,i+1)
+                    h = plot([lone(j,i) lone(j,i)],[lats(j,i) latn(j,i)],'k-');
+                    set(h,'LineWidth',1.0);
+                end
+            end
+        end
+        for i = 2:imax,
+            if topo(j,i) > layb(j,i)
+                if topo(j,i-1) <= layb(j,i-1)
+                    h = plot([lonw(j,i) lonw(j,i)],[lats(j,i) latn(j,i)],'k-');
+                    set(h,'LineWidth',1.0);
+                end
+            end
+        end
+    end
+    for i = 1:imax,
+        for j = 1:jmax-1,
+            if topo(j,i) > layb(j,i)
+                if topo(j+1,i) <= layb(j+1,i)
+                    h = plot([lonw(j,i) lone(j,i)],[latn(j,i) latn(j,i)],'k-');
+                    set(h,'LineWidth',1.0);
+                end
+            end
+        end
+        for j = 2:jmax,
+            if topo(j,i) > layb(j,i)
+                if topo(j-1,i) <= layb(j-1,i)
+                    h = plot([lonw(j,i) lone(j,i)],[lats(j,i) lats(j,i)],'k-');
+                    set(h,'LineWidth',1.0);
+                end
+            end
+        end
+    end
+    %
+    % *** OVERLAY CONTOURS ************************************************** %
+    %
+    % plot contours
+    if (contour_plot == 'y') && (data_only == 'n'),
+        v = [con_min:(con_max-con_min)/(con_n/contour_mod):con_max];
+        [C,h] = contour(xm_ex,sin(pi*ym_ex/180.0),zm_ex,v,'k-');
+        set(h,'LineWidth',0.25);
+        v = [con_min:(con_max-con_min)/(con_n/contour_mod_label):con_max];
+        [C,h] = contour(xm_ex,sin(pi*ym_ex/180.0),zm_ex,v,'k');
+        set(h,'LineWidth',0.5);
+        if data_log10 == 'y'
+            %%%%%%%%
+        elseif contour_label == 'y'
+            clabel(C,h);
+        end
+    end
+    %
+    % *** OVERLAY DATA ****************************************************** %
+    %
+    if ~isempty(overlaydataid)
+        % set uniform marker shape and color
+        if (data_shapecol == 'n'),
+            for n = 1:nmax,
+                overlaydata_shape(n) = 'o';
+                overlaydata_fcol(n) = data_sitecolor;
+                if exist('data_linecolor')
+                    overlaydata_ecol(n) = data_linecolor;
+                else
+                    overlaydata_ecol(n) = data_sitecolor;
+                end
+            end
+        end
+        % plot overlay data
+        if (data_siteonly == 'n')
+            scatter(overlaydata(:,1),overlaydata(:,2),4,overlaydata(:,3)/data_scale,overlaydata_shape(n),'Filled','LineWidth',data_sitelineth,'Sizedata',data_size,'MarkerEdgeColor',overlaydata_ecol(n));
+        else
+            if (overlaydata_fcol(n) == '-'),
+                scatter(overlaydata(:,1),overlaydata(:,2),4,overlaydata_shape(n),'LineWidth',data_sitelineth,'Sizedata',data_size,'MarkerEdgeColor',overlaydata_ecol(n));
+            else
+                scatter(overlaydata(:,1),overlaydata(:,2),4,overlaydata_shape(n),'LineWidth',data_sitelineth,'Sizedata',data_size,'MarkerEdgeColor',overlaydata_ecol(n),'MarkerFaceColor',overlaydata_fcol(n));
+            end
+        end
+        if (data_sitelabel == 'y'),
+            text(overlaydata(:,1)+(data_size/30),overlaydata(:,2)+(data_size/1200),overlaylabel(:,:),'FontSize',data_fontsz,'Color',data_sitecolor);
+        end
+    end
+    %
+    % *** PLOT BORDER ******************************************************* %
+    %
+    % draw plot border
+    h = plot([lon_min lon_max],[lat_min lat_min],'k-');
+    set(h,'LineWidth',1.0);
+    h = plot([lon_min lon_max],[lat_max lat_max],'k-');
+    set(h,'LineWidth',1.0);
+    h = plot([lon_min lon_min],[lat_min lat_max],'k-');
+    set(h,'LineWidth',1.0);
+    h = plot([lon_max lon_max],[lat_min lat_max],'k-');
+    set(h,'LineWidth',1.0);
+    %
+    hold off;
+    %
+    % *** CREATE COLOR BAR ************************************************** %
+    %
+    if (~((data_only == 'y') && (data_siteonly == 'y')))
+        %
+        set(gcf,'CurrentAxes',fh(3));
+        hold on;
+        %
+        set(gca,'XTick',[],'YTick',[]);
+        axis([0 1 0 con_n+2]);
+        % draw and label color bar rectangles
+        % draw and label start triangle
+        c = 1;
+        h = fill([0.1 0.2 0.3],[c c-1.0 c],cmap(c,:));
         if isempty(contour_file),
             str = [num2str(con_min + (c-1)*(con_max-con_min)/con_n)];
         else
@@ -1368,39 +1361,56 @@ if (~((data_only == 'y') && (data_siteonly == 'y')))
         text(0.40,c,str,'FontName','Arial','FontSize',textsize);
         set(h,'LineWidth',0.5);
         set(h,'EdgeColor','k');
+        % draw and label bars
+        for c = 2:con_n+1,
+            h = fill([0.1 0.1 0.3 0.3],[c-1.0 c c c-1.0],cmap(c,:));
+            if isempty(contour_file),
+                str = [num2str(con_min + (c-1)*(con_max-con_min)/con_n)];
+            else
+                str = num2str(contour_data(c));
+            end
+            textsize = 2+round(80/con_n);
+            if textsize > 10, textsize = 10; end
+            text(0.40,c,str,'FontName','Arial','FontSize',textsize);
+            set(h,'LineWidth',0.5);
+            set(h,'EdgeColor','k');
+        end
+        % draw end triangle
+        c = con_n+2;
+        h = fill([0.1 0.2 0.3],[c-1.0 c c-1.0],cmap(c,:));
+        set(h,'LineWidth',0.5);
+        set(h,'EdgeColor','k');
+        %
+        hold off;
+        %
+        hold off;
+        %
     end
-    % draw end triangle
-    c = con_n+2;
-    h = fill([0.1 0.2 0.3],[c-1.0 c c-1.0],cmap(c,:));
-    set(h,'LineWidth',0.5);
-    set(h,'EdgeColor','k');
     %
-    hold off;
+    % *** PRINT PLOT ******************************************************** %
     %
-    hold off;
-    %
-end
-%
-% *** PRINT PLOT ******************************************************** %
-%
-set(gcf,'CurrentAxes',fh(1));
-if (plot_format_old == 'y')
-    if (par_mutlab > 2015),
-        print('-dpsc2', '-bestfit', [par_pathout '/' filename '.' str_date '.ps']);
+    set(gcf,'CurrentAxes',fh(1));
+    if (plot_format_old == 'y')
+        if (par_mutlab > 2015),
+            print('-dpsc2', '-bestfit', [par_pathout '/' filename '.' str_date '.ps']);
+        else
+            print('-dpsc2', [par_pathout '/' filename '.' str_date '.ps']);
+        end
     else
-        print('-dpsc2', [par_pathout '/' filename '.' str_date '.ps']);
+        switch plot_format
+            case 'png'
+                export_fig([par_pathout '/' filename '.' str_date '.png'], '-png', '-r150', '-nocrop');
+            case 'pngT'
+                export_fig([par_pathout '/' filename '.' str_date '.png'], '-png', '-r150', '-nocrop', '-transparent');
+            case 'jpg'
+                export_fig([par_pathout '/' filename '.' str_date '.jpg'], '-jpg', '-r150', '-nocrop');
+            otherwise
+                export_fig([par_pathout '/' filename '.' str_date '.eps'], '-eps', '-nocrop');
+        end
     end
-else
-    switch plot_format
-        case 'png'
-            export_fig([par_pathout '/' filename '.' str_date '.png'], '-png', '-r150', '-nocrop');
-        case 'pngT'
-            export_fig([par_pathout '/' filename '.' str_date '.png'], '-png', '-r150', '-nocrop', '-transparent');
-        case 'jpg'
-            export_fig([par_pathout '/' filename '.' str_date '.jpg'], '-jpg', '-r150', '-nocrop');
-        otherwise
-            export_fig([par_pathout '/' filename '.' str_date '.eps'], '-eps', '-nocrop');
-    end
+    %
+    % *********************************************************************** %
+    %
 end
 %
 % *********************************************************************** %

@@ -14,6 +14,7 @@ function [OUTPUT] = fun_read_file(PFILENAME)
 %
 %   20/12/29: CREATED
 %   21/02/25: added more fileformat flexibility and filtering
+%   22/05/10: added ability to accept special MATLAB scatter shape codes
 %
 %   ***********************************************************************
 
@@ -34,6 +35,9 @@ str_date = [datestr(date,11), datestr(date,5), datestr(date,7)];
 tmp_mutlab = version('-release');
 str_mutlab = tmp_mutlab(1:4);
 par_mutlab = str2num(str_mutlab);
+% define special characters (e.g. for specifing marker shapes) -- *<>^
+% NOTE: '+' becasue it is used in the scientific notation ...
+str_special = [char(42) char(60) char(62) char(94)];
 %
 % *** copy passed parameters ******************************************** %
 %
@@ -161,12 +165,14 @@ else
     return;
 end
 % deduce format from first line
+% NOTE: loc_alpha(1) is assuming that if the first element of the string is a character, all is OK ...
 v_text = regexp(loc_line, ' ', 'split');
 v_format = [];
 for n = 1:n_columns
-    loc_txt = v_text{n};
+    loc_txt   = v_text{n};
     loc_alpha = isstrprop(loc_txt,'alpha');
-    v_format = [v_format loc_alpha(1)];
+    loc_char  = intersect(loc_txt,str_special);
+    v_format  = [v_format (loc_alpha(1) || ~isempty(loc_char))];
 end
 %
 % *** filter out lines that do not conform to the first ***************** %
@@ -201,9 +207,10 @@ for n = 1:n_lines
     % create format vector
     loc_format = [];
     for m = 1:n_columns
-        loc_txt = v_text{m};
-        loc_alpha = isstrprop(loc_txt,'alpha');
-        loc_format = [loc_format loc_alpha(1)];
+        loc_txt    = v_text{m};
+        loc_alpha  = isstrprop(loc_txt,'alpha');
+        loc_char   = intersect(loc_txt,str_special);
+        loc_format = [loc_format (loc_alpha(1) || ~isempty(loc_char))];
     end
     if (~isequal(v_format,loc_format))
         v_nonconform = [v_nonconform n];

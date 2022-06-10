@@ -1181,10 +1181,29 @@ if ~isempty(overlaydataid)
         overlaylabel(end,:) = [];
         nmax=m;
         % save data on grid
-        fprint_2D_d(overlaydata_gridded(:,:),[overlaydatafile, '.griddedOBS.', str_date, '.dat']);
+        fprint_2D_d(overlaydata_gridded(:,:),[overlaydataid, '.griddedOBS.', str_date, '.dat']);
     end
     % scale overlay data
     overlaydata(:,3) = overlaydata(:,3)/datapoint_scale;
+    % set uniform marker shape and color:
+    % circle if not otherwise specified
+    % square if data is re-gridded
+    if (data_shapecol == 'n')
+        for n = 1:nmax
+            overlaydata_shape(n) = 'o';
+            overlaydata_ecol(n) = data_sitecolor;
+            if ( (data_only == 'y') && (data_siteonly == 'y') )
+                overlaydata_fcol(n) = data_sitecolor;
+            else
+                overlaydata_fcol(n) = '-';
+            end
+        end
+    end
+    if (data_ijk_mean == 'y')
+        for n = 1:nmax
+            overlaydata_shape(n) = 's';
+        end
+    end
 end
 %
 % *********************************************************************** %
@@ -1454,7 +1473,7 @@ end
 % *** PLOT MAIN FIGURE ************************************************** %
 % *********************************************************************** %
 %
-if (plot_main == 'y'),
+if (plot_main == 'y')
     %
     % *** CONFIGURE AND CREATE PLOTTING WINDOW ************************** %
     %
@@ -1724,18 +1743,6 @@ if (plot_main == 'y'),
     % *** OVERLAY DATA ************************************************** %
     %
     if ~isempty(overlaydataid)
-        % set uniform marker shape and color
-        if (data_shapecol == 'n'),
-            for n = 1:nmax,
-                overlaydata_shape(n) = 'o';
-                overlaydata_ecol(n) = data_sitecolor;
-                if ( (data_only == 'y') && (data_siteonly == 'y') )
-                    overlaydata_fcol(n) = data_sitecolor;
-                else
-                    overlaydata_fcol(n) = '-';                    
-                end
-            end
-        end
         % plot overlay data
         for n = 1:nmax,
             if (data_siteonly == 'n')
@@ -1918,14 +1925,27 @@ if (plot_secondary == 'y')
     % *** PLOT FIGURE (surface zonal mean) ****************************** %
     %
     if ((data_only == 'n') && (plot_equallat == 'y'))
-        %
+        % basic figure
         figure
-        plot(grid_lat,zz(:));
+        h = plot(grid_lat,zz(:),'r');
+        set(h,'LineWidth',1.0);
         hold on;
-        scatter(grid_lat,zz(:),25,'r');
+        scatter(grid_lat,zz(:),20,'s','r','filled');
         axis([-90.0 90.0 con_min con_max ]);
         xlabel('Latitude');
         ylabel(strrep(dataid_1,'_','-'));
+        % overlay data
+        if ~isempty(overlaydataid)
+            for n = 1:nmax
+                if (data_siteonly == 'n')
+                    scatter(overlaydata(n,2),overlaydata(n,3)/data_scale,4,overlaydata_shape(n),'LineWidth',data_sitelineth,'Sizedata',data_size,'MarkerEdgeColor','k');
+                end
+            end
+            if (data_sitelabel == 'y')
+                text(overlaydata(:,2)+(data_size/30),overlaydata(:,3)+(data_size/1200),overlaylabel(:,:),'FontSize',data_fontsz,'Color',data_sitecolor);
+            end
+        end
+        % print!
         if (plot_format_old == 'y')
             print('-dpsc2', [par_pathout '/' filename '.ZONAL.' str_date '.ps']);
         else
@@ -1946,15 +1966,28 @@ if (plot_secondary == 'y')
     % *** PLOT FIGURE (surface zonal mean) ALT ************************** %
     %
     if ((data_only == 'n') && (plot_equallat == 'n'))
-        %
+        % basic figure
         figure
-        plot(sin(pi*grid_lat/180.0),zz(:));
+        h = plot(sin(pi*grid_lat/180.0),zz(:),'r');
+        set(h,'LineWidth',1.0);
         hold on;
-        scatter(sin(pi*grid_lat/180.0),zz(:),25,'r');
+        scatter(sin(pi*grid_lat/180.0),zz(:),20,'s','r','filled');
         axis([-1.0 1.0 con_min con_max ]);
         set(gca,'XTick',[-1.0 -sin(pi*60.0/180.0) -sin(pi*30.0/180.0) 0.0 sin(pi*30.0/180.0) sin(pi*60.0/180.0) 1.0],'XTickLabel',[-90:30:90]);
         xlabel('Latitude');
         ylabel(strrep(dataid_1,'_','-'));
+        % overlay data
+        if ~isempty(overlaydataid)
+            for n = 1:nmax
+                if (data_siteonly == 'n')
+                    scatter(overlaydata(n,2),overlaydata(n,3)/data_scale,4,overlaydata_shape(n),'LineWidth',data_sitelineth,'Sizedata',data_size,'MarkerEdgeColor','k');
+                end
+            end
+            if (data_sitelabel == 'y')
+                text(overlaydata(:,2)+(data_size/30),overlaydata(:,3)+(data_size/1200),overlaylabel(:,:),'FontSize',data_fontsz,'Color',data_sitecolor);
+            end
+        end
+        % print!
         if (plot_format_old == 'y')
             print('-dpsc2', [par_pathout '/' filename '.ZONALsinlat.' str_date '.ps']);
         else

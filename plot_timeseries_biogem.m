@@ -134,6 +134,8 @@ function [] = plot_timeseries_biogem(PEXP1,PEXP2,PTMIN,PTMAX,PDATA1,PDATA1N,PDAT
 %             improved auto-scaling
 %             added detection of archive files (+ unpacking then cleaning)
 %             *** VERSION 1.19 ********************************************
+%   22/04/13: catch optional data min and max being zero
+%             *** VERSION 1.20 ********************************************
 %
 %   ***********************************************************************
 
@@ -144,7 +146,7 @@ function [] = plot_timeseries_biogem(PEXP1,PEXP2,PTMIN,PTMAX,PDATA1,PDATA1N,PDAT
 % *** initialize ******************************************************** %
 %
 % set version!
-par_ver = 1.19;
+par_ver = 1.20;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -1203,7 +1205,7 @@ if (~isempty(data1) || opt_invanalysis)
     ax1 = gca;
     % create and label y-axis
     set(ax1,'YColor','k','TickDir','out');
-    set(ax1,'YLim',[axis_data1_min axis_data1_max]);
+    if (axis_data1_max > axis_data1_min), set(ax1,'YLim',[axis_data1_min axis_data1_max]); end
     if (~isempty(data1))
         if (isempty(plot_data1_title))
             plot_data1_title = data1_name;
@@ -1291,7 +1293,7 @@ if (~isempty(data2) || opt_invanalysis)
     ax2 = axes('Position',get(ax1,'Position'),'Color','none','YAxisLocation','right','YColor','k');
     % create and label y-axis
     set(ax2,'YColor','k','TickDir','out','YTickLabelMode','auto');
-    set(ax2,'YLim',[axis_data2_min axis_data2_max]);
+    if (axis_data2_max > axis_data2_min), set(ax2,'YLim',[axis_data2_min axis_data2_max]); end
     if (~isempty(data2))
         if (isempty(plot_data2_title))
             plot_data2_title = data2_name;
@@ -1375,7 +1377,7 @@ if (~isempty(data3) || opt_invanalysis)
     ax1 = gca;
     % create and label y-axis
     set(ax1,'YColor','k','TickDir','out');
-    set(ax1,'YLim',[axis_data3_min axis_data3_max]);
+    if (axis_data3_max > axis_data3_min), set(ax1,'YLim',[axis_data3_min axis_data3_max]); end
     if (~isempty(data3))
         if (isempty(plot_data3_title))
             plot_data3_title = data3_name;

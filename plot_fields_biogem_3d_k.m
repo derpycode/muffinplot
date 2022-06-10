@@ -407,8 +407,8 @@ if ~exist('plot_histc_SETTINGS','var'), plot_histc_SETTINGS = 'plot_histc_SETTIN
 % set axes
 lat_min = -090;
 lat_max = +090;
-D_min   = 0000;
-D_max   = 5000;
+D_min   = 0000; % default revised later (from netCDF grid)
+D_max   = 5000; % default revised later (from netCDF grid)
 lon_min = plot_lon_origin;
 lon_max = lon_min+360;
 lon_offset = 0;
@@ -471,11 +471,6 @@ else
         plot_lon_max = lon_max;
     end
     plot_xy_scaling = ((plot_lat_max - plot_lat_min)/(lat_max - lat_min)) / ((plot_lon_max - plot_lon_min)/(lon_max - lon_min));
-end
-%
-if (plot_D_min == plot_D_max),
-    plot_D_min = D_min;
-    plot_D_max = D_max;
 end
 %
 % *** SET PATHS & DIRECTORIES ******************************************* %
@@ -633,6 +628,13 @@ if (kplot > kmax),
 elseif (kplot < -1),
     disp(['ERROR: a kplot value of ', num2str(kplot), ' is not value. [VALID OPTIONS:, between 1 and kmax, 0 (water column integral), -1 (benthic)]']);
     return;
+end
+% determine ocean depth limits
+D_min = min(grid_zt_edges);
+D_max = max(grid_zt_edges);
+if (plot_D_min == plot_D_max),
+    plot_D_min = D_min;
+    plot_D_max = D_max;
 end
 % set data limts in k space (based on plotting depth limits)
 loc_k = find(grid_zt > plot_D_min);
@@ -1255,11 +1257,13 @@ if ~isempty(overlaydataid)
                 flag_format      = true;
             elseif ((sum(v_format(1:3)) == 0) && (v_format(4) == 1))
                 % lon, lat, value, LABEL
-                overlaydata_raw  = cell2mat(cdata(:,1:3));
+                overlaydata_raw  = cell2mat(cdata(:,1:2));
                 overlaylabel_raw = char(cdata(:,4));
                 data_shapecol    = 'n';
-                % add fake depth
-                overlaydata_raw(:,4) = 0.0;
+                % insert fake depth
+                overlaydata_raw(:,3) = 0.0;
+                % add value
+                overlaydata_raw(:,4) = cell2mat(cdata(:,3));
                 % flag for a valid format
                 flag_format      = true;
             end
