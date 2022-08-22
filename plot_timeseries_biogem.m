@@ -136,6 +136,8 @@ function [] = plot_timeseries_biogem(PEXP1,PEXP2,PTMIN,PTMAX,PDATA1,PDATA1N,PDAT
 %             *** VERSION 1.19 ********************************************
 %   22/04/13: catch optional data min and max being zero
 %             *** VERSION 1.20 ********************************************
+%   22/06/21: (minor)
+%             *** VERSION 1.21 ********************************************
 %
 %   ***********************************************************************
 
@@ -146,7 +148,7 @@ function [] = plot_timeseries_biogem(PEXP1,PEXP2,PTMIN,PTMAX,PDATA1,PDATA1N,PDAT
 % *** initialize ******************************************************** %
 %
 % set version!
-par_ver = 1.20;
+par_ver = 1.21;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -243,14 +245,6 @@ if ~(exist([str_function_path '/' par_pathlib],'dir') == 7)
 else
     addpath([str_function_path '/' par_pathlib]);
 end
-% check masks directory and add search path
-if ~(exist([str_function_path '/' par_pathmask],'dir') == 7)
-    disp([' * ERROR: Cannot find MASKS directory -- was it moved ... ?']);
-    disp([' ']);
-    return;
-else
-    addpath([str_function_path '/' par_pathmask]);
-end
 % set input path
 par_pathin = [str_current_path '/' par_pathin];
 if ~(exist(par_pathin,'dir') == 7)
@@ -290,7 +284,7 @@ if (exist(data_dir, 'dir') == 0)
         disp(['INFO: Path: ' par_pathin ' cannot be found.']);
     else
         disp(['INFO: Path: ' par_pathin ' exists.']);
-        disp(['INFO: Experiment name: ' expid1 ' cannot be found.']);
+        disp(['INFO: Experiment directory: ' expid1 ' cannot be found.']);
     end
     if (exist([data_dir '.tar.gz'],'file'))
         disp(['INFO: Archive: ' [data_dir '.tar.gz'] ' exists.']);
