@@ -346,6 +346,10 @@ function [OUTPUT] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 %             *** VERSION 1.59 ********************************************
 %   22/01/19: added loc_flag_unpack = false for data (not GENIE) netCDF 
 %             *** VERSION 1.60 ********************************************
+%   22/06/23: revisd min/max surfce output, added associated stats
+%             *** VERSION 1.61 ********************************************
+%   22/08/22: made disabling of stats version-independent [removed range]
+%             *** VERSION 1.62 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -357,7 +361,7 @@ function [OUTPUT] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.60;
+par_ver = 1.62;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -1118,6 +1122,8 @@ elseif (kplot == 0)
     zm_maxval = zeros(jmax,imax) - 1.0E6;
     zm_mink = zeros(jmax,imax);
     zm_maxk = zeros(jmax,imax);
+    zm_minD = zeros(jmax,imax);
+    zm_maxD = zeros(jmax,imax);
     % assume surface velocities
     if (data_uv == 'y')
         z_u(:,:) = data_u(kmax,:,:);
@@ -1131,10 +1137,22 @@ elseif (kplot == 0)
                 zm(j,i) = NaN;
                 z_u(j,i) = NaN;
                 z_v(j,i) = NaN;
+                zm_minval(j,i) = NaN;
+                zm_maxval(j,i) = NaN;
+                zm_mink(j,i) = NaN;
+                zm_maxk(j,i) = NaN;
+                zm_minD(j,i) = NaN;
+                zm_maxD(j,i) = NaN;
             else
                 if ~isempty(maskid)
                     if mask(j,i) == 0
                         zm(j,i) = NaN;
+                        zm_minval(j,i) = NaN;
+                        zm_maxval(j,i) = NaN;
+                        zm_mink(j,i) = NaN;
+                        zm_maxk(j,i) = NaN;
+                        zm_minD(j,i) = NaN;
+                        zm_maxD(j,i) = NaN;
                     end
                 end
                 for k = data_kmin:data_kmax
@@ -1143,12 +1161,14 @@ elseif (kplot == 0)
                         zm_M(j,i) = zm_M(j,i) + data_M(k,j,i);
                         zm_count(j,i) = zm_count(j,i) + 1;
                         if (data(k,j,i) > zm_maxval(j,i))
-                            zm_maxval(j,i)   = data(k,j,i);
-                            zm_maxk(j,i) = k;
+                            zm_maxval(j,i) = data(k,j,i);
+                            zm_maxk(j,i)   = k;
+                            zm_maxD(j,i)   = -grid_zt(k);
                         end
                         if (data(k,j,i) < zm_minval(j,i))
                             zm_minval(j,i) = data(k,j,i);
-                            zm_mink(j,i) = k;
+                            zm_mink(j,i)   = k;
+                            zm_minD(j,i)   = -grid_zt(k);
                         end
                     end
                 end
@@ -1603,12 +1623,36 @@ else
     % NOTE: if discrete data is present, this will be replaced
     % transform data sets in vectors
     % NOTE: data_1 is format (k,j,i)
+    % NOTE: for (kplot == 0): deal with optional min/max depth surfaces
+    %       (data_scale not yet applied)
     if kplot > 0
         data_vector_1 = reshape(data_1(kplot,:,:),imax*jmax,1)/data_scale;
-        data_vector_D = reshape(data_D(kplot,:,:),imax*jmax,1); 
+        data_vector_D = reshape(data_D(kplot,:,:),imax*jmax,1);
     elseif (kplot == 0)
-        data_vector_1 = reshape(data_1(:,:,:),imax*jmax*kmax,1)/data_scale;
-        data_vector_D = reshape(data_D(:,:,:),imax*jmax*kmax,1);
+        if ((plot_maxval == 'y') || (plot_minval == 'y'))
+            n=0;
+            for j = 1:jmax
+                for i = 1:imax
+                    loc_k = grid_k1(j,i);
+                    if ((loc_k <= data_kmax) && (loc_k >= data_kmin))
+                        n = n+1;
+                        if (plot_maxval == 'y')
+                            data_vector_1(n) = zm_maxval(j,i)/data_scale;
+                            data_vector_D(n) = -zm_maxD(j,i);
+                        elseif (plot_minval == 'y')
+                            data_vector_1(n) = zm_minval(j,i)/data_scale;
+                            data_vector_D(n) = -zm_minD(j,i);
+                        end
+                    end
+                end
+            end
+            % transpose vectors
+            data_vector_1 = data_vector_1';
+            data_vector_D = data_vector_D';
+        else
+            data_vector_1 = reshape(data_1(:,:,:),imax*jmax*kmax,1)/data_scale;
+            data_vector_D = reshape(data_D(:,:,:),imax*jmax*kmax,1);
+        end
     elseif (kplot == -1)
         n=0;
         for j = 1:jmax
@@ -1621,7 +1665,6 @@ else
                 end
             end
         end
-        %%%nmax=n;
         % transpose vectors
         data_vector_1 = data_vector_1';
         data_vector_D = data_vector_D';
@@ -1641,7 +1684,11 @@ if (~isempty(overlaydataid) && ((data_only == 'n') || (data_anomoly == 'y')))
     data_vector_1 = [];
     data_vector_1 = overlaydata(:,4);
     % disable stats if necessary
-    if ( (length(data_vector_1) < 2) || (range(data_vector_1) == 0.0) ), data_stats = 'n'; end
+    if ( length(data_vector_1) < 2 )
+        data_stats = 'n';
+    elseif ( (max(data_vector_1) - min(data_vector_1)) == 0.0 )
+        data_stats = 'n';
+    end
     % populate the gridded dataset vector with values corresponding to
     % the overlay data locations
     % NOTE: !!! data is (k,j,i) !!! (=> swap i and j)
@@ -2448,17 +2495,17 @@ if ((data_save == 'y') && isempty(overlaydataid) && ~isempty(exp_2) && (plot_sec
     rawdata_2(find(rawdata_2 > 1.0E30)) = NaN;
     rawdata = rawdata_1 - rawdata_2;
     % create bnds arrays
-    grid_zt = flip(grid_zt);
-    grid_zt_edges = flip(grid_zt_edges);
-    grid_ztbnds(1:kmax,1) = grid_zt_edges(1:kmax);
-    grid_ztbnds(1:kmax,2) = grid_zt_edges(2:kmax+1);
-    grid_ztbnds          = grid_ztbnds';
+    grid_zt                = flip(grid_zt);
+    grid_zt_edges          = flip(grid_zt_edges);
+    grid_ztbnds(1:kmax,1)  = grid_zt_edges(1:kmax);
+    grid_ztbnds(1:kmax,2)  = grid_zt_edges(2:kmax+1);
+    grid_ztbnds            = grid_ztbnds';
     grid_latbnds(1:imax,1) = grid_lat_edges(1:imax);
     grid_latbnds(1:imax,2) = grid_lat_edges(2:imax+1);
-    grid_latbnds          = grid_latbnds';
+    grid_latbnds           = grid_latbnds';
     grid_lonbnds(1:jmax,1) = grid_lon_edges(1:jmax);
     grid_lonbnds(1:jmax,2) = grid_lon_edges(2:jmax+1);
-    grid_lonbnds          = grid_lonbnds';
+    grid_lonbnds           = grid_lonbnds';
     % create netCDF file
     ncid = netcdf.create([par_pathout '/' filename, '.', str_date, '.nc'],'NC_WRITE');
     NC_GLOBAL = netcdf.getConstant('NC_GLOBAL');
@@ -2613,14 +2660,23 @@ if (data_output_old == 'y')
 else
     % basic stats
     % NOTE: use data_vector_1 which is the full grid data
-    % NOTE: remove NaNs first
+    % NOTE: remove NaNs first (also from depth vector)
     data_vector_1(find(isnan(data_vector_1))) = [];
+    data_vector_D(find(isnan(data_vector_D))) = [];
     output = datastats(reshape(data_vector_1,[],1));
     % add sum
     output.sum  = sum(data_vector_1);
+    % add depths of surface min and max, plus mean surface depth
+    if ((plot_maxval == 'y') || (plot_minval == 'y'))
+        loc_v = find(data_vector_1 == output.max);
+        output.Dmax = data_vector_D(loc_v(1));
+        loc_v = find(data_vector_1 == output.min);
+        output.Dmin = data_vector_D(loc_v(1));
+        output.Dmean = mean(data_vector_D);
+    end
     % add old min,max
-    output.data_min   = min(min(zm));
     output.data_max   = max(max(zm));
+    output.data_min   = min(min(zm));
     % add model-data/model stats
     if exist('STATM')
         output.statm          = STATM;

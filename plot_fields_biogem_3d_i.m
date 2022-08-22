@@ -315,6 +315,8 @@ function [OUTPUT] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 %             *** VERSION 1.59 ********************************************
 %   22/01/19: added loc_flag_unpack = false for data (not GENIE) netCDF 
 %             *** VERSION 1.60 ********************************************
+%   22/08/22: made disabling of stats version-independent [removed range]
+%             *** VERSION 1.62 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -326,7 +328,7 @@ function [OUTPUT] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.60;
+par_ver = 1.62;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -1510,7 +1512,11 @@ if (~isempty(overlaydataid))
     data_vector_1 = [];
     data_vector_1 = overlaydata(:,4);
     % disable stats if necessary
-    if ( (length(data_vector_1) < 2) || (range(data_vector_1) == 0.0) ), data_stats = 'n'; end
+    if ( length(data_vector_1) < 2 )
+        data_stats = 'n';
+    elseif ( (max(data_vector_1) - min(data_vector_1)) == 0.0 )
+        data_stats = 'n';
+    end
     % populate the gridded dataset vector with values corresponding to
     % the overlay data locations
     % NOTE: !!! overlaydata_zm is (k,j) !!!
