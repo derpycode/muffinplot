@@ -17,7 +17,7 @@ plot_fields_biogem_3d_k(DUM_EXP,'','ocn_PO4','',DUM_T,-1,-1,'',1.0E-6,0.0,3.0,30
 % [O2]
 plot_fields_biogem_3d_k(DUM_EXP,'','ocn_O2','',DUM_T,-1,-1,'',1.0E-6,0.0,300.0,30,'','plot_fields_SETTINGS_GEOCHEM',[DUM_NAME '.GEOCHEM_BENo2']);
 %
-% *** GEOCHEM -- zonal (global) ***************************************** %
+% *** GEOCHEM -- (global) zonal mean ************************************ %
 %
 % [PO4]
 plot_fields_biogem_3d_i(DUM_EXP,'','ocn_PO4','',DUM_T,-1,0,'',1.0E-6,0.0,3.0,30,'','plot_fields_SETTINGS_GEOCHEM',[DUM_NAME '.GEOCHEM_ZONALpo4']);

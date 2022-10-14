@@ -2,7 +2,7 @@ function [] = fun_make_analysis_ALL(DUM_EXP,DUM_T,DUM_NAME)
 
 % *** PHYSICS *********************************************************** %
 %
-% basic
+% basic (abiotic) climate and ocean circulation fields
 fun_make_analysis_phys(DUM_EXP,DUM_T,DUM_NAME);
 % % optional basin-masked OPSI
 % fun_make_analysis_phys_OPSI(DUM_EXP,DUM_T,MASK,DUM_NAME)
