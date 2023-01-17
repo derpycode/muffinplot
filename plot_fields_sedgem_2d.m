@@ -247,6 +247,8 @@ function [OUTPUT] = plot_fields_sedgem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,PM
 %             *** VERSION 1.60 ********************************************
 %   22/08/22: made disabling of stats version-independent [removed range]
 %             *** VERSION 1.62 ********************************************
+%   23/01/17: mostly some adjustments to returned data
+%             *** VERSION 1.63 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -258,7 +260,7 @@ function [OUTPUT] = plot_fields_sedgem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,PM
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.62;
+par_ver = 1.63;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -755,7 +757,8 @@ if ~isempty(overlaydataid)
     cdata    = file_data.cdata;
     v_format = file_data.vformat;
     % determine number of rows and columns
-    n_rows    = length(cdata);
+    n_size    = size(cdata);
+    n_rows    = n_size(1);
     n_columns = length(v_format);
     % parse call array data
     flag_format = false;
@@ -1449,7 +1452,8 @@ if (plot_secondary == 'y')
         end
         % plot without depth coding
         % NOTE: test for insufficient data for scaling the plot
-        if (range(loc_x_data) > 0.0)
+        % NOTE: function range has been moved ...
+        if ((max(loc_x_data)-min(loc_x_data)) > 0.0)
             plot_crossplotc(loc_x_data,loc_y_data,[],loc_x_label,loc_y_label,'',POPT,[par_pathout '/' filename '.CROSSPLOT']);
         end
         %
@@ -1500,15 +1504,26 @@ if (data_output_old == 'y')
     end
 else
     % basic stats
-    % NOTE: use data_vector_1 which is the full grid data
-    % NOTE: remove NaNs first
-    data_vector_1(find(isnan(data_vector_1))) = [];
-    output = datastats(reshape(data_vector_1,[],1));
-    % add sum
-    output.sum  = sum(data_vector_1);
-    % add old min,max
-    output.data_min   = min(reshape(zm,[],1));
-    output.data_max   = max(reshape(zm,[],1));
+    % NOTE: use data_vector_1 which is the full grid values
+    %       when there is no data
+    % NOTE: remove NaNs first (also from depth vector)
+    if (~isempty(overlaydataid) && ((data_only == 'n') || (data_anomoly == 'y')))
+        % basic data stats and those of corresponding model locations
+        data_vector_1(find(isnan(data_vector_1))) = [];
+        output.data = datastats(reshape(data_vector_1,[],1));
+        output.data.sum  = sum(data_vector_1); % add sum
+        data_vector_2(find(isnan(data_vector_2))) = [];
+        output.model = datastats(reshape(data_vector_2,[],1));
+        output.model.sum  = sum(data_vector_2); % add sum
+    else
+        % basic stats
+        data_vector_1(find(isnan(data_vector_1))) = [];
+        output.model = datastats(reshape(data_vector_1,[],1));
+        output.model.sum  = sum(data_vector_1); % add sum
+        % add old min,max
+        output.old.max   = max(max(zm));
+        output.old.min   = min(min(zm));
+    end
     %
     if exist('STATM')
         output.statm          = STATM;

@@ -350,6 +350,8 @@ function [OUTPUT] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 %             *** VERSION 1.61 ********************************************
 %   22/08/22: made disabling of stats version-independent [removed range]
 %             *** VERSION 1.62 ********************************************
+%   23/01/17: mostly some adjustments to returned data
+%             *** VERSION 1.63 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -361,7 +363,7 @@ function [OUTPUT] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.62;
+par_ver = 1.63;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -1260,7 +1262,8 @@ if ~isempty(overlaydataid)
     cdata    = file_data.cdata;
     v_format = file_data.vformat;
     % determine number of rows and columns
-    n_rows    = length(cdata);
+    n_size    = size(cdata);
+    n_rows    = n_size(1);
     n_columns = length(v_format);
     % parse call array data
     % NOTE: create dummay (blank space) labels if no label in format
@@ -2434,7 +2437,8 @@ if (plot_secondary == 'y')
         end
         % plot with and without depth coding
         % NOTE: test for insufficient data for scaling the plot
-        if (range(loc_x_data) > 0.0)
+        % NOTE: function range has been moved ...
+        if ((max(loc_x_data)-min(loc_x_data)) > 0.0)
             plot_crossplotc(loc_x_data,loc_y_data,[],loc_x_label,loc_y_label,'',POPT,[par_pathout '/' filename '.CROSSPLOT']);
             plot_crossplotc(loc_x_data,loc_y_data,loc_D_data,loc_x_label,loc_y_label,loc_D_label,POPT,[par_pathout '/' filename '.CROSSPLOTD']);
         end
@@ -2655,28 +2659,39 @@ if (data_output_old == 'y')
     if exist('STATM')
         OUTPUT = STATM;
     else
-        OUTPUT = [];        
+        OUTPUT = [];
     end
 else
     % basic stats
-    % NOTE: use data_vector_1 which is the full grid data
+    % NOTE: use data_vector_1 which is the full grid values
+    %       when there is no data
     % NOTE: remove NaNs first (also from depth vector)
-    data_vector_1(find(isnan(data_vector_1))) = [];
-    data_vector_D(find(isnan(data_vector_D))) = [];
-    output = datastats(reshape(data_vector_1,[],1));
-    % add sum
-    output.sum  = sum(data_vector_1);
-    % add depths of surface min and max, plus mean surface depth
-    if ((plot_maxval == 'y') || (plot_minval == 'y'))
-        loc_v = find(data_vector_1 == output.max);
-        output.Dmax = data_vector_D(loc_v(1));
-        loc_v = find(data_vector_1 == output.min);
-        output.Dmin = data_vector_D(loc_v(1));
-        output.Dmean = mean(data_vector_D);
+    if (~isempty(overlaydataid) && ((data_only == 'n') || (data_anomoly == 'y')))
+        % basic data stats and those of corresponding model locations
+        data_vector_1(find(isnan(data_vector_1))) = [];
+        output.data = datastats(reshape(data_vector_1,[],1));
+        output.data.sum  = sum(data_vector_1); % add sum
+        data_vector_2(find(isnan(data_vector_2))) = [];
+        output.model = datastats(reshape(data_vector_2,[],1));
+        output.model.sum  = sum(data_vector_2); % add sum
+    else
+        % basic stats
+        data_vector_1(find(isnan(data_vector_1))) = [];
+        output.model = datastats(reshape(data_vector_1,[],1));
+        output.model.sum  = sum(data_vector_1); % add sum
+        % add depths of surface min and max, plus mean surface depth
+        if ((plot_maxval == 'y') || (plot_minval == 'y'))
+            data_vector_D(find(isnan(data_vector_D))) = [];
+            loc_v = find(data_vector_1 == output.max);
+            output.model.Dmax = data_vector_D(loc_v(1));
+            loc_v = find(data_vector_1 == output.min);
+            output.model.Dmin = data_vector_D(loc_v(1));
+            output.model.Dmean = mean(data_vector_D);
+        end
+        % add old min,max
+        output.old.max   = max(max(zm));
+        output.old.min   = min(min(zm));
     end
-    % add old min,max
-    output.data_max   = max(max(zm));
-    output.data_min   = min(min(zm));
     % add model-data/model stats
     if exist('STATM')
         output.statm          = STATM;
