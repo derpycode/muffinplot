@@ -352,6 +352,9 @@ function [OUTPUT] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 %             *** VERSION 1.62 ********************************************
 %   23/01/17: mostly some adjustments to returned data
 %             *** VERSION 1.63 ********************************************
+%   23/05/01: various minor + check for curve fitting toolbox
+%             and reduce stats output if necessary
+%             *** VERSION 1.64 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -363,7 +366,7 @@ function [OUTPUT] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.63;
+par_ver = 1.64;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -1391,6 +1394,7 @@ if ~isempty(overlaydataid)
             overlaylabel_raw(wronglayer_locations,:) = [];
             nmax = nmax-wronglayer_n(1);
         elseif (kplot == 0)
+            % whole ocean
             % delete data lines with depth level less than loc_k1
             % UNLESS the data_seafloor option is set:
             %        => move too-deep data to local bottom level
@@ -1398,32 +1402,41 @@ if ~isempty(overlaydataid)
             while (n <= nmax),
                 loc_k1 = grid_k1(overlaydata_ijk(n,2),overlaydata_ijk(n,1));
                 if ( (overlaydata_ijk(n,3) < loc_k1) && (data_seafloor == 'n') ),
+                    % delete all data with k < k1
                     overlaydata_ijk(n,:)  = [];
                     overlaydata_raw(n,:)  = [];
                     overlaylabel_raw(n,:) = [];
                     nmax = nmax-1;
                 elseif ( (overlaydata_ijk(n,3) < loc_k1) )
+                    % reassign all data with k < k1 to k1
                     overlaydata_ijk(n,3) = loc_k1;
                     n = n+1;
                 else
+                    % otherwise:
+                    % > all data with k >= k1 remains k
                     overlaydata_ijk(n,3) = overlaydata_ijk(n,3);
                     n = n+1;
                 end
             end
         elseif (kplot == -1)
+            % benthic
             % delete data lines with depth levels not equal to loc_k1
             % UNLESS the data_seafloor option is set:
             %        => allow data k values *deeper* than the ocean grid
-            %           and also shallower
+            %           and also shallower to become seafloor
             n = 1;
             while (n <= nmax),
                 loc_k1 = grid_k1(overlaydata_ijk(n,2),overlaydata_ijk(n,1));
                 if ( (overlaydata_ijk(n,3) ~= loc_k1) && (data_seafloor == 'n') ),
+                    % delete all data with k ~= k1
                     overlaydata_ijk(n,:)  = [];
                     overlaydata_raw(n,:)  = [];
                     overlaylabel_raw(n,:) = [];
                     nmax = nmax-1;
                 else
+                    % otherwise:
+                    % > all data with k ~= k1 becomes k1
+                    % > all data with k == k1 remains k1
                     overlaydata_ijk(n,3) = loc_k1;
                     n = n+1;
                 end
@@ -1441,7 +1454,7 @@ if ~isempty(overlaydataid)
         % optional data depth processing
         if (kplot == 0)
             % whole ocean
-            % force shallower to ocean floor (if k value too deep)
+            % force data up to ocean floor (if k value too deep)
             for n = 1:nmax
                 loc_k1 = grid_k1(overlaydata_raw(n,2),overlaydata_raw(n,1));
                 if ( (overlaydata_raw(n,3) < loc_k1) && (data_seafloor == 'y') )
@@ -1450,8 +1463,8 @@ if ~isempty(overlaydataid)
             end
         elseif (kplot == -1)
             % benthic
-            % force shallower to ocean floor (if k value too deep)
-            % AND force deeper from ocean interior to seafloor
+            % force data up to ocean floor (if k value too deep)
+            % AND force data down from ocean interior to seafloor
             for n = 1:nmax
                 loc_k1 = grid_k1(overlaydata_raw(n,2),overlaydata_raw(n,1));
                 if ( (overlaydata_raw(n,3) ~= loc_k1) && (data_seafloor == 'y') )
@@ -2666,31 +2679,33 @@ else
     % NOTE: use data_vector_1 which is the full grid values
     %       when there is no data
     % NOTE: remove NaNs first (also from depth vector)
-    if (~isempty(overlaydataid) && ((data_only == 'n') || (data_anomoly == 'y')))
-        % basic data stats and those of corresponding model locations
-        data_vector_1(find(isnan(data_vector_1))) = [];
-        output.data = datastats(reshape(data_vector_1,[],1));
-        output.data.sum  = sum(data_vector_1); % add sum
-        data_vector_2(find(isnan(data_vector_2))) = [];
-        output.model = datastats(reshape(data_vector_2,[],1));
-        output.model.sum  = sum(data_vector_2); % add sum
-    else
-        % basic stats
-        data_vector_1(find(isnan(data_vector_1))) = [];
-        output.model = datastats(reshape(data_vector_1,[],1));
-        output.model.sum  = sum(data_vector_1); % add sum
-        % add depths of surface min and max, plus mean surface depth
-        if ((plot_maxval == 'y') || (plot_minval == 'y'))
-            data_vector_D(find(isnan(data_vector_D))) = [];
-            loc_v = find(data_vector_1 == output.max);
-            output.model.Dmax = data_vector_D(loc_v(1));
-            loc_v = find(data_vector_1 == output.min);
-            output.model.Dmin = data_vector_D(loc_v(1));
-            output.model.Dmean = mean(data_vector_D);
+    if (license('test','Curve Fitting Toolbox'))
+        if (~isempty(overlaydataid) && ((data_only == 'n') || (data_anomoly == 'y')))
+            % basic data stats and those of corresponding model locations
+            data_vector_1(find(isnan(data_vector_1))) = [];
+            output.data = datastats(reshape(data_vector_1,[],1));
+            output.data.sum  = sum(data_vector_1); % add sum
+            data_vector_2(find(isnan(data_vector_2))) = [];
+            output.model = datastats(reshape(data_vector_2,[],1));
+            output.model.sum  = sum(data_vector_2); % add sum
+        else
+            % basic stats
+            data_vector_1(find(isnan(data_vector_1))) = [];
+            output.model = datastats(reshape(data_vector_1,[],1));
+            output.model.sum  = sum(data_vector_1); % add sum
+            % add depths of surface min and max, plus mean surface depth
+            if ((plot_maxval == 'y') || (plot_minval == 'y'))
+                data_vector_D(find(isnan(data_vector_D))) = [];
+                loc_v = find(data_vector_1 == output.max);
+                output.model.Dmax = data_vector_D(loc_v(1));
+                loc_v = find(data_vector_1 == output.min);
+                output.model.Dmin = data_vector_D(loc_v(1));
+                output.model.Dmean = mean(data_vector_D);
+            end
+            % add old min,max
+            output.old.max   = max(max(zm));
+            output.old.min   = min(min(zm));
         end
-        % add old min,max
-        output.old.max   = max(max(zm));
-        output.old.min   = min(min(zm));
     end
     % add model-data/model stats
     if exist('STATM')

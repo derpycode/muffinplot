@@ -319,6 +319,9 @@ function [OUTPUT] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 %             *** VERSION 1.62 ********************************************
 %   23/01/17: mostly some adjustments to returned data
 %             *** VERSION 1.63 ********************************************
+%   23/05/01: various minor + check for curve fitting toolbox
+%             and reduce stats output if necessary
+%             *** VERSION 1.64 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -330,7 +333,7 @@ function [OUTPUT] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.63;
+par_ver = 1.64;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -2330,30 +2333,32 @@ else
     % NOTE: use data_vector_1 which is the full grid values
     %       when there is no data
     % NOTE: remove NaNs first (also from depth vector)
-    if (~isempty(overlaydataid) && ((data_only == 'n') || (data_anomoly == 'y')))
-        % basic data stats and those of corresponding model locations
-        data_vector_1(find(isnan(data_vector_1))) = [];
-        output.data = datastats(reshape(data_vector_1,[],1));
-        output.data.sum  = sum(data_vector_1); % add sum
-        data_vector_2(find(isnan(data_vector_2))) = [];
-        output.model = datastats(reshape(data_vector_2,[],1));
-        output.model.sum  = sum(data_vector_2); % add sum
-    else
-        % basic stats
-        data_vector_1(find(isnan(data_vector_1))) = [];
-        output.model = datastats(reshape(data_vector_1,[],1));
-        output.model.sum  = sum(data_vector_1); % add sum
-        % add inventory/global volumn-weighted mean
-        output.model.inventory = 1027.649*z;
-        output.model.mean      = z/z_V;
-        % add old min,max
-        output.model.min   = min(reshape(zm,[],1));
-        output.model.max   = max(reshape(zm,[],1));
-        % add MOC properties
-        if ~isempty(plot_opsi)
-            loc_opsi = opsizm(find(opsigrid_zt<(-plot_D_min)));
-            output.moc_min = min(loc_opsi);
-            output.moc_max = max(loc_opsi);
+    if (license('test','Curve Fitting Toolbox'))
+        if (~isempty(overlaydataid) && ((data_only == 'n') || (data_anomoly == 'y')))
+            % basic data stats and those of corresponding model locations
+            data_vector_1(find(isnan(data_vector_1))) = [];
+            output.data = datastats(reshape(data_vector_1,[],1));
+            output.data.sum  = sum(data_vector_1); % add sum
+            data_vector_2(find(isnan(data_vector_2))) = [];
+            output.model = datastats(reshape(data_vector_2,[],1));
+            output.model.sum  = sum(data_vector_2); % add sum
+        else
+            % basic stats
+            data_vector_1(find(isnan(data_vector_1))) = [];
+            output.model = datastats(reshape(data_vector_1,[],1));
+            output.model.sum  = sum(data_vector_1); % add sum
+            % add inventory/global volumn-weighted mean
+            output.model.inventory = 1027.649*z;
+            output.model.mean      = z/z_V;
+            % add old min,max
+            output.model.min   = min(reshape(zm,[],1));
+            output.model.max   = max(reshape(zm,[],1));
+            % add MOC properties
+            if ~isempty(plot_opsi)
+                loc_opsi = opsizm(find(opsigrid_zt<(-plot_D_min)));
+                output.moc_min = min(loc_opsi);
+                output.moc_max = max(loc_opsi);
+            end
         end
     end
     % add model-data/model stats

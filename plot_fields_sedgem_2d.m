@@ -249,6 +249,9 @@ function [OUTPUT] = plot_fields_sedgem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,PM
 %             *** VERSION 1.62 ********************************************
 %   23/01/17: mostly some adjustments to returned data
 %             *** VERSION 1.63 ********************************************
+%   23/05/01: various minor + check for curve fitting toolbox
+%             and reduce stats output if necessary
+%             *** VERSION 1.64 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -260,7 +263,7 @@ function [OUTPUT] = plot_fields_sedgem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,PM
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.63;
+par_ver = 1.64;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -1507,22 +1510,24 @@ else
     % NOTE: use data_vector_1 which is the full grid values
     %       when there is no data
     % NOTE: remove NaNs first (also from depth vector)
-    if (~isempty(overlaydataid) && ((data_only == 'n') || (data_anomoly == 'y')))
-        % basic data stats and those of corresponding model locations
-        data_vector_1(find(isnan(data_vector_1))) = [];
-        output.data = datastats(reshape(data_vector_1,[],1));
-        output.data.sum  = sum(data_vector_1); % add sum
-        data_vector_2(find(isnan(data_vector_2))) = [];
-        output.model = datastats(reshape(data_vector_2,[],1));
-        output.model.sum  = sum(data_vector_2); % add sum
-    else
-        % basic stats
-        data_vector_1(find(isnan(data_vector_1))) = [];
-        output.model = datastats(reshape(data_vector_1,[],1));
-        output.model.sum  = sum(data_vector_1); % add sum
-        % add old min,max
-        output.old.max   = max(max(zm));
-        output.old.min   = min(min(zm));
+    if (license('test','Curve Fitting Toolbox'))
+        if (~isempty(overlaydataid) && ((data_only == 'n') || (data_anomoly == 'y')))
+            % basic data stats and those of corresponding model locations
+            data_vector_1(find(isnan(data_vector_1))) = [];
+            output.data = datastats(reshape(data_vector_1,[],1));
+            output.data.sum  = sum(data_vector_1); % add sum
+            data_vector_2(find(isnan(data_vector_2))) = [];
+            output.model = datastats(reshape(data_vector_2,[],1));
+            output.model.sum  = sum(data_vector_2); % add sum
+        else
+            % basic stats
+            data_vector_1(find(isnan(data_vector_1))) = [];
+            output.model = datastats(reshape(data_vector_1,[],1));
+            output.model.sum  = sum(data_vector_1); % add sum
+            % add old min,max
+            output.old.max   = max(max(zm));
+            output.old.min   = min(min(zm));
+        end
     end
     %
     if exist('STATM')
