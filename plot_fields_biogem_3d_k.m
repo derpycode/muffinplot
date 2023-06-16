@@ -355,6 +355,11 @@ function [OUTPUT] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 %   23/05/01: various minor + check for curve fitting toolbox
 %             and reduce stats output if necessary
 %             *** VERSION 1.64 ********************************************
+%   23/05/01: added basic filtering of labels to parallel that for data
+%             (labels (if not also data) ideally need to be a structure
+%             to make for mroe compact code)
+%             (these changes need to be extended to the other functions)
+%             *** VERSION 1.65 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -366,7 +371,7 @@ function [OUTPUT] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.64;
+par_ver = 1.65;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -1392,6 +1397,11 @@ if ~isempty(overlaydataid)
             overlaydata_ijk(wronglayer_locations,:)  = [];
             overlaydata_raw(wronglayer_locations,:)  = [];
             overlaylabel_raw(wronglayer_locations,:) = [];
+            if strcmp(data_shapecol,'y')
+                overlaydata_shape(wronglayer_locations) = [];
+                overlaydata_ecol(wronglayer_locations)  = [];
+                overlaydata_fcol(wronglayer_locations)  = [];
+            end
             nmax = nmax-wronglayer_n(1);
         elseif (kplot == 0)
             % whole ocean
@@ -1406,6 +1416,11 @@ if ~isempty(overlaydataid)
                     overlaydata_ijk(n,:)  = [];
                     overlaydata_raw(n,:)  = [];
                     overlaylabel_raw(n,:) = [];
+                    if strcmp(data_shapecol,'y')
+                        overlaydata_shape(n) = [];
+                        overlaydata_ecol(n)  = [];
+                        overlaydata_fcol(n)  = [];
+                    end
                     nmax = nmax-1;
                 elseif ( (overlaydata_ijk(n,3) < loc_k1) )
                     % reassign all data with k < k1 to k1
@@ -1432,6 +1447,11 @@ if ~isempty(overlaydataid)
                     overlaydata_ijk(n,:)  = [];
                     overlaydata_raw(n,:)  = [];
                     overlaylabel_raw(n,:) = [];
+                    if strcmp(data_shapecol,'y')
+                        overlaydata_shape(n) = [];
+                        overlaydata_ecol(n)  = [];
+                        overlaydata_fcol(n)  = [];
+                    end
                     nmax = nmax-1;
                 else
                     % otherwise:
@@ -1499,6 +1519,11 @@ if ~isempty(overlaydataid)
                 overlaydata_ijk(n,4) = NaN;
             end
         end
+    end
+    if strcmp(data_shapecol,'y')
+        overlaydata_shape(isnan(overlaydata_raw(:,4))) = [];
+        overlaydata_ecol(isnan(overlaydata_raw(:,4)))  = [];
+        overlaydata_fcol(isnan(overlaydata_raw(:,4)))  = [];
     end
     overlaylabel_raw(isnan(overlaydata_raw(:,4)),:) = [];
     overlaydata_raw(isnan(overlaydata_raw(:,4)),:)  = [];
@@ -2679,6 +2704,7 @@ else
     % NOTE: use data_vector_1 which is the full grid values
     %       when there is no data
     % NOTE: remove NaNs first (also from depth vector)
+    output = [];
     if (license('test','Curve Fitting Toolbox'))
         if (~isempty(overlaydataid) && ((data_only == 'n') || (data_anomoly == 'y')))
             % basic data stats and those of corresponding model locations

@@ -1510,6 +1510,7 @@ else
     % NOTE: use data_vector_1 which is the full grid values
     %       when there is no data
     % NOTE: remove NaNs first (also from depth vector)
+    output = [];
     if (license('test','Curve Fitting Toolbox'))
         if (~isempty(overlaydataid) && ((data_only == 'n') || (data_anomoly == 'y')))
             % basic data stats and those of corresponding model locations

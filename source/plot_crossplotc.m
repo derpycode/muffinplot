@@ -11,7 +11,7 @@ function [] = plot_crossplotc(PVECX,PVECY,PVECZ,PSTRX,PSTRY,PSTRZ,POPT,PNAME)
 %   data set (also a vector)
 %
 %   PVECX [VECTOR] (e.g., [1 2 3 4])
-%   --> vector of the x axis data
+%   --> vector of the x axis data == data (or 1st model variable)
 %   PVECY [VECTOR] (e.g., [2 4 6 8])
 %   --> vector of the y axis data
 %   PVECZ [VECTOR] [OPTIONAL] (e.g., [4 3 2 1])
@@ -136,8 +136,22 @@ if ~isempty(data_z)
     xyz = sortrows(xyz,3);
     data_x = xyz(:,1);
     data_y = xyz(:,2);
-    data_z = xyz(:,3);    
+    data_z = xyz(:,3);
 end
+% calculate stats
+% NOTE: data_x == data (or first model variable)
+%       calc_allstats(Cr,Cf) -> Cr == the reference
+% STATM(1,:) = MEAN;
+% STATM(2,:) = STD;
+% STATM(3,:) = RMSD;
+% STATM(4,:) = CORRELATIONS;
+% STATM(5,:) = N;
+% STATM(6,:) = TOTAL RMSD;
+% STATM(7,:) = STANDARD DEVIATION NORMALISED RMSD;
+% STATM(8,:) = NORMALISED BIAS;
+% STATM(9,:) = R2;
+% STATM(10,:) = M;
+STATM = calc_allstats(data_x,data_y);
 %
 % *********************************************************************** %
 
@@ -199,7 +213,8 @@ end
 % *** ADD REGRESSION **************************************************** %
 %
 % check for invalid input data for stats
-if ( (length(loc_x) < 2) || (range(loc_x) == 0.0) ), data_stats = 'n'; end
+% NOTE: remove use of range in required case toolbox is not installed ...
+if ( (length(loc_x) < 2) || (min(loc_x) == max(loc_x)) ), data_stats = 'n'; end
 % add stats to plot
 % NOTE: loc_x == data (or first model variable)
 %       loc_y == model
@@ -230,6 +245,7 @@ if (data_stats=='y')
         loc_str1 = ['y = ' num2str(p(2)) ' + ' num2str(p(1)) '*x'];
     end
     loc_str2 = ['R2 = ' num2str(loc_R2) ' : n = ' num2str(loc_n)];
+    loc_str3 = ['[M,CORR,R2] = ' num2str(STATM(10,2)) ',' num2str(STATM(4,2)) ',' num2str(STATM(9,2))];
     % add 1:1 line
     line([min([loc_xmin loc_ymin]) max([loc_xmax loc_ymax])], [min([loc_xmin loc_ymin]) max([loc_xmax loc_ymax])],'Color','k','LineWidth',1.0,'LineStyle','--');
     % find current x,y limits
@@ -243,11 +259,13 @@ if (data_stats=='y')
     if ( ((p(2) > 0.0) && (data_fit_n > 1)) || ((p(1) > 0.0) && (data_fit_n == 1)) ),
         % positive slope
         text(loc_xmin+0.05*(loc_xmax-loc_xmin),loc_ymin+0.95*(loc_ymax-loc_ymin),loc_str1,'FontName','Arial','FontSize',11,'HorizontalAlignment','left','VerticalAlignment','middle');
-        text(loc_xmin+0.05*(loc_xmax-loc_xmin),loc_ymin+0.85*(loc_ymax-loc_ymin),loc_str2,'FontName','Arial','FontSize',10,'HorizontalAlignment','left','VerticalAlignment','middle');
+        text(loc_xmin+0.05*(loc_xmax-loc_xmin),loc_ymin+0.875*(loc_ymax-loc_ymin),loc_str2,'FontName','Arial','FontSize',10,'HorizontalAlignment','left','VerticalAlignment','middle');
+        text(loc_xmin+0.05*(loc_xmax-loc_xmin),loc_ymin+0.80*(loc_ymax-loc_ymin),loc_str3,'FontName','Arial','FontSize',8,'HorizontalAlignment','left','VerticalAlignment','middle');
     else
         % assume negative slope
         text(loc_xmin+0.95*(loc_xmax-loc_xmin),loc_ymin+0.95*(loc_ymax-loc_ymin),loc_str1,'FontName','Arial','FontSize',11,'HorizontalAlignment','right','VerticalAlignment','middle');
-        text(loc_xmin+0.95*(loc_xmax-loc_xmin),loc_ymin+0.85*(loc_ymax-loc_ymin),loc_str2,'FontName','Arial','FontSize',10,'HorizontalAlignment','right','VerticalAlignment','middle');
+        text(loc_xmin+0.95*(loc_xmax-loc_xmin),loc_ymin+0.875*(loc_ymax-loc_ymin),loc_str2,'FontName','Arial','FontSize',10,'HorizontalAlignment','right','VerticalAlignment','middle');
+        text(loc_xmin+0.95*(loc_xmax-loc_xmin),loc_ymin+0.80*(loc_ymax-loc_ymin),loc_str3,'FontName','Arial','FontSize',8,'HorizontalAlignment','right','VerticalAlignment','middle');
     end
 end
 %
