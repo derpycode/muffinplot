@@ -1372,7 +1372,7 @@ if ~isempty(overlaydataid)
     % create (i,j) from (lon,lat) and vice versa (depending on data input type)
     if (data_ijk == 'n')
         % precondition lon
-        for n = 1:nmax,
+        for n = 1:nmax
             if (overlaydata_raw(n,1) >= (360.0 + grid_lon_origin)),
                 overlaydata_raw(n,1) = overlaydata_raw(n,1) - 360.0;
             end
@@ -1384,9 +1384,10 @@ if ~isempty(overlaydataid)
         % NOTE: function 'calc_find_ij' takes input in order: (lon,lat)
         %       i.e., the same as the raw overlay data, which is (lon,lat) (i.e., (i,j)) format
         % NOTE: !!! gridded data is (j,i) !!!
-        % NOTE: for data deeper than the depth of layer 1, k=1 is returned
+        % NOTE: for data deeper than the depth of layer 1, k=0 is returned
+        %       (this is a recent change ... it used to be k=1)
         overlaydata_ijk(:,:) = zeros(size(overlaydata_raw(:,:)));
-        for n = 1:nmax,
+        for n = 1:nmax
             overlaydata_ijk(n,1:2) = calc_find_ij(overlaydata_raw(n,1),overlaydata_raw(n,2),grid_lon_origin,imax,jmax);
             overlaydata_ijk(n,3)   = calc_find_k(overlaydata_raw(n,3),kmax);
         end
@@ -1409,9 +1410,9 @@ if ~isempty(overlaydataid)
             % UNLESS the data_seafloor option is set:
             %        => move too-deep data to local bottom level
             n = 1;
-            while (n <= nmax),
+            while (n <= nmax)
                 loc_k1 = grid_k1(overlaydata_ijk(n,2),overlaydata_ijk(n,1));
-                if ( (overlaydata_ijk(n,3) < loc_k1) && (data_seafloor == 'n') ),
+                if ( (overlaydata_ijk(n,3) < loc_k1) && (data_seafloor == 'n') )
                     % delete all data with k < k1
                     overlaydata_ijk(n,:)  = [];
                     overlaydata_raw(n,:)  = [];
@@ -1440,9 +1441,9 @@ if ~isempty(overlaydataid)
             %        => allow data k values *deeper* than the ocean grid
             %           and also shallower to become seafloor
             n = 1;
-            while (n <= nmax),
+            while (n <= nmax)
                 loc_k1 = grid_k1(overlaydata_ijk(n,2),overlaydata_ijk(n,1));
-                if ( (overlaydata_ijk(n,3) ~= loc_k1) && (data_seafloor == 'n') ),
+                if ( (overlaydata_ijk(n,3) ~= loc_k1) && (data_seafloor == 'n') )
                     % delete all data with k ~= k1
                     overlaydata_ijk(n,:)  = [];
                     overlaydata_raw(n,:)  = [];

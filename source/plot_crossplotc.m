@@ -36,6 +36,8 @@ function [] = plot_crossplotc(PVECX,PVECY,PVECZ,PSTRX,PSTRY,PSTRZ,POPT,PNAME)
 %   --> the string for an alternative filename
 %   --> if an empty (i.e., '') value is passed to this parameter
 %       then a filename is automatically generated
+%   PAXIS [VECTOR] [OPTIONAL] (e.g., [0 10 0 10])
+%   --> vector of the z axis data
 %
 %   ***********************************************************************
 %   *** HISTORY ***********************************************************

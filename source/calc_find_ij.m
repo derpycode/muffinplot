@@ -49,7 +49,7 @@ if (loc_i > imax), loc_i = imax; end
 %
 % CALCULATE 'j'
 % check lat
-if (dum_lat > 90) | (dum_lat < -90)
+if ( (dum_lat > 90) || (dum_lat < -90) )
     disp(['lat out-of-range ...'])
 end
 % calculate 'j'

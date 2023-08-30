@@ -1,0 +1,331 @@
+function [] = plot_crossplotc2(PVECX,PVECY,PVECZ,PSTRX,PSTRY,PSTRZ,POPT,PNAME,PAXIS)
+% plot_scatterc
+%
+%   ***********************************************************************
+%   *** plot color-coded cross (scatter) plot *****************************
+%   ***********************************************************************
+%
+%   plot_crossplotc( ... )
+%   plots a scatter (x vs. y) plot of 2 data sets provided in vector form,
+%   with the option of color-coding the points according to a third
+%   data set (also a vector)
+%
+%   PVECX [VECTOR] (e.g., [1 2 3 4])
+%   --> vector of the x axis data == data (or 1st model variable)
+%   PVECY [VECTOR] (e.g., [2 4 6 8])
+%   --> vector of the y axis data
+%   PVECZ [VECTOR] [OPTIONAL] (e.g., [4 3 2 1])
+%   --> vector of the z axis data
+%   --> pass and empty vector, i.e. [] for no z (color) axis
+%   PSTRY [STRING] [OPTIONAL] (e.g., 'phosphate')
+%   --> x-axis label
+%   --> leave blank, i.e., '', for no x axis label
+%       (although option, passing a string value is advisable)
+%   PSTRY [STRING] [OPTIONAL] (e.g., 'oxygen')
+%   --> y-axis label
+%   --> leave blank, i.e., '', for no y axis label
+%       (although option, passing a string value is advisable)
+%   PSTRZ [STRING] [OPTIONAL] (e.g., 'depth (m)')
+%   --> z-axis (color bar) label
+%   --> leave blank, i.e., '', for no z (color) axis label
+%   POPT [STRING] (e.g., 'plotting_config_2')
+%   --> the string for an alternative plotting parameter set
+%   --> if an empty (i.e., '') value is passed to this parameter
+%       then the default parameter set is used
+%   PNAME [STRING] (e.g., 'my_plot')
+%   --> the string for an alternative filename
+%   --> if an empty (i.e., '') value is passed to this parameter
+%       then a filename is automatically generated
+%   PAXIS [VECTOR] [OPTIONAL] (e.g., [0 10 0 10])
+%   --> vector of the [xmin xmax ymin ymax] axis limits
+%
+%   ***********************************************************************
+%   *** HISTORY ***********************************************************
+%   ***********************************************************************
+%
+%   14/12/20: CREATED [from scatter code in plot_fields_biogem_3d_i.m]
+%   14/12/30: carried with development
+%   15/01/13: adjusted color scale call
+%             added range error-checking
+%   15/03/03: removed NaNs from auto-setting of colormap scale
+%   16/03/01: set n equal to x-vector rather than z (that might be empty)
+%   17/06/22: catch min/max color values equal
+%   18/04/26: fix for silly fussy case sensitive default settings filename
+%   20/08/30: added ordering by depth, such that in scatter, 
+%             deepest points (assumed to be fewest) end up on top
+%   20/09/04: filtered out 'anom' color scale
+%   20/12/30: disable stats if data cannot support the calculation
+%   23/08/08: CREATED: plot_crossplotc2
+%   23/08/08: added optional specified axis limits
+%
+%   ***********************************************************************
+
+% *********************************************************************** %
+% *** INITIALIZE PARAMETERS & VARIABLES ********************************* %
+% *********************************************************************** %
+%
+% process dummy parameters
+data_x = PVECX;
+data_y = PVECY;
+data_z = PVECZ;
+str_x = PSTRX;
+str_y = PSTRY;
+str_z = PSTRZ;
+str_filename = PNAME;
+data_axis = PAXIS;
+% load plotting options
+if isempty(POPT), POPT='plot_fields_SETTINGS'; end
+eval(POPT);
+% alter colorbar
+switch colorbar_name
+    case {'anom'}
+        % replace 'anom' becasue it creates white points ...
+        colorbar_name='parula';
+    otherwise
+        %
+end
+%
+% *** misc (local) parameters ******************************************* %
+%
+% set date
+str_date = [datestr(date,11), datestr(date,5), datestr(date,7)];
+% set function name
+str_function = 'plot-scatterc';
+%
+% *********************************************************************** %
+
+% *********************************************************************** %
+% *** PROCESS DATA ****************************************************** %
+% *********************************************************************** %
+%
+% make a copy of the data
+loc_x = data_x;
+loc_y = data_y;
+loc_z = data_z;
+% filter data
+loc_nan = isnan(loc_x);
+loc_x(loc_nan)=[];
+loc_y(loc_nan)=[];
+if ~isempty(data_z), loc_z(loc_nan)=[]; end
+loc_nan = isnan(loc_y);
+loc_x(loc_nan)=[];
+loc_y(loc_nan)=[];
+if ~isempty(data_z), loc_z(loc_nan)=[]; end
+loc_nan = isnan(loc_z);
+loc_x(loc_nan)=[];
+loc_y(loc_nan)=[];
+if ~isempty(data_z), loc_z(loc_nan)=[]; end
+% set data limts
+if isempty(data_axis)
+    loc_xmin = min(loc_x);
+    loc_xmax = max(loc_x);
+    loc_ymin = min(loc_y);
+    loc_ymax = max(loc_y);
+    loc_zmin = min(loc_z);
+    loc_zmax = min(loc_z);
+else
+    loc_xmin = data_axis(1);
+    loc_xmax = data_axis(2);
+    loc_ymin = data_axis(3);
+    loc_ymax = data_axis(4);
+    if (length(data_axis)==6)
+        loc_zmin = data_axis(5);
+        loc_zmax = data_axis(6);
+    end
+end
+% check data range
+if ((loc_xmin == loc_xmax) || (loc_ymin == loc_ymax))
+    disp(['ERROR: Cannot scale x or y axes (no range in data values). Cross-plot cannot be plotted.']);
+    return;
+end
+% convert to column vectors if necessary
+% REMEMBER: (rows,columns) :o)
+sz = size(data_x);
+if (sz(2) > sz(1)) data_x = data_x'; end
+sz = size(data_y);
+if (sz(2) > sz(1)) data_y = data_y'; end
+% sort rows by z
+if ~isempty(data_z)
+    sz = size(data_z);
+    if (sz(2) > sz(1)) data_z = data_z'; end
+    xyz = [data_x data_y data_z];
+    xyz = sortrows(xyz,3);
+    data_x = xyz(:,1);
+    data_y = xyz(:,2);
+    data_z = xyz(:,3);
+end
+% calculate stats
+% NOTE: data_x == data (or first model variable)
+%       calc_allstats(Cr,Cf) -> Cr == the reference
+% STATM(1,:) = MEAN;
+% STATM(2,:) = STD;
+% STATM(3,:) = RMSD;
+% STATM(4,:) = CORRELATIONS;
+% STATM(5,:) = N;
+% STATM(6,:) = TOTAL RMSD;
+% STATM(7,:) = STANDARD DEVIATION NORMALISED RMSD;
+% STATM(8,:) = NORMALISED BIAS;
+% STATM(9,:) = R2;
+% STATM(10,:) = M;
+STATM = calc_allstats(data_x,data_y);
+%
+% *********************************************************************** %
+
+% *********************************************************************** %
+% *** PLOT DATA ********************************************************* %
+% *********************************************************************** %
+%
+% *** CREATE AND CONFIGURE FIGURE *************************************** %
+%
+% initialize figure
+figure;
+fh(1) = axes('Position',[0 0 1 1],'Visible','off');
+if ~isempty(data_z),
+    fh(2) = axes('Position',[0.10 0.10 0.80 0.80]);
+else
+    fh(2) = axes('Position',[0.10 0.10 0.70 0.80]);
+end
+% define colormap
+if ~isempty(data_z),
+    cmap = make_cmap(colorbar_name,255);
+    if (colorbar_inv == 'y'), cmap = flipdim(cmap,1); end,
+    colormap(cmap);
+    if isempty(data_axis)
+        cmin = min(data_z(~isnan(data_z)));
+        cmax = max(data_z(~isnan(data_z)));
+        if (cmin == cmax),
+            cmin = 0.999*cmin;
+            cmax = 1.001*cmax;
+        end
+    else
+        cmin = loc_zmin;
+        cmax = loc_zmax;
+    end
+    caxis([cmin cmax]);
+end
+% date-stamp plot
+set(gcf,'CurrentAxes',fh(1));
+text(0.95,0.50,[str_function, ' / ', 'on: ', str_date],'FontName','Arial','FontSize',8,'Rotation',90.0,'HorizontalAlignment','center','VerticalAlignment','top');
+%
+% *** PLOT DATA ********************************************************* %
+%
+% NOTE: set x and y-axis limits, which can be passed into the function
+%       and which may often be the same
+% NOTE: scale an equal aspect plot if the x and y data ranges are equal
+set(gcf,'CurrentAxes',fh(2));
+hold on;
+if ~isempty(data_z)
+    scatter(data_x,data_y,data_size,data_z,'filled');
+    xlabel([strrep(str_x,'_','-')]);
+    ylabel([strrep(str_y,'_','-')]);
+else
+    scatter(data_x,data_y,data_size);
+    xlabel([strrep(str_x,'_','-')]);
+    ylabel([strrep(str_y,'_','-')]);
+end
+axis([loc_xmin loc_xmax loc_ymin loc_ymax]);
+if ( (loc_xmax-loc_xmin)==(loc_ymax-loc_ymin) )
+    daspect([1 1 1]); 
+end
+if ~isempty(data_z)
+    hb = colorbar;
+    set(get(hb,'ylabel'),'string',str_z);
+end
+if ~isempty(plot_title)
+    title(plot_title,'FontSize',18);
+else
+    title(['Data ID: ',strrep(str_y,'_','-'),' vs. ', strrep(str_x,'_','-')],'FontSize',12);
+end
+%
+% *** ADD REGRESSION **************************************************** %
+%
+% check for invalid input data for stats
+% NOTE: remove use of range in required case toolbox is not installed ...
+if ( (length(loc_x) < 2) || (min(loc_x) == max(loc_x)) ), data_stats = 'n'; end
+% add stats to plot
+% NOTE: loc_x == data (or first model variable)
+%       loc_y == model
+if (data_stats=='y')
+    % add regression line & calc R2 
+    loc_n     = length(loc_x);
+    loc_xmean = mean(loc_x);
+    loc_ymean = mean(loc_y);
+    % regression
+    [p,S] = polyfit(loc_x,loc_y,data_fit_n);
+    loc_yf = polyval(p,loc_x);
+    % R2 -- vs. best fit
+    %%%loc_SStot = sum((loc_y - loc_ymean).^2);
+    %%%loc_SSres = sum ((loc_y - loc_yf).^2);
+    %%%loc_R2 = 1 - loc_SSres/loc_SStot;
+    % R2 -- 1:1
+    loc_SStot = sum((loc_x - loc_xmean).^2);
+    loc_SSres = sum ((loc_x - loc_y).^2);
+    loc_R2 = 1 - loc_SSres/loc_SStot;
+    % add best fit line, stats
+    if (data_fit_n > 1)
+        loc_x = [loc_xmin:(loc_xmax-loc_xmin)/10:loc_xmax];
+        loc_y = p(3)+p(2)*loc_x+p(1)*loc_x.^2;
+        plot(loc_x,loc_y,'Color','k','LineWidth',1.0);
+        loc_str1 = ['y = ' num2str(p(3)) ' + ' num2str(p(2)) '*x + ' num2str(p(1)) '*x^2'];
+    else
+        line([loc_xmin loc_xmax], [p(2)+p(1)*loc_xmin p(2)+p(1)*loc_xmax],'Color','k','LineWidth',1.0);
+        loc_str1 = ['y = ' num2str(p(2)) ' + ' num2str(p(1)) '*x'];
+    end
+    loc_str2 = ['R2 = ' num2str(loc_R2) ' : n = ' num2str(loc_n)];
+    loc_str3 = ['[M,CORR,R2] = ' num2str(STATM(10,2)) ',' num2str(STATM(4,2)) ',' num2str(STATM(9,2))];
+    % add 1:1 line
+    line([min([loc_xmin loc_ymin]) max([loc_xmax loc_ymax])], [min([loc_xmin loc_ymin]) max([loc_xmax loc_ymax])],'Color','k','LineWidth',1.0,'LineStyle','--');
+    % find current x,y limits for adding text lables
+    loc_xlim = xlim;
+    loc_ylim = ylim;
+    loc_xmin = loc_xlim(1);
+    loc_xmax = loc_xlim(2);
+    loc_ymin = loc_ylim(1);
+    loc_ymax = loc_ylim(2);
+    % add text labels
+    if ( ((p(2) > 0.0) && (data_fit_n > 1)) || ((p(1) > 0.0) && (data_fit_n == 1)) ),
+        % positive slope
+        text(loc_xmin+0.05*(loc_xmax-loc_xmin),loc_ymin+0.95*(loc_ymax-loc_ymin),loc_str1,'FontName','Arial','FontSize',11,'HorizontalAlignment','left','VerticalAlignment','middle');
+        text(loc_xmin+0.05*(loc_xmax-loc_xmin),loc_ymin+0.875*(loc_ymax-loc_ymin),loc_str2,'FontName','Arial','FontSize',10,'HorizontalAlignment','left','VerticalAlignment','middle');
+        text(loc_xmin+0.05*(loc_xmax-loc_xmin),loc_ymin+0.80*(loc_ymax-loc_ymin),loc_str3,'FontName','Arial','FontSize',8,'HorizontalAlignment','left','VerticalAlignment','middle');
+    else
+        % assume negative slope
+        text(loc_xmin+0.95*(loc_xmax-loc_xmin),loc_ymin+0.95*(loc_ymax-loc_ymin),loc_str1,'FontName','Arial','FontSize',11,'HorizontalAlignment','right','VerticalAlignment','middle');
+        text(loc_xmin+0.95*(loc_xmax-loc_xmin),loc_ymin+0.875*(loc_ymax-loc_ymin),loc_str2,'FontName','Arial','FontSize',10,'HorizontalAlignment','right','VerticalAlignment','middle');
+        text(loc_xmin+0.95*(loc_xmax-loc_xmin),loc_ymin+0.80*(loc_ymax-loc_ymin),loc_str3,'FontName','Arial','FontSize',8,'HorizontalAlignment','right','VerticalAlignment','middle');
+    end
+end
+%
+% *** END FIGURE ******************************************************** %
+%
+hold off;
+%
+% *** PRINT PLOT ******************************************************** %
+%
+if isempty(str_filename), str_filename = ['crossplot']; end
+str_filename = [str_filename '.' str_date];
+if (plot_format_old)
+    print('-dpsc2', [str_filename, '.ps']);
+else
+    switch plot_format
+        case 'png'
+            export_fig([str_filename '.png'], '-png', '-r150', '-nocrop');
+        case 'pngT'
+            export_fig([str_filename '.png'], '-png', '-r150', '-nocrop', '-transparent');
+        case 'jpg'
+            export_fig([str_filename '.jpg'], '-jpg', '-r150', '-nocrop');
+        otherwise
+            export_fig([str_filename '.eps'], '-eps', '-nocrop');
+    end
+end
+%
+% *********************************************************************** %
+
+% *********************************************************************** %
+% *** END *************************************************************** %
+% *********************************************************************** %
+%
+% END
+%disp(['END ...'])
+%
+% *********************************************************************** %

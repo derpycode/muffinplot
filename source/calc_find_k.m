@@ -34,10 +34,10 @@ D = -get_gdep(dum_kmax,par_ez0,par_D_max);
 %
 % CALCULATE 'k'
 loc_n_k = dum_kmax;
-for n_k = dum_kmax:-1:2,
+for n_k = dum_kmax:-1:2
     if dum_depth > D(n_k), loc_n_k = n_k - 1; end
 end
-if dum_depth > D(1), loc_n_k = 1; end
+if dum_depth > D(1), loc_n_k = 0; end
 %
 % *********************************************************************** %
 
@@ -45,7 +45,7 @@ if dum_depth > D(1), loc_n_k = 1; end
 % *** RETURN RESULT ***************************************************** %
 % *********************************************************************** %
 %
-dum_k = [loc_n_k];
+dum_k = loc_n_k;
 %
 % *********************************************************************** %
 

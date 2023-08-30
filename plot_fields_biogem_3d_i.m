@@ -1336,38 +1336,46 @@ if ~isempty(overlaydataid)
     % determine equivalent (i,j,k)
     % NOTE: filter out masked area embodied in array <data>
     %       (this also includes bathymetry)
-    % NOTE: for data lying deeper than the depth of layer 1, k = 1 is set
+    % NOTE: for data deeper than the depth of layer 1, k=0 is returned
+    %       (this is a recent change ... it used to be k=1)
     % NOTE: format: data(k,j,i)
     % NOTE: format: mask(j,i)
+    % NOTE: accept overlaydata_raw(n,4) by default, then filter
     overlaydata_ijk(:,:) = zeros(size(overlaydata_raw(:,:)));
     for n = 1:nmax
         overlaydata_ijk(n,1:2) = calc_find_ij(overlaydata_raw(n,1),overlaydata_raw(n,2),grid_lon_origin,imax,jmax);
         overlaydata_ijk(n,3)   = calc_find_k(overlaydata_raw(n,3),kmax);
-        if ( isnan(data(overlaydata_ijk(n,3),overlaydata_ijk(n,2),overlaydata_ijk(n,1))) )
-            % delete data lines with depth level less than loc_k1
-            % UNLESS the data_seafloor option is set:
-            %        => move too-deep data to local bottom level
-            %        (AND the grid point is within the mask)
-            if ( (grid_k1(overlaydata_ijk(n,2),overlaydata_ijk(n,1)) <= kmax) && (data_seafloor == 'y') && mask(overlaydata_ijk(n,2),overlaydata_ijk(n,1)) )
-                overlaydata_ijk(n,3) = grid_k1(overlaydata_ijk(n,2),overlaydata_ijk(n,1)); 
-                overlaydata_ijk(n,4) = overlaydata_raw(n,4);               
+        overlaydata_ijk(n,4)   = overlaydata_raw(n,4);
+        % exclude:
+        % * below seafloor if (data_seafloor == 'n') (otherwise adjust k)
+        % * outside masked area
+        % * outside of specified depth range
+        % NOTE: mark
+        if (overlaydata_ijk(n,3) < grid_k1(overlaydata_ijk(n,2),overlaydata_ijk(n,1)))
+            if (data_seafloor == 'y')
+                overlaydata_ijk(n,3) = grid_k1(overlaydata_ijk(n,2),overlaydata_ijk(n,1));
             else
                 overlaydata_raw(n,4) = NaN;
                 overlaydata_ijk(n,4) = NaN;
             end
-        elseif ( (overlaydata_ijk(n,3) < data_kmin) || (overlaydata_ijk(n,3) > data_kmax) )
+        end
+        if (~mask(overlaydata_ijk(n,2),overlaydata_ijk(n,1)))
             overlaydata_raw(n,4) = NaN;
             overlaydata_ijk(n,4) = NaN;
-        else
-            overlaydata_ijk(n,4) = overlaydata_raw(n,4);
+        end
+        if ( (overlaydata_ijk(n,3) < data_kmin) || (overlaydata_ijk(n,3) > data_kmax) )
+            overlaydata_raw(n,4) = NaN;
+            overlaydata_ijk(n,4) = NaN;
         end
     end
     % remove data in land cells
     if (data_land == 'n')
         for n = 1:nmax
-            if (isnan(overlaydata_zm(overlaydata_ijk(n,3),overlaydata_ijk(n,2))))
-                overlaydata_raw(n,4) = NaN;
-                overlaydata_ijk(n,4) = NaN;
+            if ( ~isnan(overlaydata_ijk(n,4)) )
+                if ( isnan(overlaydata_zm(overlaydata_ijk(n,3),overlaydata_ijk(n,2))) )
+                    overlaydata_raw(n,4) = NaN;
+                    overlaydata_ijk(n,4) = NaN;
+                end
             end
         end
     end

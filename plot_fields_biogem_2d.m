@@ -2027,10 +2027,7 @@ if (plot_secondary == 'y')
     %
     % NOTE: data_vector_1 == DATA  (or model field 1)
     % NOTE: data_vector_2 == MODEL (or model field 2)
-    %       => swap data2 and data1 so model (data1) is on y-axis
-    %          as per for overlay data
-    %          (assuming data2 are regridded observations)
-    if ( ~isempty(dataid_2) || ~isempty(overlaydataid) )
+    if ((data_save == 'y') && (~isempty(dataid_2) || (~isempty(overlaydataid) && (data_only == 'n'))) )
         %
         if ~isempty(dataid_2)
             loc_x_data = reshape(data_2(:,:),1,[]);
@@ -2043,11 +2040,11 @@ if (plot_secondary == 'y')
             loc_x_label = [strrep(overlaydataid,'_','-')];
             loc_y_label = [strrep(dataid_1,'_','-')];
         end
-        % plot without depth coding
+        % plot without color (e.g. depth) coding
         % NOTE: test for insufficient data for scaling the plot
         % NOTE: function range has been moved ...
         if ((max(loc_x_data)-min(loc_x_data)) > 0.0)
-            plot_crossplotc(loc_x_data,loc_y_data,[],loc_x_label,loc_y_label,'',POPT,[par_pathout '/' filename '.CROSSPLOT']);
+            plot_crossplotc2(loc_x_data,loc_y_data,[],loc_x_label,loc_y_label,'',POPT,[par_pathout '/' filename '.CROSSPLOT'],[con_min con_max con_min con_max]);
         end
         %
     end
@@ -2056,6 +2053,27 @@ if (plot_secondary == 'y')
     %
     if ((data_save == 'y') && (~isempty(dataid_2) || (~isempty(overlaydataid) && (data_only == 'n'))) )
        fprint_1Dn_d([loc_x_data' loc_y_data'],[par_pathout '/' filename '.CROSSPLOT.', str_date, '.res']); 
+    end
+    %
+    %
+    % *** PLOT FIGURE (cross-plot) ALT ********************************** %
+    %
+    % now color-code z-axis with data values (data_vector_1)
+    if ( ~isempty(overlaydataid) && (data_only == 'n') )
+            loc_x_data = data_vector_1;
+            loc_y_data = data_vector_2;
+            loc_x_label = [strrep(overlaydataid,'_','-')];
+            loc_y_label = [strrep(dataid_1,'_','-')];
+        if ((max(loc_x_data)-min(loc_x_data)) > 0.0)
+            plot_crossplotc2(loc_x_data,loc_y_data,loc_x_data,loc_x_label,loc_y_label,loc_x_label,POPT,[par_pathout '/' filename '.CROSSPLOT_ALT'],[con_min con_max con_min con_max con_min con_max]);
+        end
+        %
+    end
+    %
+    % *** SAVE DATA (cross-plot relationships) ************************** %
+    %
+    if ( ~isempty(overlaydataid) && (data_only == 'n') )
+       fprint_1Dn_d([loc_x_data' loc_y_data'],[par_pathout '/' filename '.CROSSPLOT_ALT.', str_date, '.res']); 
     end
     %
 end

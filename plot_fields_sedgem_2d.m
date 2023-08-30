@@ -779,7 +779,7 @@ if ~isempty(overlaydataid)
         case 4
             if (sum(v_format(1:4)) == 0)
                 % lon, lat, depth, value
-                overlaydata_raw  = cell2mat(cdata(:,1:4));
+                overlaydata_raw  = cell2mat(cdata(:,[1 2 4]));
                 % create dummay (blank space) labels
                 overlaylabel_raw = (blanks(n_rows))';
                 data_shapecol    = 'n';
@@ -796,7 +796,7 @@ if ~isempty(overlaydataid)
         case 5
             if ((sum(v_format(1:4)) == 0) && (v_format(5) == 1))
                 % lon, lat, depth, value, LABEL
-                overlaydata_raw  = cell2mat(cdata(:,1:4));
+                overlaydata_raw  = cell2mat(cdata(:,[1 2 4]));
                 overlaylabel_raw = char(cdata(:,5));
                 data_shapecol    = 'n';
                 % flag for a valid format
@@ -817,7 +817,7 @@ if ~isempty(overlaydataid)
         case 8
             if ((sum(v_format(1:4)) == 0) && sum(v_format(5:8)) == 4)
                 % lon, lat, depth, value, LABEL, SHAPE, EDGE COLOR, FILL COLOR
-                overlaydata_raw   = cell2mat(cdata(:,1:4));
+                overlaydata_raw   = cell2mat(cdata(:,[1 2 4]));
                 overlaylabel_raw  = char(cdata(:,5));
                 overlaydata_shape = char(cdata(:,6));
                 overlaydata_ecol  = char(cdata(:,7));
