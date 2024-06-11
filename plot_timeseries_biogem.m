@@ -138,6 +138,9 @@ function [] = plot_timeseries_biogem(PEXP1,PEXP2,PTMIN,PTMAX,PDATA1,PDATA1N,PDAT
 %             *** VERSION 1.20 ********************************************
 %   22/06/21: (minor)
 %             *** VERSION 1.21 ********************************************
+%   24/06/11: updated graphics export to pdf option for:
+%             plot_format_old = 'n'
+%             *** VERSION 1.22 ********************************************
 %
 %   ***********************************************************************
 
@@ -148,7 +151,7 @@ function [] = plot_timeseries_biogem(PEXP1,PEXP2,PTMIN,PTMAX,PDATA1,PDATA1N,PDAT
 % *** initialize ******************************************************** %
 %
 % set version!
-par_ver = 1.21;
+par_ver = 1.22;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -262,11 +265,6 @@ end
 addpath([str_current_path '/' par_pathdata]);
 % check plot format setting
 if ~isempty(plot_format), plot_format_old='n'; end
-% add plotting paths
-if (plot_format_old == 'n')
-    addpath([str_function_path '/' par_pathlib '/xpdfbin-win-3.03/bin32']);
-    addpath([str_function_path '/' par_pathlib '/export_fig']);
-end
 % now make make str_function text-friendly
 str_function = strrep(str_function,'_','-');
 %
@@ -1404,23 +1402,9 @@ if opt_log10, str_filename = [str_filename '.' 'LOG10']; end
 if (~isempty(expid2)), str_filename = [str_filename '.' 'ANOM']; end
 str_filename = [str_filename '.' str_date];
 if (plot_format_old == 'y')
-    %%%print('-dpsc2', [par_pathout '/' str_filename, '.ps']);
-    if (par_mutlab > 2015)
-        print('-dpsc2', '-bestfit', [par_pathout '/' str_filename '.ps']);
-    else
-        print('-dpsc2', [par_pathout '/' str_filename '.ps']);
-    end
+    print('-dpsc2', '-bestfit', [par_pathout '/' str_filename '.ps']);
 else
-    switch plot_format
-        case 'png'
-            export_fig([par_pathout '/' str_filename '.png'], '-png', '-r150', '-nocrop');
-        case 'pngT'
-            export_fig([par_pathout '/' str_filename '.png'], '-png', '-r150', '-nocrop', '-transparent');
-        case 'jpg'
-            export_fig([par_pathout '/' str_filename '.jpg'], '-jpg', '-r150', '-nocrop');
-        otherwise
-            export_fig([par_pathout '/' str_filename '.eps'], '-eps', '-nocrop');
-    end
+    exportgraphics(gcf,[par_pathout '/' filename '.pdf'],'BackgroundColor','none','ContentType','vector');
 end
 %
 % *********************************************************************** %

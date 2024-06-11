@@ -322,6 +322,9 @@ function [OUTPUT] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 %   23/05/01: various minor + check for curve fitting toolbox
 %             and reduce stats output if necessary
 %             *** VERSION 1.64 ********************************************
+%   24/06/11: updated graphics export to pdf option for:
+%             plot_format_old = 'n'
+%             *** VERSION 1.66 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -333,7 +336,7 @@ function [OUTPUT] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.64;
+par_ver = 1.66;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -510,11 +513,6 @@ end
 addpath([str_current_path '/' par_pathdata]);
 % check plot format setting
 if ~isempty(plot_format), plot_format_old='n'; end
-% add plotting paths
-if (plot_format_old == 'n'),
-    addpath([str_function_path '/' par_pathlib '/xpdfbin-win-3.03/bin32']);
-    addpath([str_function_path '/' par_pathlib '/export_fig']);
-end
 % now make make str_function text-friendly
 str_function = strrep(str_function,'_','-');
 %
@@ -1740,15 +1738,9 @@ if (plot_main == 'y'),
     if (par_mutlab > 2015), hfig.Renderer='Painters'; end    
     clf;
     % define plotting regions
-    if (plot_format_old == 'y')
-        fh(1) = axes('Position',[0 0 1 1],'Visible','off');
-        fh(2) = axes('Position',[0.10 0.10 0.60 0.80]);
-        fh(3) = axes('Position',[0.80 0.27 0.20 0.46],'Visible','off');
-    else
-        fh(1) = axes('Position',[0 0 1 1],'Visible','off');
-        fh(2) = axes('Position',[0.075 0.125 0.60 0.70]);
-        fh(3) = axes('Position',[0.725 0.125 0.15 0.70],'Visible','off');
-    end
+    fh(1) = axes('Position',[0 0 1 1],'Visible','off');
+    fh(2) = axes('Position',[0.10 0.10 0.60 0.80]);
+    fh(3) = axes('Position',[0.80 0.27 0.20 0.46],'Visible','off');
     % define colormap
     cmap = make_cmap(colorbar_name,con_n+2);
     if (colorbar_inv == 'y'), cmap = flipdim(cmap,1); end,
@@ -2013,8 +2005,8 @@ if (plot_main == 'y'),
         else
             str = num2str(contour_data(c));
         end
-        textsize = 2+round(80/con_n);
-        if textsize > 10, textsize = 10; end
+        textsize = 6+round(80/con_n);
+        if textsize > 12, textsize = 12; end
         text(0.40,c,str,'FontName','Arial','FontSize',textsize);
         set(h,'LineWidth',0.5);
         set(h,'EdgeColor','k');
@@ -2026,8 +2018,6 @@ if (plot_main == 'y'),
             else
                 str = num2str(contour_data(c));
             end
-            textsize = 2+round(80/con_n);
-            if textsize > 10, textsize = 10; end
             text(0.40,c,str,'FontName','Arial','FontSize',textsize);
             set(h,'LineWidth',0.5);
             set(h,'EdgeColor','k');
@@ -2046,22 +2036,9 @@ if (plot_main == 'y'),
     %
     set(gcf,'CurrentAxes',fh(1));
     if (plot_format_old == 'y')
-        if (par_mutlab > 2015)
-            print('-dpsc2', '-bestfit', [par_pathout '/' filename '.' str_date '.ps']);
-        else
-            print('-dpsc2', [par_pathout '/' filename '.' str_date '.ps']);
-        end
+        print('-dpsc2', '-bestfit', [par_pathout '/' filename '.' str_date '.ps']);
     else
-        switch plot_format
-            case 'png'
-                export_fig([par_pathout '/' filename '.' str_date '.png'], '-png', '-r150', '-nocrop');
-            case 'pngT'
-                export_fig([par_pathout '/' filename '.' str_date '.png'], '-png', '-r150', '-nocrop', '-transparent');
-            case 'jpg'
-                export_fig([par_pathout '/' filename '.' str_date '.jpg'], '-jpg', '-r150', '-nocrop');
-            otherwise
-                export_fig([par_pathout '/' filename '.' str_date '.eps'], '-eps', '-nocrop');
-        end
+        exportgraphics(gcf,[par_pathout '/' filename '.' str_date '.pdf'],'BackgroundColor','none','ContentType','vector');
     end
     %
     % *** SAVE DATA ***************************************************** %
@@ -2168,16 +2145,7 @@ if (plot_secondary == 'y')
         if (plot_format_old == 'y')
             print('-dpsc2', [par_pathout '/' filename '.PROFILE.' str_date '.ps']);
         else
-            switch plot_format
-                case 'png'
-                    export_fig([par_pathout '/' filename '.PROFILE.' str_date '.png'], '-png', '-r150', '-nocrop');
-                case 'pngT'
-                    export_fig([par_pathout '/' filename '.PROFILE.' str_date '.png'], '-png', '-r150', '-nocrop', '-transparent');
-                case 'jpg'
-                    export_fig([par_pathout '/' filename '.PROFILE.' str_date '.jpg'], '-jpg', '-r150', '-nocrop');
-                otherwise
-                    export_fig([par_pathout '/' filename '.PROFILE.' str_date '.eps'], '-eps', '-nocrop');
-            end
+        exportgraphics(gcf,[par_pathout '/' filename '.PROFILE.' str_date '.pdf'],'BackgroundColor','none','ContentType','vector');
         end
         %
     end
@@ -2215,16 +2183,7 @@ if (plot_secondary == 'y')
         if (plot_format_old == 'y')
             print('-dpsc2', [par_pathout '/' filename '.ZONAL.' str_date '.ps']);
         else
-            switch plot_format
-                case 'png'
-                    export_fig([par_pathout '/' filename '.ZONAL.' str_date '.png'], '-png', '-r150', '-nocrop');
-                case 'pngT'
-                    export_fig([par_pathout '/' filename '.ZONAL.' str_date '.png'], '-png', '-r150', '-nocrop', '-transparent');
-                case 'jpg'
-                    export_fig([par_pathout '/' filename '.ZONAL.' str_date '.jpg'], '-jpg', '-r150', '-nocrop');
-                otherwise
-                    export_fig([par_pathout '/' filename '.ZONAL.' str_date '.eps'], '-eps', '-nocrop');
-            end
+        exportgraphics(gcf,[par_pathout '/' filename '.ZONAL.' str_date '.pdf'],'BackgroundColor','none','ContentType','vector');
         end
         %
     end
