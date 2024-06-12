@@ -21,10 +21,8 @@ plot_fields_biogem_3d_i(DUM_EXP,'','ocn_temp','',DUM_T,-1,0,'',1.0,0.0,30.0,30,'
 %
 % annual average sea-floor (bentic) temeprature (3D netCDF)
 plot_fields_biogem_3d_k(DUM_EXP,'','ocn_temp','',DUM_T,-1,-1,'',1.0,0.0,20.0,20,'','plot_fields_SETTINGS_BENT',[DUM_NAME '.PHYS_BENT']);
-% annual average sea-floor (benthic) salinity (3D netCDF)
-plot_fields_biogem_3d_k(DUM_EXP,'','ocn_sal','',DUM_T,-1,-1,'',1.0,32.0,36.0,20,'','plot_fields_SETTINGS_BENS',[DUM_NAME '.PHYS_BENS']);
-% % annual average sea-floor (benthic) numerical age (3D netCDF)
-% plot_fields_biogem_3d_k(DUM_EXP,'','ocn_colr','',DUM_T,-1,-1,'',1.0,0.0,2000.0,20,'','plot_fields_SETTINGS_AGE',[DUM_NAME '.PHYS_BENAGE']);
+% % annual average sea-floor (benthic) salinity (3D netCDF)
+% plot_fields_biogem_3d_k(DUM_EXP,'','ocn_sal','',DUM_T,-1,-1,'',1.0,32.0,36.0,20,'','plot_fields_SETTINGS_BENS',[DUM_NAME '.PHYS_BENS']);
 %
 % *********************************************************************** %
 

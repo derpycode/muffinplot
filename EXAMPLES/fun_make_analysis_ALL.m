@@ -6,6 +6,8 @@ function [] = fun_make_analysis_ALL(DUM_EXP,DUM_T,DUM_NAME)
 fun_make_analysis_phys(DUM_EXP,DUM_T,DUM_NAME);
 % % optional basin-masked OPSI
 % fun_make_analysis_phys_OPSI(DUM_EXP,DUM_T,MASK,DUM_NAME)
+% % ventilation age distribtions
+% fun_make_analysis_phys_AGE(DUM_EXP,DUM_T,DUM_NAME);
 %
 % *** GEOCHEMISTRY ****************************************************** %
 %
