@@ -30,6 +30,7 @@ function [] = plot_cmap(PNCOL,POPT)
 %   17/05/15: added addiitonal scales
 %   21/03/18: added additional scales
 %             removed old alternative plotting library option
+%   24/07/17: saving as PDF rather than PS
 %
 %   ***********************************************************************
 
@@ -157,7 +158,7 @@ end
 set(gcf,'CurrentAxes',fh(1));
 str_filename = ['colorscales'];
 str_filename = [str_filename '.' str_date];
-print('-dpsc2', '-bestfit', [str_filename, '.ps']);
+exportgraphics(gcf,[str_filename '.pdf'],'BackgroundColor','none','ContentType','vector');
 %
 % *********************************************************************** %
 

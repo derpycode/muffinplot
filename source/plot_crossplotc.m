@@ -55,6 +55,7 @@ function [] = plot_crossplotc(PVECX,PVECY,PVECZ,PSTRX,PSTRY,PSTRZ,POPT,PNAME)
 %             deepest points (assumed to be fewest) end up on top
 %   20/09/04: filtered out 'anom' color scale
 %   20/12/30: disable stats if data cannot support the calculation
+%   24/07/17: saving as PDF rather than PS
 %
 %   ***********************************************************************
 
@@ -282,16 +283,7 @@ str_filename = [str_filename '.' str_date];
 if (plot_format_old)
     print('-dpsc2', [str_filename, '.ps']);
 else
-    switch plot_format
-        case 'png'
-            export_fig([str_filename '.png'], '-png', '-r150', '-nocrop');
-        case 'pngT'
-            export_fig([str_filename '.png'], '-png', '-r150', '-nocrop', '-transparent');
-        case 'jpg'
-            export_fig([str_filename '.jpg'], '-jpg', '-r150', '-nocrop');
-        otherwise
-            export_fig([str_filename '.eps'], '-eps', '-nocrop');
-    end
+    exportgraphics(gcf,[str_filename '.pdf'],'BackgroundColor','none','ContentType','vector');
 end
 %
 % *********************************************************************** %
