@@ -46,6 +46,8 @@ function [] = plot_2dgridded(PDATAIN,PDATATH,POPT,PDATAID,PDATATITLE,PDATALIMS)
 %   18/11/15: added ps rendering fix ... hopefuly ...
 %             for MUTLAB version shenanigans
 %             *** VERSION 1.16 ********************************************
+%   24/07/17: saving as PDF rather than PS
+%             *** VERSION 1.17 ********************************************
 %
 %   ***********************************************************************
 
@@ -54,7 +56,7 @@ function [] = plot_2dgridded(PDATAIN,PDATATH,POPT,PDATAID,PDATATITLE,PDATALIMS)
 % *********************************************************************** %
 %
 % set version!
-par_ver = 1.16;
+par_ver = 1.17;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -64,10 +66,6 @@ if isempty(POPT), POPT='plot_fields_SETTINGS'; end
 eval(POPT);
 % set date
 str_date = [datestr(date,11), datestr(date,5), datestr(date,7)];
-% determine whcih stupid version of MUTLAB we are using
-tmp_mutlab = version('-release');
-str_mutlab = tmp_mutlab(1:4);
-par_mutlab = str2num(str_mutlab);
 %
 % *** copy passed parameters ******************************************** %
 % 
@@ -77,7 +75,7 @@ data_threshold = PDATATH;
 data_id = PDATAID;
 data_title = PDATATITLE;
 % set default plot name
-if isempty(data_id), 
+if isempty(data_id)
     data_id = str_function; 
 end
 %
@@ -94,7 +92,7 @@ c_max =256;
 % set plot limits
 % NOTE: if limits are not explicitl specified, 
 %       data > threshold is excluded (NaN) in finding the (min,max) limits
-if exist('PDATALIMS','var'),
+if exist('PDATALIMS','var')
     data_min = PDATALIMS(1);
     data_max = PDATALIMS(2);
     data(find(data(:,:) < data_min)) = data_min;
@@ -132,7 +130,6 @@ plot_xy_scaling = jmax/imax;
 % NOTE: explicitly specify renderer is using useless recent version
 scrsz = get(0,'ScreenSize');
 hfig = figure('Position',[((1 - plot_dscrsz)/2)*plot_dscrsz*scrsz(3) (1 - plot_dscrsz)*plot_dscrsz*scrsz(4) 1.1*plot_dscrsz*scrsz(4) plot_dscrsz*scrsz(4)]);
-if (par_mutlab > 2015), hfig.Renderer='Painters'; end    
 clf;
 % define plotting regions
 fh(1) = axes('Position',[0 0 1 1],'Visible','off');
@@ -224,13 +221,7 @@ hold off;
 % *** PRINT PLOT ******************************************************** %
 %
 set(gcf,'CurrentAxes',fh(1));
-set(gcf,'renderer','painters');
-filename = data_id;
-if (par_mutlab > 2015),
-    print('-dpsc2', '-bestfit', [filename '.' str_date '.ps']);
-else
-    print('-dpsc2', [filename '.' str_date '.ps']);
-end
+exportgraphics(gcf,[str_filename '.' str_date '.pdf'],'BackgroundColor','none','ContentType','vector');
 %
 % *********************************************************************** %
 

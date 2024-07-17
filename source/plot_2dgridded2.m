@@ -47,6 +47,8 @@ function [] = plot_2dgridded2(PDATAIN,PDATALIMS,PDATACOL,OSTRUCTTEXT)
 %             *** VERSION 0.92 ********************************************
 %   19/01/06: bug fix of defalt plotting parameters
 %             *** VERSION 0.93 ********************************************
+%   24/07/17: saving as PDF rather than PS
+%             *** VERSION 0.94 ********************************************
 %
 %   ***********************************************************************
 
@@ -57,7 +59,7 @@ function [] = plot_2dgridded2(PDATAIN,PDATALIMS,PDATACOL,OSTRUCTTEXT)
 % *** INITIALIZE ******************************************************** %
 %
 % set version!
-par_ver = 0.93;
+par_ver = 0.94;
 % set function name
 str_function = mfilename;
 str_function(find(str_function(:)=='_')) = '-';
@@ -65,10 +67,6 @@ str_function(find(str_function(:)=='_')) = '-';
 close all;
 % set date
 str_date = [datestr(date,11), datestr(date,5), datestr(date,7)];
-% determine whcih stupid version of MUTLAB we are using
-tmp_mutlab = version('-release');
-str_mutlab = tmp_mutlab(1:4);
-par_mutlab = str2num(str_mutlab);
 % check for make_cmap
 if ~(exist('make_cmap', 'file') == 2)
     disp([' ']);
@@ -83,7 +81,7 @@ end
 data_in   = PDATAIN;
 data_lims = PDATALIMS;
 data_col  = PDATACOL;
-if ~exist('OSTRUCTTEXT','var'),
+if ~exist('OSTRUCTTEXT','var')
     str_title    = 'hello';
     str_filename = ['myplot' str_date];
 end
@@ -106,8 +104,8 @@ color_w = [1.00 1.00 1.00];
 % set n colors
 c_max =256;
 % set color scale
-if isempty(data_col),
-    colorbar_name = 'parula';
+if isempty(data_col)
+    colorbar_name = 'inferno';
 else
     colorbar_name = data_col;
 end
@@ -230,7 +228,6 @@ str_title(find(str_title(:)=='_')) = '-';
 % NOTE: explicitly specify renderer is using useless recent version
 scrsz = get(0,'ScreenSize');
 hfig = figure('Position',[((1 - plot_dscrsz)/2)*plot_dscrsz*scrsz(3) (1 - plot_dscrsz)*plot_dscrsz*scrsz(4) 1.1*plot_dscrsz*scrsz(4) plot_dscrsz*scrsz(4)]);
-if (par_mutlab > 2015), hfig.Renderer='Painters'; end
 clf;
 % define plotting regions
 fh(1) = axes('Position',[0 0 1 1],'Visible','off');
@@ -252,9 +249,7 @@ hold on;
 caxis([data_min data_max]);
 set(gca,'PlotBoxAspectRatio',[1.0 plot_xy_scaling*1.0 1.0]);
 axis([0.0 double(xmax) 0.0 double(ymax)]);
-if (par_mutlab > 2016),
-    xtickangle(par_xtickangle);
-end
+xtickangle(par_xtickangle);
 set(gca,'XLabel',text('String',str_xlabel,'FontSize',18),'XTick',[0.5:1:xmax-0.5],'XTickLabel',v_xticks,'fontsize',9*(12/xmax)^0.5);
 set(gca,'YLabel',text('String',str_ylabel,'FontSize',18),'YTick',[0.5:1:ymax-0.5],'YTickLabel',v_yticks,'fontsize',9*(12/ymax)^0.5);
 set(gca,'TickDir','out');
@@ -326,12 +321,7 @@ hold off;
 % *** PRINT PLOT ******************************************************** %
 %
 set(gcf,'CurrentAxes',fh(1));
-set(gcf,'renderer','painters');
-if (par_mutlab > 2015),
-    print('-dpsc2', '-bestfit', [str_filename '.ps']);
-else
-    print('-dpsc2', [str_filename '.ps']);
-end
+exportgraphics(gcf,[str_filename '.' str_date '.pdf'],'BackgroundColor','none','ContentType','vector');
 %
 % *********************************************************************** %
 
