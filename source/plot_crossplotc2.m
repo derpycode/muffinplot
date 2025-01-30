@@ -305,7 +305,7 @@ hold off;
 %
 if isempty(str_filename), str_filename = ['crossplot']; end
 str_filename = [str_filename '.' str_date];
-if (plot_format_old)
+if (plot_format_old == 'y')
     print('-dpsc2', [str_filename, '.ps']);
 else
     exportgraphics(gcf,[str_filename '.pdf'],'BackgroundColor','none','ContentType','vector');
