@@ -221,7 +221,7 @@ hold off;
 % *** PRINT PLOT ******************************************************** %
 %
 set(gcf,'CurrentAxes',fh(1));
-exportgraphics(gcf,[str_filename '.' str_date '.pdf'],'BackgroundColor','none','ContentType','vector');
+exportgraphics(gcf,[data_id '.' str_date '.pdf'],'BackgroundColor','none','ContentType','vector');
 %
 % *********************************************************************** %
 
