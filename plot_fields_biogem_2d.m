@@ -1226,7 +1226,7 @@ end
 %
 if ~isempty(dataid_2)
     %
-    % *** 3D (GRIDDED) DATA ********************************************* %
+    % *** 2D (GRIDDED) DATA ********************************************* %
     %
     % transform data sets in vectors
     data_vector_1 = reshape(data_1(:,:),imax*jmax,1);
@@ -1999,7 +1999,11 @@ if (plot_secondary == 'y')
         % NOTE: test for insufficient data for scaling the plot
         % NOTE: function range has been moved ...
         if ((max(loc_x_data)-min(loc_x_data)) > 0.0)
-            plot_crossplotc2(loc_x_data,loc_y_data,[],loc_x_label,loc_y_label,'',POPT,[par_pathout '/' filename '.CROSSPLOT'],[con_min con_max con_min con_max]);
+            if ~isempty(dataid_2)
+                plot_crossplotc2(loc_x_data,loc_y_data,[],loc_x_label,loc_y_label,'',POPT,[par_pathout '/' filename '.CROSSPLOT'],[min(loc_x_data) max(loc_x_data) min(loc_y_data) max(loc_y_data)]);
+            elseif ~isempty(overlaydataid)
+                plot_crossplotc2(loc_x_data,loc_y_data,[],loc_x_label,loc_y_label,'',POPT,[par_pathout '/' filename '.CROSSPLOT'],[con_min con_max con_min con_max]);
+            end
         end
         %
     end

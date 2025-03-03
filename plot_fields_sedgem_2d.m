@@ -255,6 +255,8 @@ function [OUTPUT] = plot_fields_sedgem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,PM
 %   24/06/11: updated graphics export to pdf option for:
 %             plot_format_old = 'n'
 %             *** VERSION 1.66 ********************************************
+%   25/02/27: fixed mixtake in 2nd netCDF filename
+%             *** VERSION 1.67 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -608,7 +610,7 @@ if ~isempty(exp_2)
     if strcmp(exp_2(end-2:end),'.nc'),
         ncid_2=netcdf.open(exp_2,'nowrite');
     else
-        ncid_2=netcdf.open([par_pathin '/' exp_2 '/sedgem/fields_sedgem_2d.nc.nc'],'nowrite');
+        ncid_2=netcdf.open([par_pathin '/' exp_2 '/sedgem/fields_sedgem_2d.nc'],'nowrite');
     end
     % read netCDf information
     [ndims,nvars,ngatts,unlimdimid] = netcdf.inq(ncid_2);
@@ -958,8 +960,35 @@ end
 %
 if ~isempty(dataid_2)
     %
-    % *** 3D (GRIDDED) DATA ********************************************* %
+    % *** 2D (GRIDDED) DATA ********************************************* %
     %
+    % transform data sets in vectors
+    data_vector_1 = reshape(data_1(:,:),imax*jmax,1);
+    data_vector_2 = reshape(data_2(:,:),imax*jmax,1);
+    % filter data
+    data_vector_1(find(data_vector_1(:) < -1.0E6)) = NaN;
+    data_vector_1(find(data_vector_1(:) > 0.9E36)) = NaN;
+    data_vector_2(find(data_vector_2(:) < -1.0E6)) = NaN;
+    data_vector_2(find(data_vector_2(:) > 0.9E36)) = NaN;
+    if isempty(overlaydataid), nmax = length(data_vector_2); end
+    if (data_stats == 'y')
+        % calculate stats
+        % NOTE: STATM = allstats(Cr,Cf)
+        % 	    STATM(1,:) => Mean
+        % 	    STATM(2,:) => Standard Deviation (scaled by N)
+        % 	    STATM(3,:) => Centered Root Mean Square Difference (scaled by N)
+        % 	    STATM(4,:) => Correlation
+        %       STATM(5,:) => N
+        STATM = calc_allstats(data_vector_1,data_vector_2);
+        if (plot_secondary=='y')
+            % plot Taylor diagram
+            taylordiag_vargout = plot_taylordiag(STATM(2,1:2),STATM(3,1:2),STATM(4,1:2));
+            print('-depsc2', [par_pathout '/' filename, '_TaylorDiagram.', str_date, '.eps']);
+            %%%% plot Target diagram
+            %%%targetdiag_vargout = plot_target(STATM(7,1:2),STATM(8,1:2),'r',1.0,[],[]);
+            %%%print('-depsc2', [filename, '_TargetDiagram.', str_date, '.eps']);
+        end
+    end
 else
     % set default vector_1
     % NOTE: if discrete data is present, this will be replaced
@@ -1430,7 +1459,11 @@ if (plot_secondary == 'y')
         % NOTE: test for insufficient data for scaling the plot
         % NOTE: function range has been moved ...
         if ((max(loc_x_data)-min(loc_x_data)) > 0.0)
-            plot_crossplotc(loc_x_data,loc_y_data,[],loc_x_label,loc_y_label,'',POPT,[par_pathout '/' filename '.CROSSPLOT']);
+            if ~isempty(dataid_2)
+                plot_crossplotc2(loc_x_data,loc_y_data,[],loc_x_label,loc_y_label,'',POPT,[par_pathout '/' filename '.CROSSPLOT'],[min(loc_x_data) max(loc_x_data) min(loc_y_data) max(loc_y_data)]);
+            elseif ~isempty(overlaydataid)
+                plot_crossplotc2(loc_x_data,loc_y_data,[],loc_x_label,loc_y_label,'',POPT,[par_pathout '/' filename '.CROSSPLOT'],[con_min con_max con_min con_max]);
+            end
         end
         %
     end
