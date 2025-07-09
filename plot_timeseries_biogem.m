@@ -1404,7 +1404,7 @@ str_filename = [str_filename '.' str_date];
 if (plot_format_old == 'y')
     print('-dpsc2', '-bestfit', [par_pathout '/' str_filename '.ps']);
 else
-    exportgraphics(gcf,[par_pathout '/' filename '.pdf'],'BackgroundColor','none','ContentType','vector');
+    exportgraphics(gcf,[par_pathout '/' str_filename '.pdf'],'BackgroundColor','none','ContentType','vector');
 end
 %
 % *********************************************************************** %
