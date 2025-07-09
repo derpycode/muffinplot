@@ -120,7 +120,7 @@ plot_datasize = 20.0;      % [ 20.0] DATA POINT PLOTTING SIZE
 plot_dscrsz = 0.75;        % [ 0.75] FRACTIONAL FIGURE WINDOW SIZE
 plot_fatdx = 0.75;         % [ 0.75] FRACTIONAL X-AXIS SIZE
 %                          *** alternative plotting ***
-plot_format_old = 'y';     % [  'y']  'OLD' STYLE PLOTTING
+plot_format_old = 'n';     % [  'y']  'OLD' STYLE PLOTTING
 plot_format = '';          % [  '']  FORMAT OF (NEW STYLE) PLOT
 opt_fatplot=false;         % [false] FATTER PLOTS?
 plot_title = '';           % [  '']  OPTIONAL REPLACEMENT TITLE

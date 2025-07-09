@@ -168,6 +168,9 @@ function [] = plot_sedcore(PEXP,PCORE,PMIN,PMAX,PREFAGE,PDATA1,PDATA2,POPT,PNAME
 %   18/09/24: made diagnostics data saving optional
 %             made timeseries saving optional [true by default]
 %             *** VERSION 1.13 ********************************************
+%   26/07/09: updated graphics export to pdf option for:
+%             plot_format_old = 'n'
+%             *** VERSION 1.66 ********************************************
 %
 %   ***********************************************************************
 
@@ -178,7 +181,7 @@ function [] = plot_sedcore(PEXP,PCORE,PMIN,PMAX,PREFAGE,PDATA1,PDATA2,POPT,PNAME
 % *** initialize ******************************************************** %
 %
 % set version!
-par_ver = 1.13;
+par_ver = 1.66;
 % set function name
 str_function = mfilename;
 % close plot windows
@@ -1404,20 +1407,20 @@ set(gcf,'CurrentAxes',fh(1));
 set(gcf,'renderer','painters');
 if (~isempty(altfilename)), str_filename = altfilename; end
 if (opt_refage),
-    if (~isempty(data1) && ~isempty(data2)),
+    if (~isempty(data1) && ~isempty(data2))
         str_filename = [str_filename '.' 'sedcore' coreid '_vsA'];
     else
         str_filename = [str_filename '.' 'sedcoreonly' coreid '_vsA'];
     end
-    if (opt_ashagemodel && ~opt_detagemodel),
+    if (opt_ashagemodel && ~opt_detagemodel)
         str_filename = [str_filename, 'ash'];
-    elseif (opt_ashagemodel && opt_detagemodel),
+    elseif (opt_ashagemodel && opt_detagemodel)
         str_filename = [str_filename, 'ashdet'];
-    elseif (~opt_ashagemodel && opt_detagemodel),
+    elseif (~opt_ashagemodel && opt_detagemodel)
         str_filename = [str_filename, 'det'];
     end
 else
-    if (~isempty(data1) && ~isempty(data2)),
+    if (~isempty(data1) && ~isempty(data2))
         str_filename = [str_filename '.' 'sedcore' coreid '_vsD'];
     else
         str_filename = [str_filename '.' 'sedcoreonly' coreid '_vsD'];
@@ -1426,16 +1429,7 @@ end
 if (plot_format_old == 'y')
     print('-dpsc2', [par_pathout '/' str_filename '.' str_date '.ps']);
 else
-    switch plot_format
-        case 'png'
-            export_fig([par_pathout '/' str_filename '.' str_date '.png'], '-png', '-r150', '-nocrop');
-        case 'pngT'
-            export_fig([par_pathout '/' str_filename '.' str_date '.png'], '-png', '-r150', '-nocrop', '-transparent');
-        case 'jpg'
-            export_fig([par_pathout '/' str_filename '.' str_date '.jpg'], '-jpg', '-r150', '-nocrop');
-        otherwise
-            export_fig([par_pathout '/' str_filename '.' str_date '.eps'], '-eps', '-nocrop');
-    end
+    exportgraphics(gcf,[par_pathout '/' str_filename '.' str_date '.pdf'],'BackgroundColor','none','ContentType','vector');
 end
 %
 % *********************************************************************** %

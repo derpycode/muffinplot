@@ -140,7 +140,7 @@ function [] = plot_timeseries_biogem(PEXP1,PEXP2,PTMIN,PTMAX,PDATA1,PDATA1N,PDAT
 %             *** VERSION 1.21 ********************************************
 %   24/06/11: updated graphics export to pdf option for:
 %             plot_format_old = 'n'
-%             *** VERSION 1.22 ********************************************
+%             *** VERSION 1.66 ********************************************
 %
 %   ***********************************************************************
 
@@ -151,7 +151,7 @@ function [] = plot_timeseries_biogem(PEXP1,PEXP2,PTMIN,PTMAX,PDATA1,PDATA1N,PDAT
 % *** initialize ******************************************************** %
 %
 % set version!
-par_ver = 1.22;
+par_ver = 1.66;
 % set function name
 str_function = mfilename;
 % close open windows
