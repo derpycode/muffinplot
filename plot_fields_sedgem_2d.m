@@ -692,6 +692,10 @@ if (~isempty(altfilename)), filename = altfilename; end
 % *** FILTER & PROCESS RAW DATA ***************************************** %
 % *********************************************************************** %
 %
+% identify 'NaN's and set these locations explicitly so that NaNs do not 
+% get 'lost' in the anomoly calculation (i.e., 9.9E36 - 9.9E36 ...)
+data_1(find(data_1 > 0.9E30)) = NaN;
+data_2(find(data_2 > 0.9E30)) = NaN;
 % set ocean grid value to give white when plotted
 if strcmp(dataid_1,'grid_mask')
     data_1 = NaN;
@@ -699,37 +703,33 @@ end
 if strcmp(dataid_2,'grid_mask')
     data_2 = NaN;
 end
-%
+% set final axes arrays
 xm = lonm;
 ym = latm;
+% set final data arrays
 data = data_1 - data_2;
 data = data - data_offset;
-zm = data;
+zm   = data;
 % filter gridded data
 n = 0;
-for i = 1:imax,
-    for j = 1:jmax,
+for i = 1:imax
+    for j = 1:jmax
         if grid_topo(j,i) >= 0
+            % mark as non ocean
             zm(j,i) = NaN;
             topo(j,i) = +1.0;
             layb(j,i) = -1.0;
-        elseif (zm(j,i) < -1.0E6) || (zm(j,i) > 0.9E30) || isnan(zm(j,i))
+        elseif isnan(zm(j,i))
+            % valid ocean point but invalid value
+            % => mark to plot in white (or data_nancolor)
+            topo(j,i) = -1.0;
+            layb(j,i) = +1.0;
+        elseif (~isempty(maskid) && (mask(j,i) == 0))
+            % mark as non ocean
             zm(j,i) = NaN;
             topo(j,i) = +1.0;
             layb(j,i) = -1.0;
-            % if mask selected and cell is masked out => mark to plot in white
-            if ~isempty(plot_mask_netcdf)
-                if grid_mask(j,i) == 0.0
-                    topo(j,i) = -1.0;
-                    layb(j,i) = +1.0;
-                end
-            end
         else
-            if ~isempty(maskid)
-                if mask(j,i) == 0
-                    zm(j,i) = NaN;
-                end
-            end
             if data_log10 == 'y'
                 if (zm(j,i) > 0.0)
                     zm(j,i) = log10(zm(j,i)/data_scale);
@@ -742,6 +742,15 @@ for i = 1:imax,
             if ~isnan(zm(j,i)), n = n + 1; end
             topo(j,i) = -1.0;
             layb(j,i) = +1.0;
+            % if netCDF mask is selected and cell is masked out
+            % => mark to plot in white (or data_nancolor)
+            if ~isempty(plot_mask_netcdf)
+                if grid_mask(j,i) == 0.0
+                    zm(j,i) = NaN;
+                    topo(j,i) = -1.0;
+                    layb(j,i) = +1.0;
+                end
+            end
         end
     end
 end
@@ -983,7 +992,11 @@ if ~isempty(dataid_2)
         if (plot_secondary=='y')
             % plot Taylor diagram
             taylordiag_vargout = plot_taylordiag(STATM(2,1:2),STATM(3,1:2),STATM(4,1:2));
-            print('-depsc2', [par_pathout '/' filename, '_TaylorDiagram.', str_date, '.eps']);
+            if (plot_format_old == 'y')
+                print('-depsc2', [par_pathout '/' filename, '_TaylorDiagram.', str_date, '.eps']);
+            else
+                exportgraphics(gcf,[par_pathout '/' filename '.TaylorDiagram.', str_date '.pdf'],'BackgroundColor','none','ContentType','vector');
+            end
             %%%% plot Target diagram
             %%%targetdiag_vargout = plot_target(STATM(7,1:2),STATM(8,1:2),'r',1.0,[],[]);
             %%%print('-depsc2', [filename, '_TargetDiagram.', str_date, '.eps']);
@@ -1014,14 +1027,14 @@ if (~isempty(overlaydataid) && ((data_only == 'n') || (data_anomoly == 'y')))
     % the overlay data locations
     % NOTE: !!! data is (j,i) !!! (=> swap i and j)
     % NOTE: re-orientate data_vector_2 to match data_vector_1
-    for n = 1:nmax,
+    for n = 1:nmax
         data_vector_2(n) = data(overlaydata_ij(n,2),overlaydata_ij(n,1));
     end
     data_vector_2 = data_vector_2';
     % filter data
     data_vector_2(find(data_vector_2(:) < -1.0E6)) = NaN;
     data_vector_2(find(data_vector_2(:) > 0.9E36)) = NaN;
-    if ((data_stats == 'y') && (data_only == 'n')),
+    if ((data_stats == 'y') && (data_only == 'n'))
         % calculate stats
         STATM = calc_allstats(data_vector_1,data_vector_2);
         if (plot_secondary=='y')
@@ -1029,7 +1042,11 @@ if (~isempty(overlaydataid) && ((data_only == 'n') || (data_anomoly == 'y')))
             % NOTE: only if there is a non-zero data SD
             if (STATM(2,2) > 0.0)
                 taylordiag_vargout = plot_taylordiag(STATM(2,1:2),STATM(3,1:2),STATM(4,1:2));
-                print('-depsc2', [par_pathout '/' filename, '_TaylorDiagram.', str_date, '.eps']);
+                if (plot_format_old == 'y')
+                    print('-depsc2', [par_pathout '/' filename, '_TaylorDiagram.', str_date, '.eps']);
+                else
+                    exportgraphics(gcf,[par_pathout '/' filename '.TaylorDiagram.', str_date '.pdf'],'BackgroundColor','none','ContentType','vector');
+                end
             end
             %%%% plot Target diagram
             %%%targetdiag_vargout = plot_target(STATM(7,1:2),STATM(8,1:2),'r',1.0,[],[]);
