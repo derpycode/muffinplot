@@ -1,11 +1,11 @@
-function [] = plot_2dgridded2(PDATAIN,PDATALIMS,PDATACOL,OSTRUCTTEXT)
+function [] = plot_2dgridded2(PDATAIN,PDATALIMS,PDATACOL,PSTRUCTTEXT)
 % plot_2dgridded2
 %
 %   ***********************************************************************
 %   *** plot 2D gridded data **********************************************
 %   ***********************************************************************
 %
-%   plot_2dgridded(PDATAIN,PDATALIMS,PDATAID,PDATACOL,OSTRUCTTEXT)
+%   plot_2dgridded(PDATAIN,PDATALIMS,PDATAID,PDATACOL,PSTRUCTTEXT)
 %   displays and saves a 2-D array of data in a block/grid plot (version 2)
 %
 %   PDATAIN [ARRAY] (e.g. data)
@@ -16,19 +16,20 @@ function [] = plot_2dgridded2(PDATAIN,PDATALIMS,PDATACOL,OSTRUCTTEXT)
 %   PDATACOL [STRING]
 %   --> the string of a color scale
 %       (an empty string uses the default -- 'parula')
-%   OSTRUCTTEXT [STRUCTURE ARRAY]
+%   PSTRUCTTEXT [STRUCTURE ARRAY]
 %   --> a structure array of strings for title, x- and y-axes labels,
 %       and x- and y-axis ticks
 %   --> OPTIONAL
 %   --> FORMAT:
-%       OSTRUCTTEXT.title      -- title text
-%       OSTRUCTTEXT.xlabel     -- x-axis label text
-%       OSTRUCTTEXT.ylabel     -- y-axis label text
-%       OSTRUCTTEXT.unitslabel -- label for colorbar
-%       OSTRUCTTEXT.xticks     -- vector of x-tick labels
-%       OSTRUCTTEXT.yticks     -- vector of y-tick labels
-%       OSTRUCTTEXT.xtickangle -- angle of xtick labels in degrees
-%       OSTRUCTTEXT.filename   -- filename (excluding '.ps' extension)
+%       PSTRUCTTEXT.title      -- title text
+%       PSTRUCTTEXT.xlabel     -- x-axis label text
+%       PSTRUCTTEXT.ylabel     -- y-axis label text
+%       PSTRUCTTEXT.unitslabel -- label for colorbar
+%       PSTRUCTTEXT.xticks     -- vector of x-tick labels
+%       PSTRUCTTEXT.yticks     -- vector of y-tick labels
+%       PSTRUCTTEXT.xtickangle -- angle of xtick labels in degrees
+%       PSTRUCTTEXT.filename   -- filename (excluding '.eps' extension)
+%       PSTRUCTTEXT.filepath   -- file path
 %   --> defaults are used if any (or the entire structure) are missing
 %
 %   ***********************************************************************
@@ -49,6 +50,10 @@ function [] = plot_2dgridded2(PDATAIN,PDATALIMS,PDATACOL,OSTRUCTTEXT)
 %             *** VERSION 0.93 ********************************************
 %   24/07/17: saving as PDF rather than PS
 %             *** VERSION 0.94 ********************************************
+%   25/08/17: added output filepath
+%             *** VERSION 0.95 ********************************************
+%   25/09/02: added graphics format option
+%             *** VERSION 0.96 ********************************************
 %
 %   ***********************************************************************
 
@@ -59,7 +64,7 @@ function [] = plot_2dgridded2(PDATAIN,PDATALIMS,PDATACOL,OSTRUCTTEXT)
 % *** INITIALIZE ******************************************************** %
 %
 % set version!
-par_ver = 0.94;
+par_ver = 0.96;
 % set function name
 str_function = mfilename;
 str_function(find(str_function(:)=='_')) = '-';
@@ -81,10 +86,6 @@ end
 data_in   = PDATAIN;
 data_lims = PDATALIMS;
 data_col  = PDATACOL;
-if ~exist('OSTRUCTTEXT','var')
-    str_title    = 'hello';
-    str_filename = ['myplot' str_date];
-end
 %
 % *** backwards compatability ******************************************* %
 %
@@ -173,8 +174,8 @@ par_xtickangle = 90.0;
 % *** sort out strings/text ********************************************* %
 %
 % apply any and all structure-specified plotting parameters
-if exist('OSTRUCTTEXT','var'),
-    s = OSTRUCTTEXT;
+if exist('PSTRUCTTEXT','var')
+    s = PSTRUCTTEXT;
     if  isstruct(s)
         if (isfield(s,'title'))
             str_title = s.title;
@@ -206,12 +207,30 @@ if exist('OSTRUCTTEXT','var'),
             loc_title(find(loc_title(:)==' ')) = '_';
             str_filename = [loc_title '.' str_date];
         end 
+        if (isfield(s,'filepath'))
+            str_filepath = s.filepath;
+        else
+            str_filepath = '';
+        end
+        if (isfield(s,'format'))
+            str_format = s.format;
+        else
+            str_format = 'vector';
+        end
+        if (isfield(s,'v_plotratio'))
+            v_plotratio = s.v_plotratio;
+        else
+            v_plotratio = [1.0 plot_xy_scaling*1.0 1.0];
+        end
     else
         disp([' ']);
         disp([' * ERROR: 5th parameter is not a structure array ...']);
         disp([' ']);
         return;
     end
+else
+    str_title    = 'hello';
+    str_filename = ['myplot' str_date];
 end
 % clean up plot title
 str_title(find(str_title(:)=='_')) = '-';
@@ -247,7 +266,7 @@ set(gcf,'CurrentAxes',fh(2));
 hold on;
 % set color and lat/lon axes and labels
 caxis([data_min data_max]);
-set(gca,'PlotBoxAspectRatio',[1.0 plot_xy_scaling*1.0 1.0]);
+set(gca,'PlotBoxAspectRatio',v_plotratio);
 axis([0.0 double(xmax) 0.0 double(ymax)]);
 xtickangle(par_xtickangle);
 set(gca,'XLabel',text('String',str_xlabel,'FontSize',18),'XTick',[0.5:1:xmax-0.5],'XTickLabel',v_xticks,'fontsize',9*(12/xmax)^0.5);
@@ -321,7 +340,7 @@ hold off;
 % *** PRINT PLOT ******************************************************** %
 %
 set(gcf,'CurrentAxes',fh(1));
-exportgraphics(gcf,[str_filename '.' str_date '.pdf'],'BackgroundColor','none','ContentType','vector');
+exportgraphics(gcf,[str_filepath str_filename '.' str_date '.pdf'],'BackgroundColor','none','ContentType',str_format);
 %
 % *********************************************************************** %
 

@@ -284,6 +284,8 @@ function [OUTPUT] = plot_fields_biogem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,PM
 %   24/06/11: updated graphics export to pdf option for:
 %             plot_format_old = 'n'
 %             *** VERSION 1.66 ********************************************
+%   25/08/25: removed plot_format_old plot option
+%             *** VERSION 1.67 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -295,7 +297,7 @@ function [OUTPUT] = plot_fields_biogem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,PM
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.66;
+par_ver = 1.67;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -1210,6 +1212,15 @@ if ~isempty(overlaydataid)
             overlaydata_shape(n) = 's';
         end
     end
+    % finally -- check there is any data left ... if not, flag as no data ...
+    % (and warn)
+    if (nmax == 0)
+        disp([' ']);
+        disp([' * WARNING: there is no remaining overlay data after filtering/averaging']);
+        disp(['   Disabling overlay data ...'])
+        disp([' ']);
+        overlaydataid = [];
+    end
 end
 %
 % *********************************************************************** %
@@ -1272,6 +1283,7 @@ if (~isempty(overlaydataid) && ((data_only == 'n') || (data_anomoly == 'y')))
     % *** DISCRETE DATA ************************************************* %
     %
     % set overlay data vector
+    data_vector_1 = [];
     data_vector_1 = overlaydata(:,3);
     % disable stats if necessary
     if ( length(data_vector_1) < 2 )
@@ -1283,14 +1295,14 @@ if (~isempty(overlaydataid) && ((data_only == 'n') || (data_anomoly == 'y')))
     % the overlay data locations
     % NOTE: !!! data is (j,i) !!! (=> swap i and j)
     % NOTE: re-orientate data_vector_2 to match data_vector_1
-    for n = 1:nmax,
+    for n = 1:nmax
         data_vector_2(n) = data(overlaydata_ij(n,2),overlaydata_ij(n,1));
     end
     data_vector_2 = data_vector_2';
     % filter data
     data_vector_2(find(data_vector_2(:) < -1.0E6)) = NaN;
     data_vector_2(find(data_vector_2(:) > 0.9E36)) = NaN;
-    if ((data_stats == 'y') && (data_only == 'n')),
+    if ((data_stats == 'y') && (data_only == 'n'))
         % calculate stats
         STATM = calc_allstats(data_vector_1,data_vector_2);
         if (plot_secondary=='y')
@@ -1862,11 +1874,7 @@ if (plot_main == 'y')
     % *** PRINT PLOT **************************************************** %
     %
     set(gcf,'CurrentAxes',fh(1));
-    if (plot_format_old == 'y')
-        print('-dpsc2', '-bestfit', [par_pathout '/' filename '.' str_date '.ps']);
-    else
-        exportgraphics(gcf,[par_pathout '/' filename '.' str_date '.pdf'],'BackgroundColor','none','ContentType','vector');
-    end
+    exportgraphics(gcf,[par_pathout '/' filename '.' str_date '.pdf'],'BackgroundColor','none','ContentType','vector');
     %
     % *********************************************************************** %
     %
@@ -1931,11 +1939,7 @@ if (plot_secondary == 'y')
             end
         end
         % print!
-        if (plot_format_old == 'y')
-            print('-dpsc2', [par_pathout '/' filename '.ZONAL.' str_date '.ps']);
-        else
-            exportgraphics(gcf,[par_pathout '/' filename '.ZONAL.' str_date '.pdf'],'BackgroundColor','none','ContentType','vector');
-        end
+        exportgraphics(gcf,[par_pathout '/' filename '.ZONAL.' str_date '.pdf'],'BackgroundColor','none','ContentType','vector');
         %
     end
     %
@@ -1964,11 +1968,7 @@ if (plot_secondary == 'y')
             end
         end
         % print!
-        if (plot_format_old == 'y')
-            print('-dpsc2', [par_pathout '/' filename '.ZONALsinlat.' str_date '.ps']);
-        else
-            exportgraphics(gcf,[par_pathout '/' filename '.ZONALsinlat.' str_date '.pdf'],'BackgroundColor','none','ContentType','vector');
-        end
+        exportgraphics(gcf,[par_pathout '/' filename '.ZONALsinlat.' str_date '.pdf'],'BackgroundColor','none','ContentType','vector');
         %
     end
     %
@@ -2095,6 +2095,22 @@ else
             % add old min,max
             output.old.max   = max(max(zm));
             output.old.min   = min(min(zm));
+        end
+    else
+        if (~isempty(overlaydataid) && ((data_only == 'n') || (data_anomoly == 'y')))
+            % basic data stats and those of corresponding model locations
+            data_vector_1(find(isnan(data_vector_1))) = [];
+            output.data.n    = length(data_vector_1);
+            output.data.sum  = sum(data_vector_1);
+            output.data.mean = mean(data_vector_1);
+            output.data.min  = min(data_vector_1);
+            output.data.max  = max(data_vector_1);
+            data_vector_2(find(isnan(data_vector_2))) = [];
+            output.model.n    = length(data_vector_2);
+            output.model.sum  = sum(data_vector_2);
+            output.model.mean = mean(data_vector_2);
+            output.model.min  = min(data_vector_2);
+            output.model.max  = max(data_vector_2);
         end
     end
     % add model-data/model stats
