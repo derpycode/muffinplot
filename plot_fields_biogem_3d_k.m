@@ -363,6 +363,8 @@ function [OUTPUT] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 %   24/06/11: updated graphics export to pdf option for:
 %             plot_format_old = 'n'
 %             *** VERSION 1.66 ********************************************
+%   25/10/24: correct NaN criteria for differenced fields
+%             *** VERSION 1.67 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -374,7 +376,7 @@ function [OUTPUT] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.66;
+par_ver = 1.67;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -865,6 +867,10 @@ if timesliceid_2 > 0.0
             timesliceid_2 = input('   > Time-slice year: ');
         end
     end
+else
+    % NOTE: we are implicitly assuming the time-slices are exactly the same
+    %       between the 2 different netCDF files
+    %       and that time-slice n corresponds to the same year in both
 end
 %
 % *** ALT DATA FIELD **************************************************** %
@@ -1075,6 +1081,9 @@ else
 end
 data = data + data_offset;
 % filter gridded data
+% NOTE: adopt equivalent criteria for 'NaN' as per plot_fields_biogem_3d_i
+%       (not NaN :: (data(k,j,i) > -0.999E19) && (data(k,j,i) < 0.999E19))
+% NOTE: plot_fields_biogem_2d filters the 2 datasets before differencing
 n = 0;
 if (kplot > 0)
     % process single depth layer
@@ -1088,7 +1097,7 @@ if (kplot > 0)
                 zm(j,i) = NaN;
                 z_u(j,i) = NaN;
                 z_v(j,i) = NaN;
-            elseif (zm(j,i) < -1.0E6) || (zm(j,i) > 1.0E30) || isnan(zm(j,i))
+            elseif (zm(j,i) <= -0.999E19) || (zm(j,i) >= 0.999E19) || isnan(zm(j,i))
                 zm(j,i) = NaN;
                 z_u(j,i) = NaN;
                 z_v(j,i) = NaN;
