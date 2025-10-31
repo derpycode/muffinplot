@@ -257,6 +257,9 @@ function [OUTPUT] = plot_fields_sedgem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,PM
 %             *** VERSION 1.66 ********************************************
 %   25/02/27: fixed mixtake in 2nd netCDF filename
 %             *** VERSION 1.67 ********************************************
+%   25/10/31: upgraded gridding function
+%             added nearest neighbor (ocean cell) option
+%             *** VERSION 1.68 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -268,7 +271,7 @@ function [OUTPUT] = plot_fields_sedgem_2d(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,PM
 % *** initialize ******************************************************** %
 % 
 % set version!
-par_ver = 1.66;
+par_ver = 1.68;
 % set function name
 str_function = mfilename;
 % close open windows
@@ -297,6 +300,7 @@ if ~exist('data_minmax','var'),      data_minmax  = ''; end
 if ~exist('data_nseas','var'),       data_nseas   = 0; end
 % model-data
 if ~exist('data_seafloor','var'),    data_seafloor = 'n'; end
+if ~exist('data_ijk_near','var'),    data_ijk_near = 'n'; end
 % plotting
 if ~exist('contour_hlt2','var'),     contour_hlt2 = contour_hlt; end
 if ~exist('contour_hltval2','var'),  contour_hltval2 = contour_hltval; end
@@ -883,15 +887,50 @@ if ~isempty(overlaydataid)
             if (overlaydata_raw(n,1) < grid_lon_origin),
                 overlaydata_raw(n,1) = overlaydata_raw(n,1) + 360.0;
             end
-        end        
+        end
         % convert (lon,lat) overlay data to (i,j)
-        % NOTE: function 'calc_find_ij' takes input in order: (lon,lat)
-        %       i.e., the same as the raw overlay data, which is (lon,lat) (i.e., (i,j)) format
         % NOTE: !!! gridded data is (j,i) !!!
         overlaydata_ij(:,:) = zeros(size(overlaydata_raw(:,:)));
-        for n = 1:nmax,
-            overlaydata_ij(n,1:2) = calc_find_ij(overlaydata_raw(n,1),overlaydata_raw(n,2),grid_lon_origin,imax,jmax);
+        % *** OLD *** function for gridding
+        % NOTE: function 'calc_find_ij' takes input in order: (lon,lat)
+        %       i.e., the same as the raw overlay data, which is (lon,lat) (i.e., (i,j)) format
+        % for n = 1:nmax,
+        %     overlaydata_ij(n,1:2) = calc_find_ij(overlaydata_raw(n,1),overlaydata_raw(n,2),grid_lon_origin,imax,jmax);
+        % end
+        % *** NEW *** function for gridding
+        % NOTE: possible search vectors are:
+        %       [1 0; 0 1; -1 0; 0 -1] (ignoring diagnoals)
+        %       [1 1; 1 0; 1 -1; 0 -1; -1 -1; -1 0; -1 1; 0 1]
+        % NOTE: structure format is:
+        % sin.lone;
+        % sin.late;
+        % sin.lon;
+        % sin.lat;
+        % sin.vdsrch;
+        loc_sin.lone = grid_lon_edges;
+        loc_sin.late = grid_lat_edges;
+        loc_sin.vdsrch = [1 1; 1 0; 1 -1; 0 -1; -1 -1; -1 0; -1 1; 0 1];
+        % process each data points
+        for n = 1:nmax
+            loc_sin.lon = overlaydata_raw(n,1);
+            loc_sin.lat = overlaydata_raw(n,2);
+            loc_sout = fun_near(loc_sin);
+            overlaydata_ij(n,1:2) = loc_sout.ij;
+            % set try limit to control whether an attempt to grid data
+            % location to adjacent ocean cell is made
+            if (data_ijk_near == 'y')
+                loc_n = 0;
+            else
+                loc_n = length(loc_sin.vdsrch);
+            end
+            %
+            while (isnan(zm(overlaydata_ij(n,2),overlaydata_ij(n,1))))
+                loc_n = loc_n + 1;
+                if (loc_n > length(loc_sin.vdsrch)), break; end
+                overlaydata_ij(n,1:2) = loc_sout.dij_near(loc_n,2:3);
+            end
         end
+        % copy data value
         overlaydata_ij(:,3) = overlaydata_raw(:,3);
     else
         % convert (i,j) overlay data to (lon,lat)
@@ -951,6 +990,25 @@ if ~isempty(overlaydataid)
     end
     % scale overlay data
     overlaydata(:,3) = overlaydata(:,3)/datapoint_scale;
+    % set uniform marker shape and color:
+    % circle if not otherwise specified
+    % square if data is re-gridded
+    if (data_shapecol == 'n')
+        for n = 1:nmax
+            overlaydata_shape(n) = 'o';
+            overlaydata_ecol(n) = data_sitecolor;
+            if ( (data_only == 'y') && (data_siteonly == 'y') )
+                overlaydata_fcol(n) = data_sitecolor;
+            else
+                overlaydata_fcol(n) = '-';
+            end
+        end
+    end
+    if (data_ijk_mean == 'y')
+        for n = 1:nmax
+            overlaydata_shape(n) = 's';
+        end
+    end
 end
 %
 % *********************************************************************** %
@@ -1551,6 +1609,22 @@ else
             % add old min,max
             output.old.max   = max(max(zm));
             output.old.min   = min(min(zm));
+        end
+    else
+        if (~isempty(overlaydataid) && ((data_only == 'n') || (data_anomoly == 'y')))
+            % basic data stats and those of corresponding model locations
+            data_vector_1(find(isnan(data_vector_1))) = [];
+            output.data.n    = length(data_vector_1);
+            output.data.sum  = sum(data_vector_1);
+            output.data.mean = mean(data_vector_1);
+            output.data.min  = min(data_vector_1);
+            output.data.max  = max(data_vector_1);
+            data_vector_2(find(isnan(data_vector_2))) = [];
+            output.model.n    = length(data_vector_2);
+            output.model.sum  = sum(data_vector_2);
+            output.model.mean = mean(data_vector_2);
+            output.model.min  = min(data_vector_2);
+            output.model.max  = max(data_vector_2);
         end
     end
     %
