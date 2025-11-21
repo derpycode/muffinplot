@@ -379,6 +379,7 @@ if ~exist('par_pathexam','var'), par_pathexam = 'EXAMPLES'; end
 % plotting panel options
 if ~exist('plot_profile','var'), plot_profile = 'y'; end % PLOT PROFILE
 if ~exist('plot_zonal','var'),   plot_zonal   = 'y'; end % PLOT ZONAL
+if ~exist('plot_hist','var'),    plot_hist    = 'n'; end % PLOT HISTOGRAM
 if ~exist('plot_histc_SETTINGS','var'), plot_histc_SETTINGS = 'plot_histc_SETTINGS'; end % histc plotting settings
 %
 % *** initialize parameters ********************************************* %
@@ -1155,11 +1156,19 @@ for k = 1:kmax
         end
     end
     if (zl_V(k) > 0.0)
-        zl(k) = zl(k)/data_scale/zl_V(k);
+        if data_log10 == 'y'
+            if (zl(k) > 0.0)
+                zl(k) = log10(zl(k)/data_scale/zl_V(k));
+            else
+                zl(k) = NaN;
+            end
+        else
+            zl(k) = zl(k)/data_scale/zl_V(k);
+        end
     else
         zl(k) = NaN;
     end
-end
+end % end k loop
 nmax = n;
 % copy zm before it gets transformed ...
 overlaydata_zm(:,:) = zm(:,:);
@@ -1302,7 +1311,6 @@ if ~isempty(overlaydataid)
         disp(['   Number of data columns found == ' num2str(n_columns)']);
         disp(['   Columns must be: comma/tab/space-separated.']);
         disp([' ']);
-        fclose(fid);
         return;
     end
     % filter label
@@ -2201,7 +2209,7 @@ if (plot_secondary == 'y')
     %       => swap data2 and data1 so model (data1) is on y-axis
     %          as per for overlay data
     %          (assuming data2 are regridded observations)
-    if ( ~isempty(dataid_2) || ~isempty(overlaydataid) )
+    if ( (~isempty(dataid_2) || ~isempty(overlaydataid)))
         %
         if ~isempty(dataid_2)
             loc_x_data = reshape(data_2(data_kmin:data_kmax,:,:),[],1);
@@ -2236,22 +2244,24 @@ if (plot_secondary == 'y')
     %
     % *** PLOT FIGURE (histogram) *************************************** %
     %
-    % single histogram
-    loc_bins1 = [con_min:(con_max-con_min)/con_n:con_max];
-    str_name = [par_pathout '/' filename '.HIST1'];
-    plot_histc_2d(data_vector_1,loc_bins1,strrep(dataid_1,'_','-'),[],[],'',plot_histc_SETTINGS,str_name);
-    % double histogram
-    str_name = [par_pathout '/' filename '.HIST2'];
-    if (~isempty(dataid_2))
-        loc_min = min(data_vector_2);
-        loc_max = max(data_vector_2);
-        loc_bins2 = [loc_min:(loc_max-loc_min)/10:loc_max];
-        plot_histc_2d(data_vector_1,loc_bins1,strrep(dataid_1,'_','-'),data_vector_2,loc_bins2,[strrep(dataid_2,'_','-')],plot_histc_SETTINGS,[str_name 'D']);
-    else
-        loc_bins2 = fliplr(grid_zt_edges');
-        loc_bins2(find(loc_bins2 < plot_D_min)) = [];
-        loc_bins2(find(loc_bins2 > plot_D_max)) = [];
-        plot_histc_2d(data_vector_1,loc_bins1,strrep(dataid_1,'_','-'),data_vector_D,loc_bins2,'Depth (m)',plot_histc_SETTINGS,str_name);
+    if (plot_hist == 'y')
+        % single histogram
+        loc_bins1 = [con_min:(con_max-con_min)/con_n:con_max];
+        str_name = [par_pathout '/' filename '.HIST1'];
+        plot_histc_2d(data_vector_1,loc_bins1,strrep(dataid_1,'_','-'),[],[],'',plot_histc_SETTINGS,str_name);
+        % double histogram
+        str_name = [par_pathout '/' filename '.HIST2'];
+        if (~isempty(dataid_2))
+            loc_min = min(data_vector_2);
+            loc_max = max(data_vector_2);
+            loc_bins2 = [loc_min:(loc_max-loc_min)/10:loc_max];
+            plot_histc_2d(data_vector_1,loc_bins1,strrep(dataid_1,'_','-'),data_vector_2,loc_bins2,[strrep(dataid_2,'_','-')],plot_histc_SETTINGS,[str_name 'D']);
+        else
+            loc_bins2 = fliplr(grid_zt_edges');
+            loc_bins2(find(loc_bins2 < plot_D_min)) = [];
+            loc_bins2(find(loc_bins2 > plot_D_max)) = [];
+            plot_histc_2d(data_vector_1,loc_bins1,strrep(dataid_1,'_','-'),data_vector_D,loc_bins2,'Depth (m)',plot_histc_SETTINGS,str_name);
+        end
     end
     %
     % ******************************************************************* %
@@ -2328,6 +2338,36 @@ else
                 output.moc_max = max(loc_opsi);
             end
         end
+    else
+        if (~isempty(overlaydataid) && ((data_only == 'n') || (data_anomoly == 'y')))
+            % basic data stats and those of corresponding model locations
+            data_vector_1(find(isnan(data_vector_1))) = [];
+            output.data.n    = length(data_vector_1);
+            output.data.sum  = sum(data_vector_1);
+            output.data.mean = mean(data_vector_1);
+            output.data.min  = min(data_vector_1);
+            output.data.max  = max(data_vector_1);
+            data_vector_2(find(isnan(data_vector_2))) = [];
+            output.model.n    = length(data_vector_2);
+            output.model.sum  = sum(data_vector_2);
+            output.model.mean = mean(data_vector_2);
+            output.model.min  = min(data_vector_2);
+            output.model.max  = max(data_vector_2);
+        end
+    end
+    % add profile stats (if selected)
+    % NOTE: remove log10 transformation
+    if (plot_profile == 'y')
+        if (data_log10 == 'y')
+            zl(:) = 10.0.^zl(:);
+        end
+        output.profile.n    = length(zl);
+        output.profile.mean = mean(zl,'omitnan');
+        output.profile.min  = min(zl,[],'omitnan');
+        output.profile.max  = max(zl,[],'omitnan');
+        output.profile.minD = grid_zt(find(zl == output.profile.min));
+        output.profile.maxD = grid_zt(find(zl == output.profile.max));
+        output.profile.sur  = zl(end);
     end
     % add model-data/model stats
     if exist('STATM')
