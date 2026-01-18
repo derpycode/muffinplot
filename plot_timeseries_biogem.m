@@ -389,7 +389,7 @@ if ~isempty(data1_name)
         disp(['(or BIOGEM orbital data file ', data1_fileORB, ' does not exist)']);
         return;
     end
-    data1(:,n) = axis_data1_scale*data1(:,data1_n);
+    data1(:,data1_n) = axis_data1_scale*data1(:,data1_n);
     axis_data1_min = axis_data1_min;
     axis_data1_max = axis_data1_max;
     if (opt_invanalysis), disp(['WARNING: selection of opt_invanalysis=true option over-rides use of chosen time-series file: ', data1_file]); end
