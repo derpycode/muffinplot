@@ -423,6 +423,7 @@ if ~exist('par_pathexam','var'), par_pathexam = 'EXAMPLES'; end
 % plotting panel options
 if ~exist('plot_profile','var'), plot_profile = 'y'; end % PLOT PROFILE
 if ~exist('plot_zonal','var'),   plot_zonal   = 'y'; end % PLOT ZONAL
+if ~exist('plot_hist','var'),    plot_hist    = 'n'; end % PLOT HISTOGRAM
 if ~exist('plot_histc_SETTINGS','var'), plot_histc_SETTINGS = 'plot_histc_SETTINGS'; end % histc plotting settings
 %
 % *** initialize parameters ********************************************* %
@@ -1295,8 +1296,8 @@ if ~isempty(overlaydataid)
                 overlaydata_raw  = cell2mat(cdata(:,1:3));
                 overlaylabel_raw = (blanks(n_rows))';
                 data_shapecol    = 'n';
-                % insert fake (surface) depth
-                overlaydata_raw(:,3) = 1.0;
+                % insert fake depth as a catch-all valid for all levels
+                overlaydata_raw(:,3) = -1.0;
                 % add value
                 overlaydata_raw(:,4) = cell2mat(cdata(:,3));
                 % flag for a valid format
@@ -1315,8 +1316,8 @@ if ~isempty(overlaydataid)
                 overlaydata_raw  = cell2mat(cdata(:,1:2));
                 overlaylabel_raw = char(cdata(:,4));
                 data_shapecol    = 'n';
-                % insert fake depth
-                overlaydata_raw(:,3) = 1.0;
+                % insert fake depth as a catch-all valid for all levels
+                overlaydata_raw(:,3) = -1.0;
                 % add value
                 overlaydata_raw(:,4) = cell2mat(cdata(:,3));
                 % flag for a valid format
@@ -1450,9 +1451,15 @@ if ~isempty(overlaydataid)
         % NOTE: for data deeper than the depth of layer 1, k=0 is returned
         %       (this is a recent change ... it used to be k=1)
         for n = 1:nmax
-            overlaydata_ijk(n,3)   = calc_find_k(overlaydata_raw(n,3),kmax);
+            overlaydata_ijk(n,3) = calc_find_k(overlaydata_raw(n,3),kmax);
+            % for negative depths -- set k equal to the requested slice
+            % and over-ride the k value just calculated above
+            % (i.e., so the data lacking true depth info always plots)
+            if ((overlaydata_raw(n,3) < 0.0) && (kplot > 0))
+                overlaydata_ijk(n,3) = kplot;
+            end
         end
-        %
+        % test for slice catagory
         if (kplot > 0)
             % delete data lines with depth levels not equal to kplot
             wronglayer_locations = find(overlaydata_ijk(:,3)~=kplot);
@@ -1799,7 +1806,7 @@ end
 %
 % *** DISCRETE DATA ***************************************************** %
 %
-% NOTE: no scale transformatoin has been appplied
+% NOTE: no scale transformation has been appplied
 %       to either gridded or % overlay data
 % NOTE: valid only for data on a single depth level
 if (~isempty(overlaydataid) && ((data_only == 'n') || (data_anomoly == 'y')))
@@ -1852,6 +1859,8 @@ if (~isempty(overlaydataid) && ((data_only == 'n') || (data_anomoly == 'y')))
             %%%print('-depsc2', [filename, '_TargetDiagram.', str_date, '.eps']);
         end
     end
+else
+    data_vector_2 = [];
 end
 %
 % *** SAVE STATS DATA *************************************************** %
@@ -2560,22 +2569,26 @@ if (plot_secondary == 'y')
     %
     % *** PLOT FIGURE (histogram) *************************************** %
     %
-    % single histogram
-    loc_bins1 = [con_min:(con_max-con_min)/con_n:con_max];
-    str_name = [par_pathout '/' filename '.HIST1'];
-    plot_histc_2d(data_vector_1,loc_bins1,strrep(dataid_1,'_','-'),[],[],'',plot_histc_SETTINGS,str_name);
-    % double histogram
-    str_name = [par_pathout '/' filename '.HIST2'];
-    if (~isempty(dataid_2))
-        loc_min = min(data_vector_2);
-        loc_max = max(data_vector_2);
-        loc_bins2 = [loc_min:(loc_max-loc_min)/10:loc_max];
-        plot_histc_2d(data_vector_1,loc_bins1,strrep(dataid_1,'_','-'),data_vector_2,loc_bins2,[strrep(dataid_2,'_','-')],plot_histc_SETTINGS,[str_name 'D']);
-    else
-        loc_bins2 = fliplr(grid_zt_edges');
-        loc_bins2(find(loc_bins2 < plot_D_min)) = [];
-        loc_bins2(find(loc_bins2 > plot_D_max)) = [];
-        plot_histc_2d(data_vector_1,loc_bins1,strrep(dataid_1,'_','-'),data_vector_D,loc_bins2,'Depth (m)',plot_histc_SETTINGS,str_name);
+    if (plot_hist == 'y')
+        % single histogram
+        str_name = [par_pathout '/' filename '.HIST1'];
+        if (length(data_vector_1) > 1)
+            loc_bins1 = [con_min:(con_max-con_min)/con_n:con_max];
+            plot_histc_2d(data_vector_1,loc_bins1,strrep(dataid_1,'_','-'),[],[],'',plot_histc_SETTINGS,str_name);
+        end
+        % double histogram
+        str_name = [par_pathout '/' filename '.HIST2'];
+        if (length(data_vector_2) > 1)
+            loc_min = min(data_vector_2);
+            loc_max = max(data_vector_2);
+            loc_bins2 = [loc_min:(loc_max-loc_min)/10:loc_max];
+            plot_histc_2d(data_vector_1,loc_bins1,strrep(dataid_1,'_','-'),data_vector_2,loc_bins2,[strrep(dataid_2,'_','-')],plot_histc_SETTINGS,[str_name 'D']);
+        elseif (length(data_vector_1) > 1)
+            loc_bins2 = fliplr(grid_zt_edges');
+            loc_bins2(find(loc_bins2 < plot_D_min)) = [];
+            loc_bins2(find(loc_bins2 > plot_D_max)) = [];
+            plot_histc_2d(data_vector_1,loc_bins1,strrep(dataid_1,'_','-'),data_vector_D,loc_bins2,'Depth (m)',plot_histc_SETTINGS,str_name);
+        end
     end
     %
     % ******************************************************************* %
@@ -2763,6 +2776,7 @@ else
     % NOTE: use data_vector_1 which is the full grid values
     %       when there is no data
     % NOTE: remove NaNs first (also from depth vector)
+    % NOTE: in the absence of data input, data_vector_1 == model
     output = [];
     if (license('test','Curve Fitting Toolbox'))
         if (~isempty(overlaydataid) && ((data_only == 'n') || (data_anomoly == 'y')))
@@ -2795,17 +2809,30 @@ else
         if (~isempty(overlaydataid) && ((data_only == 'n') || (data_anomoly == 'y')))
             % basic data stats and those of corresponding model locations
             data_vector_1(find(isnan(data_vector_1))) = [];
-            output.data.n    = length(data_vector_1);
-            output.data.sum  = sum(data_vector_1);
-            output.data.mean = mean(data_vector_1);
-            output.data.min  = min(data_vector_1);
-            output.data.max  = max(data_vector_1);
+            output.data.n     = length(data_vector_1);
+            output.data.sum   = sum(data_vector_1);
+            output.data.mean  = mean(data_vector_1);
+            output.data.min   = min(data_vector_1);
+            output.data.max   = max(data_vector_1);
             data_vector_2(find(isnan(data_vector_2))) = [];
             output.model.n    = length(data_vector_2);
             output.model.sum  = sum(data_vector_2);
             output.model.mean = mean(data_vector_2);
             output.model.min  = min(data_vector_2);
             output.model.max  = max(data_vector_2);
+        else
+            data_vector_2(find(isnan(data_vector_2))) = [];
+            output.data.n     = 0;
+            output.data.sum   = NaN;
+            output.data.mean  = NaN;
+            output.data.min   = NaN;
+            output.data.max   = NaN;
+            data_vector_1(find(isnan(data_vector_1))) = [];
+            output.model.n     = length(data_vector_1);
+            output.model.sum   = sum(data_vector_1);
+            output.model.mean  = mean(data_vector_1);
+            output.model.min   = min(data_vector_1);
+            output.model.max   = max(data_vector_1);
         end
     end
     % add model-data/model stats

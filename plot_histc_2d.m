@@ -356,7 +356,7 @@ hold off;
 set(gcf,'CurrentAxes',fh(1));
 if isempty(str_filename), str_filename = ['colorhistogram']; end
 str_filename = [str_filename '.' str_date];
-print('-dpsc2', '-fillpage', [str_filename, '.ps']);
+exportgraphics(gcf,[str_filename '.pdf'],'BackgroundColor','none','ContentType','vector');
 %
 % *********************************************************************** %
 

@@ -1204,8 +1204,10 @@ if ~isempty(overlaydataid)
         overlaydata(:,:)    = [];
         overlaylabel(:,:)   = [];
         overlaylabel        = 'n/a';
-        overlaydata_gridded = zeros(jmax,imax);
-        overlaydata_gridded(:,:) = -0.999999E+19;
+        overlaydata_gridded_mean      = zeros(jmax,imax);
+        % overlaydata_gridded_mean(:,:) = -0.999999E+19;
+        overlaydata_gridded_sum       = zeros(jmax,imax);
+        % overlaydata_gridded_sum(:,:)  = -0.999999E+19;
         m=0;
         for i = 1:imax,
             for j = 1:jmax,
@@ -1215,12 +1217,14 @@ if ~isempty(overlaydataid)
                     if (samecell_n(1) > 0)
                         m=m+1;
                         samecell_mean = mean(overlaydata_ij_old(samecell_locations,3));
+                        samecell_sum  = sum(overlaydata_ij_old(samecell_locations,3));
                         overlaydata_ij(m,:) = [i j samecell_mean];
                         overlaydata(m,1)    = grid_lon_origin + 360.0*(overlaydata_ij(m,1) - 0.5)/jmax;
                         overlaydata(m,2)    = 2.0*(overlaydata_ij(m,2) - 0.5)/jmax - 1.0;
                         overlaydata(m,3)    = samecell_mean;
                         overlaylabel        = [overlaylabel; 'n/a'];
-                        overlaydata_gridded(j,i) = overlaydata(m,3);
+                        overlaydata_gridded_mean(j,i) = samecell_mean;
+                        overlaydata_gridded_sum(j,i)  = samecell_sum;
                     end
                 end
             end
@@ -1228,7 +1232,8 @@ if ~isempty(overlaydataid)
         overlaylabel(end,:) = [];
         nmax=m;
         % save data on grid
-        fprint_2D_d(overlaydata_gridded(:,:),[overlaydataid, '.griddedOBS.', str_date, '.dat']);
+        % fprint_2D_d(overlaydata_gridded_mean(:,:),[overlaydataid, '.griddedOBS_mean.', str_date, '.dat']);
+        % fprint_2D_d(overlaydata_gridded_sum(:,:),[overlaydataid, '.griddedOBS_sum.', str_date, '.dat']);        
     end
     % scale overlay data
     overlaydata(:,3) = overlaydata(:,3)/datapoint_scale;
@@ -1251,30 +1256,38 @@ if ~isempty(overlaydataid)
             overlaydata_shape(n) = 's';
         end
     end
-    % finally -- check there is any data left ... if not, flag as no data ...
-    % (and warn)
-    if (nmax == 0)
+    % finally -- check remaining data
+    % if there is no data left -- flag as no data (overlaydataid = [])
+    % otherwise save data locations as 2D mask file
+    if (nmax > 0)
+        % NOTE: remember (j,i)
+        % (1) first create mask based on zm -- adopt size, transfer NaNs (land)
+        mask = zeros(size(zm));
+        mask(find(isnan(zm))) = NaN;
+        % (2) add data locations
+        for n = 1:nmax
+            mask(overlaydata_ij(n,2),overlaydata_ij(n,1)) = 1.0;
+        end
+        % (3) save gridded data mask file!
+        str_mask = [overlaydataid '.MASK.dat'];
+        fprint_MASK(mask(:,:),str_mask,false);
+        if (plot_secondary == 'y')
+            loc_s.filename = [maskid '.MASK'];
+            plot_2dgridded2(mask,[0 1],'',loc_s);
+        end
+        % (4) save griadded data files!
+        %     NOTE: if dataaveraging is being employed
+        if (data_ijk_mean == 'y')
+            fprint_MASKDATA(mask(:,:),overlaydata_gridded_mean(:,:),[overlaydataid, '.griddedOBS_mean.', str_date, '.dat'],false);
+            fprint_MASKDATA(mask(:,:),overlaydata_gridded_sum(:,:),[overlaydataid, '.griddedOBS_sum.', str_date, '.dat'],false);
+            fprint_MASKDATA(mask(:,:),overlaydata_gridded_sum(:,:),[str_mask '.wght'],false);
+        end
+    else
         disp([' ']);
         disp([' * WARNING: there is no remaining overlay data after filtering/averaging']);
         disp(['   Disabling overlay data ...'])
         disp([' ']);
         overlaydataid = [];
-    end
-    % save data locations as 2D mask file
-    % NOTE: remember (j,i)
-    % (1) first create mask based on zm -- adopt size, transfer NaNs (land)
-    mask = zeros(size(zm));
-    mask(find(isnan(zm))) = NaN;
-    % (2) add data locations
-    for n = 1:nmax
-        mask(overlaydata_ij(n,2),overlaydata_ij(n,1)) = 1.0;
-    end
-    % (3) save file!
-    str_mask = [overlaydataid '.MASK.dat'];
-    fprint_MASK(mask(:,:),str_mask,false);
-    if (plot_secondary == 'y')
-        loc_s.filename = [maskid '.MASK'];;
-        plot_2dgridded2(mask,[0 1],'',loc_s);
     end
 end
 %
@@ -2132,6 +2145,7 @@ else
     % NOTE: use data_vector_1 which is the full grid values
     %       when there is no data
     % NOTE: remove NaNs first (also from depth vector)
+    % NOTE: in the absence of data input, data_vector_1 == model
     output = [];
     if (license('test','Curve Fitting Toolbox'))
         if (~isempty(overlaydataid) && ((data_only == 'n') || (data_anomoly == 'y')))
@@ -2166,6 +2180,18 @@ else
             output.model.mean = mean(data_vector_2);
             output.model.min  = min(data_vector_2);
             output.model.max  = max(data_vector_2);
+        else
+            output.data.n     = 0;
+            output.data.sum   = NaN;
+            output.data.mean  = NaN;
+            output.data.min   = NaN;
+            output.data.max   = NaN;
+            data_vector_1(find(isnan(data_vector_1))) = [];
+            output.model.n     = length(data_vector_1);
+            output.model.sum   = sum(data_vector_1);
+            output.model.mean  = mean(data_vector_1);
+            output.model.min   = min(data_vector_1);
+            output.model.max   = max(data_vector_1);
         end
     end
     % add model-data/model stats

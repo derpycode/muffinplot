@@ -325,6 +325,8 @@ function [OUTPUT] = plot_fields_biogem_3d_i(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 %   24/06/11: updated graphics export to pdf option for:
 %             plot_format_old = 'n'
 %             *** VERSION 1.66 ********************************************
+%   n/a       not all of the changes have been documented ... :(          
+%             *** VERSION 1.70 ********************************************
 %
 % *********************************************************************** %
 %%
@@ -381,6 +383,8 @@ if ~exist('plot_profile','var'), plot_profile = 'y'; end % PLOT PROFILE
 if ~exist('plot_zonal','var'),   plot_zonal   = 'y'; end % PLOT ZONAL
 if ~exist('plot_hist','var'),    plot_hist    = 'n'; end % PLOT HISTOGRAM
 if ~exist('plot_histc_SETTINGS','var'), plot_histc_SETTINGS = 'plot_histc_SETTINGS'; end % histc plotting settings
+% misc
+if ~exist('data_dataweight','var'), data_dataweight = 'n'; end
 %
 % *** initialize parameters ********************************************* %
 % 
@@ -685,7 +689,7 @@ if ~isempty(maskid)
         error('*WARNING*: Unknown mask parameter type (must be character array or vector location) ... ')
     end
 end
-%
+% apply mask to topography
 if ~isempty(maskid)
     topo = mask.*topo;
 elseif ((iplot == 0) || (iplot == -1))
@@ -700,6 +704,20 @@ else
     mask = zeros(jmax,imax);
     mask(:,iplot) = 1.0;
     topo = mask.*topo;
+end
+% load optional data field and create mask for weighting profile averages
+% NOTE: the default is a copy of the mask
+%       (which should leave the calculation unchanged)
+% NOTE: also check it exists!
+if ((data_dataweight == 'y') && ~isempty(maskid))
+    if (exist([maskfile '.wght'],'file'))
+        mask_dataweight = load([maskfile '.wght'],'-ascii');
+        mask_dataweight = flipdim(mask_dataweight,1);
+    else
+        mask_dataweight = mask;
+    end
+else
+    mask_dataweight = mask;
 end
 %
 % *********************************************************************** %
@@ -1111,20 +1129,20 @@ for k = 1:kmax
                 if ((data(k,j,i) > -0.999E19) && (data(k,j,i) < 0.999E19) &&  ~isnan(data(k,j,i)))
                     zm(k,j) = zm(k,j) + data(k,j,i);
                     zm_count(k,j) = zm_count(k,j) + 1.0;
-                    zl(k) = zl(k) + data_V(k,j,i)*data(k,j,i);
-                    zl_V(k) = zl_V(k) + data_V(k,j,i);
+                    zl(k) = zl(k) + mask_dataweight(j,i)*data_V(k,j,i)*data(k,j,i);
+                    zl_V(k) = zl_V(k) + mask_dataweight(j,i)*data_V(k,j,i);
                     zz(k,j) = zz(k,j) + data_V(k,j,i)*data(k,j,i);
                     zz_V(k,j) = zz_V(k,j) + data_V(k,j,i);
                     z = z + data_V(k,j,i)*data(k,j,i); 
                     z_V = z_V + data_V(k,j,i);
                 else
-                    data(k,j,i) = NaN;
+                    data(k,j,i)   = NaN;
                     data_1(k,j,i) = NaN;
                     data_2(k,j,i) = NaN;
                     data_D(k,j,i) = NaN;
                 end
             else
-                data(k,j,i) = NaN;
+                data(k,j,i)   = NaN;
                 data_1(k,j,i) = NaN;
                 data_2(k,j,i) = NaN;
                 data_D(k,j,i) = NaN;
@@ -2161,8 +2179,13 @@ if (plot_secondary == 'y')
     % *** SAVE DATA (profile) ******************************************* %
     %
     % model mean profile
+    % NOTE: undo log10 transformation if selected
     if ((data_save == 'y') && (data_only == 'n') && (plot_profile == 'y'))
-        fprint_1D2_d([flipud(grid_zt(:)) flipud(zl(:))],[par_pathout '/' filename '.PROFILE.', str_date, '.res']); 
+        if (data_log10 == 'y')
+            fprint_1D2_d([flipud(grid_zt(:)) flipud(10.^zl(:))],[par_pathout '/' filename '.PROFILE.', str_date, '.res']);
+        else
+            fprint_1D2_d([flipud(grid_zt(:)) flipud(zl(:))],[par_pathout '/' filename '.PROFILE.', str_date, '.res']);
+        end
     end
     % data and modal @ data, mean profile
     if ((data_save == 'y') && (plot_profile == 'y') && ~isempty(overlaydataid) )
@@ -2198,8 +2221,13 @@ if (plot_secondary == 'y')
     %
     % *** SAVE DATA (surface zonal mean) ******************************** %
     %
+    % NOTE: undo log10 transformation if selected
     if ((data_save == 'y') && (data_only == 'n') && (plot_zonal == 'y'))
-        fprint_1Dn_d([flipud(grid_lat) rot90(zz(kmax,:),1)],[par_pathout '/' filename '.ZONAL.', str_date, '.res']);
+        if (data_log10 == 'y')
+            fprint_1Dn_d([flipud(grid_lat) rot90(10.^zz(kmax,:),1)],[par_pathout '/' filename '.ZONAL.', str_date, '.res']);
+        else
+            fprint_1Dn_d([flipud(grid_lat) rot90(zz(kmax,:),1)],[par_pathout '/' filename '.ZONAL.', str_date, '.res']);
+        end
     end
     %
     % *** PLOT FIGURE (cross-plot) ************************************** %
@@ -2342,17 +2370,28 @@ else
         if (~isempty(overlaydataid) && ((data_only == 'n') || (data_anomoly == 'y')))
             % basic data stats and those of corresponding model locations
             data_vector_1(find(isnan(data_vector_1))) = [];
-            output.data.n    = length(data_vector_1);
-            output.data.sum  = sum(data_vector_1);
-            output.data.mean = mean(data_vector_1);
-            output.data.min  = min(data_vector_1);
-            output.data.max  = max(data_vector_1);
+            output.data.n     = length(data_vector_1);
+            output.data.sum   = sum(data_vector_1);
+            output.data.mean  = mean(data_vector_1);
+            output.data.min   = min(data_vector_1);
+            output.data.max   = max(data_vector_1);
             data_vector_2(find(isnan(data_vector_2))) = [];
             output.model.n    = length(data_vector_2);
             output.model.sum  = sum(data_vector_2);
             output.model.mean = mean(data_vector_2);
             output.model.min  = min(data_vector_2);
             output.model.max  = max(data_vector_2);
+        else
+            output.data.n     = 0;
+            output.data.sum   = NaN;
+            output.data.mean  = NaN;
+            output.data.min   = NaN;
+            output.data.max   = NaN;
+            output.model.n    = 0;
+            output.model.sum  = NaN;
+            output.model.mean = NaN;
+            output.model.min  = NaN;
+            output.model.max  = NaN;
         end
     end
     % add profile stats (if selected)
@@ -2368,6 +2407,20 @@ else
         output.profile.minD = grid_zt(find(zl == output.profile.min));
         output.profile.maxD = grid_zt(find(zl == output.profile.max));
         output.profile.sur  = zl(end);
+        if (output.profile.n>1)
+            output.profile.sub = zl(end-1);
+        else
+            output.profile.sub = NaN;
+        end
+    else
+        output.profile.n    = 0;
+        output.profile.mean = NaN;
+        output.profile.min  = NaN;
+        output.profile.max  = NaN;
+        output.profile.minD = NaN;
+        output.profile.maxD = NaN;
+        output.profile.sur  = NaN;
+        output.profile.sub  = NaN;
     end
     % add model-data/model stats
     if exist('STATM')
