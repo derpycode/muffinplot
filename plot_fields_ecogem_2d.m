@@ -910,15 +910,50 @@ if ~isempty(overlaydataid)
             if (overlaydata_raw(n,1) < grid_lon_origin),
                 overlaydata_raw(n,1) = overlaydata_raw(n,1) + 360.0;
             end
-        end        
+        end
         % convert (lon,lat) overlay data to (i,j)
-        % NOTE: function 'calc_find_ij' takes input in order: (lon,lat)
-        %       i.e., the same as the raw overlay data, which is (lon,lat) (i.e., (i,j)) format
         % NOTE: !!! gridded data is (j,i) !!!
         overlaydata_ij(:,:) = zeros(size(overlaydata_raw(:,:)));
-        for n = 1:nmax,
-            overlaydata_ij(n,1:2) = calc_find_ij(overlaydata_raw(n,1),overlaydata_raw(n,2),grid_lon_origin,imax,jmax);
+        % *** OLD *** function for gridding
+        % NOTE: function 'calc_find_ij' takes input in order: (lon,lat)
+        %       i.e., the same as the raw overlay data, which is (lon,lat) (i.e., (i,j)) format
+        % for n = 1:nmax,
+        %     overlaydata_ij(n,1:2) = calc_find_ij(overlaydata_raw(n,1),overlaydata_raw(n,2),grid_lon_origin,imax,jmax);
+        % end
+        % *** NEW *** function for gridding
+        % NOTE: possible search vectors are:
+        %       [1 0; 0 1; -1 0; 0 -1] (ignoring diagnoals)
+        %       [1 1; 1 0; 1 -1; 0 -1; -1 -1; -1 0; -1 1; 0 1]
+        % NOTE: structure format is:
+        % sin.lone;
+        % sin.late;
+        % sin.lon;
+        % sin.lat;
+        % sin.vdsrch;
+        loc_sin.lone = grid_lon_edges;
+        loc_sin.late = grid_lat_edges;
+        loc_sin.vdsrch = [1 1; 1 0; 1 -1; 0 -1; -1 -1; -1 0; -1 1; 0 1];
+        % process each data points
+        for n = 1:nmax
+            loc_sin.lon = overlaydata_raw(n,1);
+            loc_sin.lat = overlaydata_raw(n,2);
+            loc_sout = fun_near(loc_sin);
+            overlaydata_ij(n,1:2) = loc_sout.ij;
+            % set try limit to control whether an attempt to grid data
+            % location to adjacent ocean cell is made
+            if (data_ijk_near == 'y')
+                loc_n = 0;
+            else
+                loc_n = length(loc_sin.vdsrch);
+            end
+            %
+            while (isnan(zm(overlaydata_ij(n,2),overlaydata_ij(n,1))))
+                loc_n = loc_n + 1;
+                if (loc_n > length(loc_sin.vdsrch)), break; end
+                overlaydata_ij(n,1:2) = loc_sout.dij_near(loc_n,2:3);
+            end
         end
+        % copy data value
         overlaydata_ij(:,3) = overlaydata_raw(:,3);
     else
         % convert (i,j) overlay data to (lon,lat)
@@ -955,8 +990,10 @@ if ~isempty(overlaydataid)
         overlaydata(:,:)    = [];
         overlaylabel(:,:)   = [];
         overlaylabel        = 'n/a';
-        overlaydata_gridded = zeros(jmax,imax);
-        overlaydata_gridded(:,:) = -0.999999E+19;
+        overlaydata_gridded_mean      = zeros(jmax,imax);
+        % overlaydata_gridded_mean(:,:) = -0.999999E+19;
+        overlaydata_gridded_sum       = zeros(jmax,imax);
+        % overlaydata_gridded_sum(:,:)  = -0.999999E+19;
         m=0;
         for i = 1:imax,
             for j = 1:jmax,
@@ -966,12 +1003,14 @@ if ~isempty(overlaydataid)
                     if (samecell_n(1) > 0)
                         m=m+1;
                         samecell_mean = mean(overlaydata_ij_old(samecell_locations,3));
+                        samecell_sum  = sum(overlaydata_ij_old(samecell_locations,3));
                         overlaydata_ij(m,:) = [i j samecell_mean];
                         overlaydata(m,1)    = grid_lon_origin + 360.0*(overlaydata_ij(m,1) - 0.5)/jmax;
                         overlaydata(m,2)    = 2.0*(overlaydata_ij(m,2) - 0.5)/jmax - 1.0;
                         overlaydata(m,3)    = samecell_mean;
                         overlaylabel        = [overlaylabel; 'n/a'];
-                        overlaydata_gridded(j,i) = overlaydata(m,3);
+                        overlaydata_gridded_mean(j,i) = samecell_mean;
+                        overlaydata_gridded_sum(j,i)  = samecell_sum;
                     end
                 end
             end
@@ -979,7 +1018,8 @@ if ~isempty(overlaydataid)
         overlaylabel(end,:) = [];
         nmax=m;
         % save data on grid
-        fprint_2D_d(overlaydata_gridded(:,:),[overlaydataid, '.griddedOBS.', str_date, '.dat']);
+        % fprint_2D_d(overlaydata_gridded_mean(:,:),[overlaydataid, '.griddedOBS_mean.', str_date, '.dat']);
+        % fprint_2D_d(overlaydata_gridded_sum(:,:),[overlaydataid, '.griddedOBS_sum.', str_date, '.dat']);        
     end
     % scale overlay data
     overlaydata(:,3) = overlaydata(:,3)/datapoint_scale;
@@ -1002,9 +1042,33 @@ if ~isempty(overlaydataid)
             overlaydata_shape(n) = 's';
         end
     end
-    % finally -- check there is any data left ... if not, flag as no data ...
-    % (and warn)
-    if (nmax == 0)
+    % finally -- check remaining data
+    % if there is no data left -- flag as no data (overlaydataid = [])
+    % otherwise save data locations as 2D mask file
+    if (nmax > 0)
+        % NOTE: remember (j,i)
+        % (1) first create mask based on zm -- adopt size, transfer NaNs (land)
+        mask = zeros(size(zm));
+        mask(find(isnan(zm))) = NaN;
+        % (2) add data locations
+        for n = 1:nmax
+            mask(overlaydata_ij(n,2),overlaydata_ij(n,1)) = 1.0;
+        end
+        % (3) save gridded data mask file!
+        str_mask = [overlaydataid '.MASK.dat'];
+        fprint_MASK(mask(:,:),str_mask,false);
+        if (plot_secondary == 'y')
+            loc_s.filename = [maskid '.MASK'];
+            plot_2dgridded2(mask,[0 1],'',loc_s);
+        end
+        % (4) save griadded data files!
+        %     NOTE: if dataaveraging is being employed
+        if (data_ijk_mean == 'y')
+            fprint_MASKDATA(mask(:,:),overlaydata_gridded_mean(:,:),[overlaydataid, '.griddedOBS_mean.', str_date, '.dat'],false);
+            fprint_MASKDATA(mask(:,:),overlaydata_gridded_sum(:,:),[overlaydataid, '.griddedOBS_sum.', str_date, '.dat'],false);
+            fprint_MASKDATA(mask(:,:),overlaydata_gridded_sum(:,:),[str_mask '.wght'],false);
+        end
+    else
         disp([' ']);
         disp([' * WARNING: there is no remaining overlay data after filtering/averaging']);
         disp(['   Disabling overlay data ...'])

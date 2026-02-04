@@ -198,11 +198,11 @@ function [OUTPUT] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 %   17/01/20: added option for seperating scaling of model and data data
 %             [data_scalepoints]
 %   17/04/27: added saving of mask points
-%             NOTE: added laym values in 'calculate topography' ... 
+%             NOTE: added laym values in 'calculate topography' ...
 %                   hopefully not screwing anything up ...
 %   17/05/02: added parameter backwards-compatability [data_scalepoints]
 %   17/08/03: fixed up velocity vector plotting!
-%   17/08/04: add surface current speed background when 
+%   17/08/04: add surface current speed background when
 %             <data_only> == 'y', <data_uv> == 'y'
 %   17/08/28: changed sign of how data_offset is aplied to <data>
 %             edited model-data output format
@@ -231,7 +231,7 @@ function [OUTPUT] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 %   18/04/05: added M-score stats output
 %             *** VERSION 1.09 ********************************************
 %   18/07/16: corrected sign of depth in mask location ASCII output
-%   18/07/20: changed initial name of 'raw' netCDF data 
+%   18/07/20: changed initial name of 'raw' netCDF data
 %             to help avoid potenital issues
 %             added parameters and code to extract min and max from
 %             seasonal data
@@ -310,9 +310,9 @@ function [OUTPUT] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 %   20/01/10: added flexibility to have mixed (i,j)+depth location data
 %             disabled old/redundant(???) data saving
 %             *** VERSION 1.42 ********************************************
-%   20/03/10: added new data input column format (no label) 
+%   20/03/10: added new data input column format (no label)
 %             *** VERSION 1.43 ********************************************
-%   20/06/11: adjusted when netCDF anomoly fields are saved 
+%   20/06/11: adjusted when netCDF anomoly fields are saved
 %             *** VERSION 1.44 ********************************************
 %   20/08/18: (various)
 %             *** VERSION 1.45 ********************************************
@@ -344,7 +344,7 @@ function [OUTPUT] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 %             *** VERSION 1.58 ********************************************
 %   21/08/31: added sum to returned structure, renoved NaNs from vector
 %             *** VERSION 1.59 ********************************************
-%   22/01/19: added loc_flag_unpack = false for data (not GENIE) netCDF 
+%   22/01/19: added loc_flag_unpack = false for data (not GENIE) netCDF
 %             *** VERSION 1.60 ********************************************
 %   22/06/23: revisd min/max surfce output, added associated stats
 %             *** VERSION 1.61 ********************************************
@@ -377,7 +377,7 @@ function [OUTPUT] = plot_fields_biogem_3d_k(PEXP1,PEXP2,PVAR1,PVAR2,PT1,PT2,PIK,
 % *********************************************************************** %
 %
 % *** initialize ******************************************************** %
-% 
+%
 % set version!
 par_ver = 1.678;
 % set function name
@@ -395,7 +395,7 @@ str_mutlab = tmp_mutlab(1:4);
 par_mutlab = str2num(str_mutlab);
 %
 % *** backwards compatability ******************************************* %
-% 
+%
 % data point scaling
 if ~exist('data_scalepoints','var'), data_scalepoints = 'n'; end
 % data saving
@@ -427,7 +427,7 @@ if ~exist('plot_hist','var'),    plot_hist    = 'n'; end % PLOT HISTOGRAM
 if ~exist('plot_histc_SETTINGS','var'), plot_histc_SETTINGS = 'plot_histc_SETTINGS'; end % histc plotting settings
 %
 % *** initialize parameters ********************************************* %
-% 
+%
 % set axes
 lat_min = -090;
 lat_max = +090;
@@ -440,7 +440,7 @@ lon_offset = 0;
 par_data_null = 9.9E19;
 %
 % *** copy passed parameters ******************************************** %
-% 
+%
 % set passed parameters
 exp_1 = PEXP1;
 exp_2 = PEXP2;
@@ -465,7 +465,7 @@ color_g = [0.75 0.75 0.75];
 color_b = [0.00 0.00 0.00];
 %
 % *** SCALING *********************************************************** %
-% 
+%
 % set default data scaling
 if data_scale == 0.0
     data_scale = 1.0;
@@ -498,7 +498,7 @@ else
 end
 %
 % *** SET PATHS & DIRECTORIES ******************************************* %
-% 
+%
 % find current path
 str_current_path = pwd;
 % find where str_function lives ...
@@ -535,7 +535,7 @@ par_pathout = [str_current_path '/' par_pathout];
 if ~(exist(par_pathout,'dir') == 7), mkdir(par_pathout);  end
 % check/add data path
 if ~(exist([str_current_path '/' par_pathdata],'dir') == 7),
-    mkdir([str_current_path '/' par_pathdata]); 
+    mkdir([str_current_path '/' par_pathdata]);
 end
 addpath([str_current_path '/' par_pathdata]);
 % check plot format setting
@@ -544,7 +544,7 @@ if ~isempty(plot_format), plot_format_old='n'; end
 str_function = strrep(str_function,'_','-');
 %
 % *** FILTER OPTIONS **************************************************** %
-% 
+%
 % there will be no site labels if data is averaged ...
 if (data_ijk_mean == 'y'), data_sitelabel = 'n'; end
 %
@@ -1382,7 +1382,7 @@ if ~isempty(overlaydataid)
         disp(['   Number of data rows read == ' num2str(nmax)]);
         disp(['   Number of lines in file  == ' num2str(n_rows)]);
         disp([' ']);
-        return;        
+        return;
     end
     % check for mixed up lon-lat ... i.e. not (LON, LAT) format
     if ( (min(overlaydata_raw(:,2)) < -90) || (max(overlaydata_raw(:,2)) > 90) ),
@@ -1451,12 +1451,20 @@ if ~isempty(overlaydataid)
         % NOTE: for data deeper than the depth of layer 1, k=0 is returned
         %       (this is a recent change ... it used to be k=1)
         for n = 1:nmax
-            overlaydata_ijk(n,3) = calc_find_k(overlaydata_raw(n,3),kmax);
             % for negative depths -- set k equal to the requested slice
             % and over-ride the k value just calculated above
             % (i.e., so the data lacking true depth info always plots)
-            if ((overlaydata_raw(n,3) < 0.0) && (kplot > 0))
-                overlaydata_ijk(n,3) = kplot;
+            % NOTE: if kplot == -1, then force to seafloor
+            if (overlaydata_raw(n,3) < 0.0)
+                if (kplot > 0)
+                    overlaydata_ijk(n,3) = kplot;
+                elseif (kplot < 0)
+                    overlaydata_ijk(n,3) = grid_k1(overlaydata_ijk(n,2),overlaydata_ijk(n,1));
+                else
+                    overlaydata_ijk(n,3) = calc_find_k(overlaydata_raw(n,3),kmax);
+                end
+            else
+                overlaydata_ijk(n,3) = calc_find_k(overlaydata_raw(n,3),kmax);
             end
         end
         % test for slice catagory
@@ -1571,7 +1579,7 @@ if ~isempty(overlaydataid)
                     overlaydata_raw(n,3) = grid_k1(overlaydata_raw(n,2),overlaydata_raw(n,1));
                 else
                     overlaydata_raw(n,3) = 0;
-                end                
+                end
             end
         end
         % convert (i,j) overlay data to (lon,lat)
@@ -1700,7 +1708,7 @@ if (~isempty(dataid_2))
     if kplot > 0
         data_vector_1 = reshape(data_1(kplot,:,:),imax*jmax,1)/data_scale;
         data_vector_2 = reshape(data_2(kplot,:,:),imax*jmax,1)/data_scale;
-        data_vector_D = reshape(data_D(kplot,:,:),imax*jmax,1); 
+        data_vector_D = reshape(data_D(kplot,:,:),imax*jmax,1);
     elseif (kplot == 0)
         data_vector_1 = reshape(data_1(:,:,:),imax*jmax*kmax,1)/data_scale;
         data_vector_2 = reshape(data_2(:,:,:),imax*jmax*kmax,1)/data_scale;
@@ -2141,7 +2149,7 @@ if (plot_main == 'y')
     % NOTE: explicitly specify renderer is using useless recent version
     scrsz = get(0,'ScreenSize');
     hfig = figure('Position',[((1 - plot_dscrsz)/2)*plot_dscrsz*scrsz(3) (1 - plot_dscrsz)*plot_dscrsz*scrsz(4) plot_dscrsz*scrsz(3) plot_dscrsz*scrsz(4)]);
-    if (par_mutlab > 2015), hfig.Renderer='Painters'; end    
+    if (par_mutlab > 2015), hfig.Renderer='Painters'; end
     clf;
     % define plotting regions
     fh(1) = axes('Position',[0 0 1 1],'Visible','off');
@@ -2410,7 +2418,7 @@ if (plot_main == 'y')
                 if ( (data_only == 'y') && (data_siteonly == 'y') )
                     overlaydata_fcol(n) = data_sitecolor;
                 else
-                    overlaydata_fcol(n) = '-';                    
+                    overlaydata_fcol(n) = '-';
                 end
             end
         end
@@ -2501,7 +2509,7 @@ if (plot_main == 'y')
     %
     % *** SAVE DATA ***************************************************** %
     %
-    % NOTE: it has become unclear what this is 'for' ... 
+    % NOTE: it has become unclear what this is 'for' ...
     %       (particularly given the newer and extensive model/data saving)
     %%%fprint_1Dn_d([data_vector_1 data_vector_D],[par_pathout '/' filename '.kDATA.', str_date, '.res']);
     %
@@ -2742,7 +2750,7 @@ end
 % *** FUNCTION RETURN *************************************************** %
 % *********************************************************************** %
 %
-% NOTE: 
+% NOTE:
 %       STATM(1,2) = MEAN;
 %       STATM(2,2) = STD;
 %       STATM(3,2) = RMSD;
@@ -2755,7 +2763,7 @@ end
 %       STATM(10,2) = M;
 %
 % NOTE2:
-% xds = datastats(x) returns statistics for the column vector x 
+% xds = datastats(x) returns statistics for the column vector x
 % to the structure xds. Fields in xds are:
 % num       -- The number of data values
 % max       -- The maximum data value
@@ -2765,7 +2773,7 @@ end
 % range     -- The range of the data
 % std       -- The standard deviation of the data
 %
-if (data_output_old == 'y') 
+if (data_output_old == 'y')
     if exist('STATM')
         OUTPUT = STATM;
     else
