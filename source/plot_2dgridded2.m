@@ -54,6 +54,8 @@ function [] = plot_2dgridded2(PDATAIN,PDATALIMS,PDATACOL,PSTRUCTTEXT)
 %             *** VERSION 0.95 ********************************************
 %   25/09/02: added graphics format option
 %             *** VERSION 0.96 ********************************************
+%   26/02/10: stripped '-' from labels
+%             *** VERSION 0.97 ********************************************
 %
 %   ***********************************************************************
 
@@ -64,7 +66,7 @@ function [] = plot_2dgridded2(PDATAIN,PDATALIMS,PDATACOL,PSTRUCTTEXT)
 % *** INITIALIZE ******************************************************** %
 %
 % set version!
-par_ver = 0.96;
+par_ver = 0.97;
 % set function name
 str_function = mfilename;
 str_function(find(str_function(:)=='_')) = '-';
@@ -269,8 +271,8 @@ caxis([data_min data_max]);
 set(gca,'PlotBoxAspectRatio',v_plotratio);
 axis([0.0 double(xmax) 0.0 double(ymax)]);
 xtickangle(par_xtickangle);
-set(gca,'XLabel',text('String',str_xlabel,'FontSize',18),'XTick',[0.5:1:xmax-0.5],'XTickLabel',v_xticks,'fontsize',9*(12/xmax)^0.5);
-set(gca,'YLabel',text('String',str_ylabel,'FontSize',18),'YTick',[0.5:1:ymax-0.5],'YTickLabel',v_yticks,'fontsize',9*(12/ymax)^0.5);
+set(gca,'XLabel',text('String',strrep(str_xlabel,'_',' '),'FontSize',18),'XTick',[0.5:1:xmax-0.5],'XTickLabel',v_xticks,'fontsize',9*(12/xmax)^0.5);
+set(gca,'YLabel',text('String',strrep(str_ylabel,'_',' '),'FontSize',18),'YTick',[0.5:1:ymax-0.5],'YTickLabel',v_yticks,'fontsize',9*(12/ymax)^0.5);
 set(gca,'TickDir','out');
 title(str_title,'FontSize',21);
 % draw filled rectangles
@@ -325,7 +327,7 @@ for c = 1:c_max,
 end
 str = [num2str(data_min + c_max*(data_max-data_min)/c_max)];
 textsize = 11;
-text(0.60,1.0,str,'FontName','Arial','FontSize',textsize);
+text(0.60,1.0,strrep(str,'_',' '),'FontName','Arial','FontSize',textsize);
 % draw outline
 h = line([0.0 0.0],[1.0 0.0],'Color','k','LineWidth',0.75);
 h = line([0.5 0.5],[1.0 0.0],'Color','k','LineWidth',0.75);
